@@ -42,7 +42,7 @@ Commit and push are **allowed** (changed 2026-07-28; the old standing "never com
 retired). Conventions:
 
 - Push work to a **branch for review**, not straight to `main`, unless told otherwise.
-- Author identity is set **globally on this machine**: `Edwin Rios
+- Author identity is set **globally on this machine**: `Edwin Arkel Rios
   <edwinarkel.rios@gmail.com>`. Use it; no per-repo override is needed. (It was unset before
   2026-07-28, which made the first commit fail with "Author identity unknown".)
 - Existing history shows two other authors, both expected and not to be corrected:
