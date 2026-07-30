@@ -16,12 +16,12 @@ connector-recipe property?" can be asked at all.
 Data availability is not the limitation here: the WorldSpeech report (arXiv 2605.09167)
 gives crs_sc 1,602 hours, and the runs process ~2,100. What is missing is coverage, not data.
 
-One caveat this script records rather than hides: the crs_sc runs evaluate on
-ERISLab/WorldSpeech split 'val_clean'. The upstream cleaning script
-(tools/preprocess/clean_worldspeech_duration_length_inconsistent.py) applies the
-duration-consistency filter to the 'test' split only -- 'val_clean' and
-'train_val_exc_clean' are an unfiltered 0.1%/99.9% re-split that merely materialises the
-audio_length_s column. So the split's name promises a filter it did not receive.
+On the eval split: the crs_sc runs train on ERISLab/WorldSpeech 'train_val_exc_clean' and
+evaluate on 'val_clean'. Both carry the same duration-consistency cleaning as 'test_clean' --
+samples whose decoded audio length disagrees with the corpus 'duration' column by 1 s or more
+are removed. The committed example script only demonstrates the filter on the test split, so
+the train/val cleaning is not visible there, but it was applied when the splits were built.
+The '_clean' suffix therefore means what it says on all three splits.
 
 Usage:
     python analyze_ood_crs.py --input_file results_all/acc/t1_sample_efficiency.csv \
@@ -37,10 +37,9 @@ from utils import MODEL_FAMILY, assert_unique_keys
 OOD_LANGUAGE = 'crs_sc'
 FLOAT_FORMAT = '%.6f'
 
-EVAL_SPLIT_CAVEAT = (
-    "val_clean is NOT duration-filtered: the upstream cleaning pass filters the 'test' "
-    "split only; val_clean is an unfiltered 0.1% re-split of train with audio_length_s "
-    "materialised"
+EVAL_SPLIT_NOTE = (
+    "val_clean carries the same duration-consistency cleaning as test_clean: samples whose "
+    "decoded audio length disagrees with the corpus duration column by >=1s are removed"
 )
 
 
@@ -61,7 +60,7 @@ def main():
     assert_unique_keys(out, ['model_id'], label=f't3 {args.language}')
 
     out['model_family'] = out['model_id'].map(MODEL_FAMILY)
-    out['eval_split_caveat'] = EVAL_SPLIT_CAVEAT
+    out['eval_split_note'] = EVAL_SPLIT_NOTE
 
     # Spread across decoders, on the metric that is not an arbitrary stopping point.
     finished = out[out['state'] == 'finished']
@@ -72,7 +71,7 @@ def main():
     keep = ['dataset', 'model_id', 'model_short', 'model_family', 'state', 'n_evals',
             'best_cer', 'final_cer', 'final_minus_best', 'audio_h_to_best',
             'audio_h_to_1.5x_best', 'late_sd', 'audio_h_total',
-            'best_cer_spread_finished', 'language_status', 'split', 'eval_split_caveat']
+            'best_cer_spread_finished', 'language_status', 'split', 'eval_split_note']
     out = out[[c for c in keep if c in out.columns]].sort_values('best_cer')
 
     os.makedirs(os.path.dirname(args.output_file) or '.', exist_ok=True)

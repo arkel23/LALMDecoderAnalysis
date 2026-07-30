@@ -16,9 +16,13 @@ Three things this script is deliberately careful about:
    so excluding it removes en_us's matched arm entirely. Dropping the language is the
    defensible choice, but it also removes the single largest against-hypothesis point, so
    the sensitivity analysis that keeps everything is reported alongside, not instead.
-3. It flags non-clean cells rather than silently pooling them: fr_fr and es_419 are
-   cross-dialect (trained on one dialect, evaluated on another) and ta_in / ha_ng / sw_ke
-   interleave two WorldSpeech configs at 50/50 regardless of corpus size.
+3. It flags non-clean cells rather than silently pooling them. fr_fr and es_419 are
+   cross-dialect (trained on one dialect, evaluated on another), and any language whose
+   training stream does not reconcile with the published corpus size is carried through from
+   the data-accounting table -- currently ta_in, whose implied stream is ~7x below a lower
+   bound on its corpus. Interleaving is NOT among these flags: the upstream loader uses
+   'all_exhausted_without_replacement', so the combined stream is exactly the sum of its
+   parts (proved in verify_interleave_semantics.py).
 
 crs_sc is absent by construction: its region is None because neither Whisper nor TinyAya
 officially supports Seychellois Creole, making it an out-of-distribution probe rather than
@@ -119,6 +123,10 @@ def main():
     p.add_argument('--stats_file', type=str,
                    default=os.path.join('results_all', 'acc', 't2_region_match_stats.csv'))
     p.add_argument('--metric', type=str, default='best_cer')
+    p.add_argument('--accounting_file', type=str,
+                   default=os.path.join('results_all', 'acc',
+                                        't4_data_accounting_by_language.csv'),
+                   help='Optional; adds the per-language data-accounting flag to the output.')
     args = p.parse_args()
 
     df = pd.read_csv(args.input_file)
@@ -139,6 +147,14 @@ def main():
     primary['analysis'] = 'primary_excluding_failed_runs'
     sensitivity['analysis'] = 'sensitivity_including_all_runs'
     table = pd.concat([primary, sensitivity], ignore_index=True)
+
+    # Carry the data-accounting verdict onto every language row, so a reader of t2 alone can
+    # see which cells rest on a training stream that does not reconcile with its corpus.
+    if os.path.exists(args.accounting_file):
+        acc = pd.read_csv(args.accounting_file)[
+            ['dataset', 'accounting_flag', 'ratio_implied_to_published']]
+        assert_unique_keys(acc, ['dataset'], label='t4 by-language join key')
+        table = table.merge(acc, on='dataset', how='left')
 
     os.makedirs(os.path.dirname(args.output_file) or '.', exist_ok=True)
     table.to_csv(args.output_file, index=False, float_format=FLOAT_FORMAT)

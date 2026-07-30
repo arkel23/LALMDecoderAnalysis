@@ -95,19 +95,53 @@ Dropping the language is defensible. Dropping it *silently* would not be — the
 roughly quintuples the apparent effect (−0.48 → −2.32). Both analyses are therefore reported,
 and neither is significant.
 
-### Two cell types that are not clean, and are flagged rather than pooled
+### Cells that are not clean, and are flagged rather than pooled
 
 - **Cross-dialect**: `fr_fr` trains on `fr_ca` and evaluates on `fr_fr`; `es_419` trains on
   `es_es` (the running jobs' wandb config says `es_mx`, so the YAML changed after launch) and
   evaluates on `es_419`.
-- **Uniform interleaving**: `ta_in`+`ta_lk`, `ha_ng`+`ha_td` and `sw_ke`+`sw_tz` are
-  interleaved at `1/N` probabilities *regardless of relative corpus size*
-  (`qasr/data/data_utils.py:239-251`; the size-proportional line is commented out). The
-  smaller config is heavily oversampled.
+- **`ta_in`'s training stream does not reconcile with its corpus** — see §4.1.
 
-`ta_in` is both interleaved and by far the largest single contributor to the region-match
-effect. Its data accounting does not reconcile with the WorldSpeech report and is the first
-thing that should be checked — see section 7.
+**Interleaving is NOT a confound, contrary to how the loader reads.** The multi-config
+languages (`ta_in`+`ta_lk`, `ha_ng`+`ha_td`, `sw_ke`+`sw_tz`) are combined with uniform `1/N`
+probabilities, which looks as though the smaller config would be oversampled. It is not: the
+strategy is `all_exhausted_without_replacement`, so an exhausted config is never recycled and
+the combined stream is exactly the sum of its parts, each example once. The uniform
+probabilities affect arrival *order* only. `verify_interleave_semantics.py` proves this
+empirically — an interleave of a 100-example and a 25-example dataset yields exactly 125
+distinct examples, in both the map-style and streaming paths, while plain `all_exhausted`
+would oversample the smaller one to 122×. This was a known issue upstream and it is fixed;
+it should not be re-raised.
+
+### 4.1 The one real data-accounting anomaly: `ta_in`
+
+`results_all/acc/t4_data_accounting_by_language.csv` reconstructs each training stream from
+logged scalars alone (`global_step × batch_size × gradient_accumulation_steps`, audio seconds,
+and the epoch counter, which under streaming counts how many times the stream was consumed),
+and compares it against the frozen WorldSpeech hour snapshot:
+
+| language | epochs | implied stream h | published h | scope | ratio | verdict |
+|---|---|---|---|---|---|---|
+| **ta_in** | 58.01 | **34.82** | 240 | lower bound | **0.15** | **far below published** |
+| ha_ng | 18.05 | 125.55 | 126 | lower bound | 1.00 | consistent |
+| crs_sc | 1.29 | 1644.16 | 1602 | config | 1.03 | consistent |
+| sw_ke | 1.41 | 1050.35 | 1006 | lower bound | 1.04 | consistent |
+| hi_in | 1.00 | 1939.25 | 1707 | config | 1.14 | never exhausted; lower bound only |
+| id_id | 5.02 | 434.99 | 340 | config | 1.28 | consistent |
+| mr_in | 8.10 | 236.29 | 114 | config | 2.07 | above published |
+| en_us, fr_fr, es_419 | — | — | — | not comparable | — | published figure is a language-level aggregate over configs the runs did not use |
+
+Every comparable language reconciles except **`ta_in`**, whose implied stream is 0.15 of a
+*lower bound* — so the true shortfall is worse than 6.7×, since the published 240 h covers
+`ta_lk` alone and training also drew on `ta_in`. With interleaving ruled out, the remaining
+candidates are the filters the loader applies silently: clips of 30 s or longer are dropped,
+and undecodable clips are assigned a 100,000 s sentinel that the same filter removes without
+counting. That is the same duration-inconsistency failure mode that required Seychellois
+Creole to be cleaned into a separate mirror, and Tamil received no such cleaning.
+
+This matters because **`ta_in` contributes the single largest term in the region-match
+effect** (−14.70 CER). Until its stream is explained, that term should be treated as
+provisional.
 
 ## 5. What the existing logs already support, at zero GPU cost
 
@@ -159,10 +193,11 @@ encoder nor the decoder has seen the language, **which regional variant is chose
 matters**. That is a clean, interpretable negative result and a genuine contribution: it bounds
 where decoder specialisation can help.
 
-Caveat recorded on the table itself: these runs evaluate on `ERISLab/WorldSpeech` split
-`val_clean`, and the upstream cleaning pass applies its duration-consistency filter to the
-`test` split only. `val_clean` is an unfiltered 0.1 % re-split of train with `audio_length_s`
-materialised — the split's name promises a filter it did not receive.
+Recorded on the table itself: these runs train on `train_val_exc_clean` and evaluate on
+`val_clean`, and both carry the same duration-consistency cleaning as `test_clean` — samples
+whose decoded audio length disagrees with the corpus `duration` column by 1 s or more are
+removed. The committed example script only demonstrates the filter on the test split, so the
+train/val cleaning is not visible there, but it was applied when the splits were built.
 
 ## 6. What is missing before any causal wording is defensible
 
@@ -181,14 +216,14 @@ materialised — the split's name promises a filter it did not receive.
 
 ## 7. Recommendations, in descending value per GPU-hour
 
-1. **Fix the data accounting first — pure CPU, and the largest apparent effect depends on it.**
-   Epoch-derived unique hours reconcile with the WorldSpeech report for only 3 of 9 languages
-   (`crs_sc`, `ha_ng`, `sw_ke`) and fail badly for `ta_in` (≈35 h implied against ≥240 h
-   published). `train/train_audio_seconds` itself is trustworthy — it sums decoded array length
-   over sampling rate (`qasr/data/data_utils.py:71-82`) — but the wandb `train/epoch` counter is
-   an estimate under `streaming=True`, so it must not be used as a divisor. Compute exact hours
-   with the framework's own function, and apply the `crs_sc` duration-consistency check to
-   `ta_in`. Until then, report audio *processed*, never unique hours.
+1. **Explain `ta_in`'s training stream — the largest apparent effect depends on it.**
+   Its implied stream is 0.15 of a lower bound on its corpus (§4.1) while every other
+   comparable language reconciles within 0.15 of parity. Interleaving is ruled out, so the
+   likely cause is the silent filter path: 30 s-and-over clips dropped, plus undecodable clips
+   removed via the 100,000 s sentinel without being counted. Applying the same
+   duration-consistency check Seychellois Creole received would settle it. Note that
+   `mr_in` sits at 2.07, i.e. *more* data than published, which is worth a glance but is not a
+   data-loss failure.
 2. **Reframe the headline on sample efficiency** (5.1), not endpoint CER. Zero new compute.
 3. **Report the best-vs-final gap as an overfitting metric** (5.2). Zero new compute.
 4. **Keep the two error-bar routes distinct.** Late-training sd measures optimisation noise and
@@ -200,8 +235,9 @@ materialised — the split's name promises a filter it did not receive.
    converts "we cannot detect an effect" into "the effect is below X CER with 95 % confidence".
 7. **Finish the grid**: `es_419` (`water` was never launched), relaunch `en_us`/`water`, and add
    `base` beyond `crs_sc`.
-8. **Fix or report the uniform interleaving** for `ta`, `ha`, `sw`. The size-proportional code
-   already exists, commented out.
+8. **Report the multi-config construction** for `ta`, `ha`, `sw` — not as a sampling defect
+   (it is not one) but because the published per-config hour counts become lower bounds on the
+   combined stream, which changes what a corpus-size comparison can claim.
 9. **Tokenizer fertility** — still the cheapest mechanism, pure CPU, and it converts a number
    into an explanation. With exact hours available, also correlate gains against unique hours
    and repetition, which are the likeliest confounds in this grid.

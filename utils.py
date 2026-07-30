@@ -153,16 +153,53 @@ LANGUAGE_DIC = {
 # not errors to drop, but they are not interchangeable with the clean cells either, and a
 # region-level claim that leans on them is weaker than it looks.
 #
-#  - dialect_mismatch: trained on one dialect, evaluated on another.
-#  - uniform_interleave: two WorldSpeech configs interleaved at 1/N probabilities regardless
-#    of their relative corpus size (qasr/data/data_utils.py:239-251, the size-proportional
-#    line is commented out), so the smaller config is heavily oversampled.
+# NOTE on interleaving, which used to be listed here and is NOT a confound:
+# ta_in+ta_lk, ha_ng+ha_td and sw_ke+sw_tz are loaded by interleave_datasets with uniform
+# 1/N probabilities, which reads as though the smaller config would be oversampled. It is
+# not. The strategy is 'all_exhausted_without_replacement', so an exhausted config is never
+# recycled and the interleaved stream is exactly the sum of its parts, each example once.
+# verify_interleave_semantics.py proves this empirically (125 == 100 + 25, no duplicates, in
+# both the map-style and streaming paths). The uniform probabilities affect only ARRIVAL
+# ORDER, not how many times an example is seen. Do not re-add this as a confound.
 TRAIN_EVAL_MATCH = {
     'fr_fr': 'dialect_mismatch',      # trains fr_ca, evaluates fr_fr
     'es_419': 'dialect_mismatch',     # trains es_es (wandb says es_mx), evaluates es_419
-    'ta_in': 'uniform_interleave',    # ta_in + ta_lk at 50/50
-    'ha_ng': 'uniform_interleave',    # ha_ng + ha_td at 50/50
-    'sw_ke': 'uniform_interleave',    # sw_ke + sw_tz at 50/50
+}
+
+# Languages whose training stream is built from more than one WorldSpeech config. Recorded
+# because it changes what the published per-config hour count means (it becomes a lower bound
+# on the combined stream), not because the interleaving distorts sampling.
+MULTI_CONFIG_TRAIN = {
+    'ta_in': ('ta_in', 'ta_lk'),
+    'ha_ng': ('ha_ng', 'ha_td'),
+    'sw_ke': ('sw_ke', 'sw_tz'),
+}
+
+# --- WorldSpeech published hours: FROZEN SNAPSHOT ------------------------------------
+# Copied 2026-07-30 from the WorldSpeech report (arXiv:2605.09167v1, "WorldSpeech: A
+# Multilingual Speech Corpus from Around the World", Asonitis et al., ETH Zurich; 65k hours
+# across 76 languages, CC BY 4.0). Objective, non-analytical raw data, copied as a frozen
+# snapshot rather than referenced live, so a later correction upstream cannot silently
+# reopen a finished analysis.
+#
+# 'scope' is load-bearing and must be read before comparing anything to these numbers:
+#   config       -- the figure is for exactly the config used in training.
+#   lower_bound  -- training interleaves this config with a second one whose published hours
+#                   we do not have, so the true combined stream is LARGER than this.
+#   not_comparable -- the report gives only a language-level total aggregated over many
+#                   country configs, while training used one specific (and different) config.
+#                   e.g. French trains on fr_ca but the report aggregates all French.
+WORLDSPEECH_HOURS = {
+    'crs_sc': {'hours': 1602, 'scope': 'config',         'note': 'crs_sc'},
+    'hi_in':  {'hours': 1707, 'scope': 'config',         'note': 'in_hi'},
+    'mr_in':  {'hours': 114,  'scope': 'config',         'note': 'in_mr'},
+    'id_id':  {'hours': 340,  'scope': 'config',         'note': 'id_id'},
+    'ha_ng':  {'hours': 126,  'scope': 'lower_bound',    'note': 'ha_ng only; ha_td unknown'},
+    'sw_ke':  {'hours': 1006, 'scope': 'lower_bound',    'note': 'tz_sw only; sw_ke unknown'},
+    'ta_in':  {'hours': 240,  'scope': 'lower_bound',    'note': 'ta_lk only; ta_in unknown'},
+    'en_us':  {'hours': 5312, 'scope': 'not_comparable', 'note': 'aggregated over all English configs'},
+    'fr_fr':  {'hours': 6029, 'scope': 'not_comparable', 'note': 'aggregated; training uses fr_ca'},
+    'es_419': {'hours': 6792, 'scope': 'not_comparable', 'note': 'aggregated; training uses es_es/es_mx'},
 }
 
 # --- Datasets and metrics -----------------------------------------------------------

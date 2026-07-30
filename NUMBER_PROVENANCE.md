@@ -19,6 +19,8 @@ sibling repo. Printing uses round-half-**up**, not Python's banker's default.
 | `results_all/acc/t2_region_match.csv` | `analyze_region_match.py` | per-language matched / mismatched / global |
 | `results_all/acc/t2_region_match_stats.csv` | `analyze_region_match.py` | paired tests, bootstrap CIs, minimum detectable effect |
 | `results_all/acc/t3_crs_ood.csv` | `analyze_ood_crs.py` | the crs_sc out-of-distribution cell |
+| `results_all/acc/t4_data_accounting.csv` | `analyze_data_accounting.py` | per-run stream reconstruction |
+| `results_all/acc/t4_data_accounting_by_language.csv` | `analyze_data_accounting.py` | per-language stream vs published corpus hours |
 
 ## Definitions that a reader could otherwise get wrong
 
@@ -32,11 +34,18 @@ sibling repo. Printing uses round-half-**up**, not Python's banker's default.
   (An earlier draft of the assessment mixed the two populations and quoted 0.96 where the
   core-variant median is 1.03; the checker caught it.)
 - **`audio_hours`** — cumulative audio **processed**, counting repeats, derived from
-  `train/train_audio_seconds`. That metric is a real measurement: it sums decoded array
-  length over sampling rate per batch (`qasr/data/data_utils.py:71-82`). It is **not** unique
-  corpus hours, and unique hours are deliberately **not** reported anywhere: the wandb
-  `train/epoch` counter is an estimate under `streaming=True` and reconciles with the
-  WorldSpeech report for only 3 of 9 languages.
+  `train/train_audio_seconds`, which sums decoded array length over sampling rate per batch.
+  It is **not** unique corpus hours. Where unique hours are needed they are reported as
+  `implied_stream_hours` in `t4`, always with an `estimate_kind` of `estimate` or
+  `lower_bound`: under streaming the epoch counter records how many times the stream was
+  consumed, so the division is only meaningful once the stream has wrapped at least once
+  (`en_us` and `hi_in` sit at exactly 1.000 and are lower bounds only).
+- **`worldspeech_hours` scope** — the frozen snapshot in `utils.WORLDSPEECH_HOURS` tags each
+  language `config`, `lower_bound` or `not_comparable`. Only four languages support a direct
+  config-to-config comparison; three interleave a second config whose published hours are
+  unknown, and three (`en_us`, `fr_fr`, `es_419`) have only a language-level aggregate over
+  configs the runs did not use. Comparing without reading the scope manufactures
+  discrepancies.
 - **`late_sd`** — standard deviation of CER over the last 30 % of a run's curve, by processed
   audio. Used as the within-run noise floor. It measures **optimisation** noise, not sampling
   noise; a bootstrap over eval utterances would measure the latter and needs per-utterance
@@ -46,10 +55,18 @@ sibling repo. Printing uses round-half-**up**, not Python's banker's default.
 
 ## Known-unverified inputs
 
-- Exact unique audio hours per training config (blocked on a dataset-hours utility; see
-  `PLAN_ASSESSMENT.md` §7.1). `ta_in` is the priority case.
-- Whether the `crs_sc` `val_clean` eval split received the duration-consistency filter its
-  name implies. It did not, as far as the upstream script shows — only `test_clean` is
-  filtered.
+- **Why `ta_in`'s training stream is 0.15 of a lower bound on its corpus** while every other
+  comparable language reconciles. Interleaving is ruled out (`verify_interleave_semantics.py`);
+  the silent filter path is the remaining candidate. This is the priority case, because
+  `ta_in` carries the largest term in the region-match effect.
 - The matched-variant premise (identical base/tokenizer/parameter count across the four
   regional variants), still unconfirmed against the Tiny Aya report.
+
+## Settled, do not re-report
+
+- **Interleaving does not oversample the smaller config.** The loader uses
+  `all_exhausted_without_replacement`, so a combined stream is exactly the sum of its parts.
+  Proved offline in `verify_interleave_semantics.py`, which runs in `plotter.sh`.
+- **The `crs_sc` `_clean` splits are all genuinely cleaned** — train, val and test carry the
+  same duration-consistency filter. The committed upstream example only demonstrates it on
+  test, which is why it can look otherwise.

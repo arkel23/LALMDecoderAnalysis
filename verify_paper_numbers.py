@@ -33,6 +33,7 @@ DOC = os.path.join('docs', 'PLAN_ASSESSMENT.md')
 T1 = os.path.join(ACC, 't1_sample_efficiency.csv')
 T2S = os.path.join(ACC, 't2_region_match_stats.csv')
 T3 = os.path.join(ACC, 't3_crs_ood.csv')
+T4L = os.path.join(ACC, 't4_data_accounting_by_language.csv')
 RAW = os.path.join('data', 'raw_serials', 'raw_serial_0.csv')
 
 CORE = ('earth', 'fire', 'global', 'water')
@@ -114,7 +115,31 @@ DERIVED = [
     # Parameter counts, from the wandb config -- the matched-variant premise (risk 1).
     ('regional variant parameter count', lambda: _regional_params(), 0),
     ('base minus regional parameter delta', lambda: _base_param_delta(), 0),
+
+    # Data accounting, per language: epochs, implied stream hours, published hours, ratio.
+    *[(f'accounting {lang} / {col}', (lambda lang=lang, col=col: _acc(lang, col)), nd)
+      for lang in ('ta_in', 'ha_ng', 'crs_sc', 'sw_ke', 'hi_in', 'id_id', 'mr_in')
+      for col, nd in (('epochs_logged', 2), ('implied_stream_hours', 2),
+                      ('worldspeech_hours', 0), ('ratio_implied_to_published', 2))],
+
+    # The ta_in region-match term the accounting anomaly puts in doubt.
+    ('ta_in delta_vs_mismatched', lambda: _t2_delta('ta_in'), 2),
 ]
+
+
+def _acc(lang, col):
+    d = load(T4L)
+    sel = d[d['dataset'] == lang]
+    assert len(sel) == 1, f'{lang} matched {len(sel)} rows in {T4L}'
+    return sel.iloc[0][col]
+
+
+def _t2_delta(lang):
+    d = load(os.path.join(ACC, 't2_region_match.csv'))
+    sel = d[(d['dataset'] == lang)
+            & (d['analysis'] == 'primary_excluding_failed_runs')]
+    assert len(sel) == 1, f'{lang} matched {len(sel)} rows'
+    return sel.iloc[0]['delta_vs_mismatched']
 
 
 def _regional_params():
@@ -171,6 +196,35 @@ ORDERINGS = [
      lambda: int(load(T1)['excluded_from_aggregate'].sum()) == 1),
     ('all four regional/global variants share one parameter count',
      lambda: _regional_params() > 0),
+
+    # Data accounting: ta_in is the sole anomaly, and everything else reconciles. If a data
+    # correction ever changes that, no printed digit in the prose would move on its own.
+    ('ta_in is the ONLY language flagged far-below-published',
+     lambda: list(load(T4L).query(
+         "accounting_flag == 'IMPLIED_STREAM_FAR_BELOW_PUBLISHED'")['dataset']) == ['ta_in']),
+    ('every comparable language except ta_in has ratio >= 0.5',
+     lambda: bool((load(T4L).query(
+         "worldspeech_scope in ['config', 'lower_bound'] and dataset != 'ta_in'"
+     )['ratio_implied_to_published'] >= 0.5).all())),
+    ('ta_in carries the largest-magnitude region-match delta',
+     lambda: (lambda d: d.loc[d['delta_vs_mismatched'].abs().idxmax(), 'dataset'])(
+         load(os.path.join(ACC, 't2_region_match.csv')).query(
+             "analysis == 'primary_excluding_failed_runs'"
+         ).dropna(subset=['delta_vs_mismatched'])) == 'ta_in'),
+    # es_419 has no finished runs yet, so it is absent from the by-language table. The claim
+    # is that nothing OUTSIDE the aggregated-published set is scoped not_comparable, and that
+    # the ones present are scoped that way -- not that all three are present.
+    ('only en_us / fr_fr / es_419 are scoped not_comparable',
+     lambda: set(load(T4L).query("worldspeech_scope == 'not_comparable'")['dataset'])
+     <= {'en_us', 'fr_fr', 'es_419'}),
+    ('the aggregated-published languages present are all scoped not_comparable',
+     lambda: {'en_us', 'fr_fr'}
+     <= set(load(T4L).query("worldspeech_scope == 'not_comparable'")['dataset'])),
+    ('every language reports an estimate_kind',
+     lambda: load(T4L)['estimate_kind'].isin(['estimate', 'lower_bound']).all()),
+    ('mean sample duration is within the 30 s cap for every run',
+     lambda: bool(load(os.path.join(ACC, 't4_data_accounting.csv'))[
+         'mean_sample_seconds_within_cap'].all())),
 ]
 
 

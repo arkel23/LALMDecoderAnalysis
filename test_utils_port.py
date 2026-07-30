@@ -21,6 +21,7 @@ import pandas as pd
 import utils
 from utils import (CORE_VARIANTS, LANGUAGE_REGION, LANGUAGE_DIC, METHODS_DIC, MODEL_SHORT,
                    MODEL_FAMILY, TRAIN_EVAL_MATCH, EXCLUDED_MODELS_AGGREGATE,
+                   MULTI_CONFIG_TRAIN, WORLDSPEECH_HOURS,
                    add_language_columns, assert_unique_keys, half_up,
                    is_excluded_from_aggregate)
 
@@ -81,8 +82,28 @@ check('every region has >=2 languages, so a matched/mismatched contrast exists',
 check('fr_fr and es_419 flagged as dialect_mismatch',
       TRAIN_EVAL_MATCH.get('fr_fr') == 'dialect_mismatch'
       and TRAIN_EVAL_MATCH.get('es_419') == 'dialect_mismatch')
-check('ta_in, ha_ng, sw_ke flagged as uniform_interleave',
-      all(TRAIN_EVAL_MATCH.get(k) == 'uniform_interleave'
+# Interleaving is NOT a confound and must not be re-added as one: the loader uses
+# 'all_exhausted_without_replacement', so the combined stream is exactly the sum of its parts.
+# verify_interleave_semantics.py proves it; this pins the conclusion in the data dicts.
+check('no language is flagged for interleaving (refuted -- see verify_interleave_semantics)',
+      not any(v == 'uniform_interleave' for v in TRAIN_EVAL_MATCH.values()))
+check('the multi-config languages are recorded, without implying oversampling',
+      set(MULTI_CONFIG_TRAIN) == {'ta_in', 'ha_ng', 'sw_ke'})
+check('every multi-config language lists exactly 2 configs',
+      all(len(v) == 2 for v in MULTI_CONFIG_TRAIN.values()))
+
+# The published-hours snapshot must carry a scope for every language, because three of the
+# ten are not comparable config-to-config and would otherwise read as discrepancies.
+check('WORLDSPEECH_HOURS covers all 10 languages',
+      set(WORLDSPEECH_HOURS) == EXPECTED_LANGUAGES)
+check('every WORLDSPEECH_HOURS entry declares a scope',
+      all(v.get('scope') in ('config', 'lower_bound', 'not_comparable')
+          for v in WORLDSPEECH_HOURS.values()))
+check('en_us, fr_fr, es_419 are marked not_comparable (aggregated published totals)',
+      all(WORLDSPEECH_HOURS[k]['scope'] == 'not_comparable'
+          for k in ('en_us', 'fr_fr', 'es_419')))
+check('the multi-config languages are marked lower_bound',
+      all(WORLDSPEECH_HOURS[k]['scope'] == 'lower_bound'
           for k in ('ta_in', 'ha_ng', 'sw_ke')))
 
 # --- 2. Model dicts -----------------------------------------------------------------
@@ -152,8 +173,15 @@ check('add_language_columns defaults other languages to in_domain',
       _out.loc[2, 'language_status'] == 'in_domain')
 check('add_language_columns defaults train_eval_match to clean',
       _out.loc[0, 'train_eval_match'] == 'clean')
-check('add_language_columns carries the uniform_interleave flag',
-      _out.loc[1, 'train_eval_match'] == 'uniform_interleave')
+# ta_in is 'clean' on this axis now: interleaving is not a confound. Its data-accounting
+# anomaly is tracked in t4, not in TRAIN_EVAL_MATCH.
+check('add_language_columns no longer flags ta_in for interleaving',
+      _out.loc[1, 'train_eval_match'] == 'clean')
+_dial = add_language_columns(pd.DataFrame({
+    'dataset': ['fr_fr'],
+    'model_id': ['q2a_openai/whisper-medium_CohereLabs/tiny-aya-water']}))
+check('add_language_columns carries the dialect_mismatch flag',
+      _dial.loc[0, 'train_eval_match'] == 'dialect_mismatch')
 check('add_language_columns maps model_short', _out.loc[0, 'model_short'] == 'earth')
 
 # --- 6. Data-shape invariants (only if the downloads have run) ----------------------

@@ -8,7 +8,10 @@
 # Run with the `pytorch` conda env already active (matching the sibling repos, which also do
 # not activate it themselves).
 
-set -u
+# -e matters: without it this script's exit status is only the LAST command's, so a failing
+# verification guard in section 5 would be printed and then silently ignored. That happened
+# once during development -- test_utils_port.py exited 1 and plotter.sh still reported success.
+set -eu
 
 SERIALS=(0)
 PROJECT='LisTAya/LALMDecoder'
@@ -75,6 +78,13 @@ python -u count_data.py \
 python -u analyze_sample_efficiency.py \
   --input_file "$HIST" --output_file "$ACC/t1_sample_efficiency.csv"
 
+# Data accounting before the contrasts, so t2 can carry each language's verdict. Derived
+# purely from logged scalars plus the frozen WorldSpeech snapshot in utils.py -- this repo
+# does analysis only and never loads a dataset.
+python -u analyze_data_accounting.py \
+  --input_file "$HIST" --output_file "$ACC/t4_data_accounting.csv" \
+  --per_language_file "$ACC/t4_data_accounting_by_language.csv"
+
 python -u analyze_region_match.py \
   --input_file "$ACC/t1_sample_efficiency.csv" \
   --output_file "$ACC/t2_region_match.csv" \
@@ -134,4 +144,8 @@ python -u plot_curve.py --input_file "$HIST" \
 # verify_paper_numbers.py cannot catch a CSV that is CONSISTENTLY wrong -- a mis-regioned
 # language would regenerate every table wrongly and still pass every numeric check.
 python -u test_utils_port.py
+# Offline and instant: proves the multi-config interleaving reads every example exactly once,
+# so "uniform probabilities oversample the smaller config" stays refuted rather than becoming
+# folklore again.
+python -u verify_interleave_semantics.py
 python -u verify_paper_numbers.py

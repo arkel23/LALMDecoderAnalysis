@@ -45,8 +45,8 @@ Cost is not zero, and should be budgeted honestly:
 - WorldSpeech defines a 95/5 train/test split per country-language pair, so the test split
   exists for every trained config.
 - The `duration`-column inconsistency that forced the `crs_sc` cleaning pass may affect other
-  configs. Run the duration-consistency check before trusting a new split (see
-  `PLAN_ASSESSMENT.md` §7.1).
+  configs -- `ta_in` shows exactly that signature (`PLAN_ASSESSMENT.md` §4.1). Run the
+  duration-consistency check before trusting a new split.
 
 ## 2. Same-language, different domain — already in hand, needs reframing
 
@@ -81,9 +81,9 @@ it proposed.
   `short_en/openasr_ami.yaml` (meeting / far-field),
   `short_en/openasr_librispeech_test_other.yaml` (harder read speech).
 - **`crs_sc`** is already the strongest OOD probe in the grid: unsupported by both Whisper and
-  TinyAya, 1,602 h available, six models run. Keep it framed as the encoder-and-decoder-unseen
-  quadrant rather than as an ordinary language. Its `val_clean` split caveat is recorded in
-  `analyze_ood_crs.py` and on `t3_crs_ood.csv`.
+  TinyAya, 1,602 h available, six models run, and its train/val/test splits all carry the
+  duration-consistency cleaning. Keep it framed as the encoder-and-decoder-unseen quadrant
+  rather than as an ordinary language.
 - **Long-form** is a further axis if wanted: `configs/datasets/long_ml/` has 96
   `espnet/floras` configs including Tamil, with `long_form: true`.
 
@@ -105,7 +105,8 @@ it proposed.
 
 ## Recommended order
 
-1. Duration-consistency check on the training configs (blocks trusting anything else).
+1. Duration-consistency check on the `ta_in`/`ta_lk` configs (blocks trusting the largest
+   region-match term).
 2. Resolve the WorldSpeech Opus/libsndfile decode error, then add the eight `test` configs.
 3. Re-run the existing grid's evaluation on both domains, in-domain and FLEURS.
 4. Zero-shot cross-language sweep on FLEURS.

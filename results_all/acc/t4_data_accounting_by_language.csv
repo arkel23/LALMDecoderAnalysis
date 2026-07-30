@@ -1,0 +1,10 @@
+dataset,language_name,n_runs,train_configs,epochs_logged,audio_hours_processed,mean_sample_seconds,implied_stream_hours,implied_stream_samples,estimate_kind,worldspeech_hours,worldspeech_scope,ratio_implied_to_published,accounting_flag
+ta_in,Tamil,4,ta_in+ta_lk,58.014000,2019.961006,14.202851,34.818509,8825.455924,estimate,240,lower_bound,0.145077,IMPLIED_STREAM_FAR_BELOW_PUBLISHED
+fr_fr,French,4,fr_fr,2.242000,2304.346432,16.202436,1027.808400,228367.528992,estimate,6029,not_comparable,0.170477,not_comparable_published_scope
+en_us,English,4,en_us,1.000000,2707.768965,19.039001,2707.768965,512000.000000,lower_bound,5312,not_comparable,0.509746,not_comparable_published_scope
+ha_ng,Hausa,4,ha_ng+ha_td,18.046000,2265.632343,15.930227,125.547620,28371.938380,estimate,126,lower_bound,0.996410,consistent
+crs_sc,Seychellois Creole,5,crs_sc,1.286000,2114.383794,14.866761,1644.155361,398133.748056,estimate,1602,config,1.026314,consistent
+sw_ke,Swahili,4,sw_ke+sw_tz,1.411000,1482.037092,10.420573,1050.345211,362863.217576,estimate,1006,lower_bound,1.044081,consistent
+hi_in,Hindi,4,hi_in,1.000000,1939.252849,13.635372,1939.252849,512000.000000,lower_bound,1707,config,1.136059,stream_never_exhausted_lower_bound_only
+id_id,Indonesian,4,id_id,5.015000,2181.455403,15.338358,434.986122,102093.718843,estimate,340,config,1.279371,consistent
+mr_in,Marathi,4,mr_in,8.096000,1913.041684,13.451074,236.294674,63241.106719,estimate,114,config,2.072760,implied_stream_above_published
