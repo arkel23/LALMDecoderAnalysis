@@ -1,0 +1,3 @@
+dataset_path,dataset_config,split,n_examples,num_bytes,available_splits,error
+disco-eth/WorldSpeech,ta_in,test,466,59421427,"test,train",
+disco-eth/WorldSpeech,ta_lk,test,1224,314698872,"test,train",

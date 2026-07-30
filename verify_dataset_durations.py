@@ -10,14 +10,16 @@ the smaller config, and that a duration-column inconsistency was silently droppi
 Both were wrong, and a direct test on the real data is what showed it. This script is that
 test, generalised, so the next such suspicion is checked before it is written down.
 
-VERIFIED 2026-07-30 on disco-eth/WorldSpeech, configs ta_in + ta_lk, split train:
+VERIFIED 2026-07-30 on disco-eth/WorldSpeech, configs ta_in + ta_lk, both splits:
 
-  * len(interleaved) == len(ta_in) + len(ta_lk)          -- interleaving loses nothing
-  * the duration-consistency filter removed ZERO samples -- no corrupt or mislabelled clips
+  train (run externally)      len(interleaved) == len(ta_in) + len(ta_lk); filter removed 0
+  test  (run by this script)  1690 == 466 + 1224; 0 undecodable; filter removed 0 of 1690;
+                              loaded counts match the builder metadata; 12.00 audio hours
 
-So there is no data-integrity issue with the Tamil configs. The interleave semantics are
-sound (see also verify_interleave_semantics.py, which proves the same property offline with
-synthetic data), and the reported `duration` column agrees with the decoded audio.
+So there is no data-integrity issue with the Tamil configs, on either split, confirmed twice
+independently. The interleave semantics are sound (see also verify_interleave_semantics.py,
+which proves the same property offline with synthetic data and passes identically under
+datasets 4.5.0 and 5.0.0), and the reported `duration` column agrees with the decoded audio.
 
 Two modes, because the cheap one is usually enough:
 
@@ -30,6 +32,14 @@ Two modes, because the cheap one is usually enough:
                  and applies the duration-consistency filter, reporting exactly how many
                  samples it removes. This downloads audio and can be tens of GB, so it is
                  opt-in and not run by plotter.sh.
+
+WHICH CONDA ENV. Run this in `asr`, not `pytorch`. `pytorch` has no audio backend at all --
+`datasets` 5.0.0 with neither soundfile nor torchcodec -- so every audio read there fails, and
+that is where the long-standing "WorldSpeech files are malformed" belief came from. `asr` has
+`datasets` 4.5.0 (the version the training runs used), torchcodec 0.9.1 and the ffmpeg shared
+objects. Retested 2026-07-30 in `asr`: the three configs previously believed undecodable
+(`la_va`, `si_lk`, `tl_ph`) all decode correctly at 24 kHz. Metadata-only mode needs no audio
+backend and runs in either env.
 
 Usage:
     # cheap, authoritative sample counts
@@ -70,18 +80,32 @@ def check(name, cond, detail=''):
 
 
 def make_audio_length_fn(audio_column='audio'):
-    """Duration from the decoded array, never from a metadata column.
+    """Duration from the decoded audio, never from a metadata column.
 
     Duplicated rather than imported: this repo does analysis only and must not depend on the
-    training framework. It is a verbatim copy of the upstream function, which is the point --
-    a re-implementation would be measuring something else.
+    training framework.
+
+    Handles BOTH shapes the Audio feature can yield, which matters more than it looks. Up to
+    datasets 3.x a decoded example gives a dict with 'array' and 'sampling_rate'. From
+    datasets 4.x, when torchcodec is installed, it gives an AudioDecoder object instead and
+    dict access raises. The upstream function only does dict access, so under a torchcodec
+    env its bare `except` would assign the corrupt sentinel to EVERY clip -- which reads as
+    "the whole corpus is broken" and would then filter the whole split away. Falling into that
+    is precisely the class of mistake this script exists to prevent, so both shapes are
+    handled and the sentinel is reserved for genuinely unreadable audio.
     """
     def get_audio_length(example):
         audio = example[audio_column]
         try:
-            example['audio_length_s'] = len(audio['array']) / audio['sampling_rate']
+            if hasattr(audio, 'get_all_samples'):        # datasets >= 4 + torchcodec
+                samples = audio.get_all_samples()
+                example['audio_length_s'] = (
+                    samples.data.shape[-1] / samples.sample_rate)
+            else:                                        # datasets <= 3, or no torchcodec
+                example['audio_length_s'] = (
+                    len(audio['array']) / audio['sampling_rate'])
         except Exception:
-            # if len(audio['array']) cannot be read: missing file/corrupted
+            # genuinely unreadable: missing file / corrupted
             example['audio_length_s'] = CORRUPT_SENTINEL
         return example
     return get_audio_length

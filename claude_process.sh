@@ -77,10 +77,18 @@ set -u
 #   len(interleaved) == len(ta_in) + len(ta_lk)   -- interleaving loses nothing
 #   duration-consistency filter removed 0 samples -- no corrupt or mislabelled clips
 # Downloads ~7 GB of audio, so it is opt-in and NOT in plotter.sh (which runs the instant
-# metadata-only mode instead). Spent -- leave commented.
+# metadata-only mode instead). MUST run in the `asr` env: `pytorch` has no audio backend.
+# Spent -- leave commented.
 #
-# python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
-#   --dataset_configs ta_in ta_lk --split train --load --num_proc 20
+# ~/miniconda3/envs/asr/bin/python -u verify_dataset_durations.py \
+#   --dataset_path disco-eth/WorldSpeech --dataset_configs ta_in ta_lk --split train \
+#   --load --num_proc 20
+#
+# Independent confirmation on the test splits, run here 2026-07-30 (~0.4 GB, ~4 min):
+# ALL CHECKS PASSED -- 1690 == 466 + 1224, 0 undecodable, 0 removed, 12.00 audio hours.
+# ~/miniconda3/envs/asr/bin/python -u verify_dataset_durations.py \
+#   --dataset_path disco-eth/WorldSpeech --dataset_configs ta_in ta_lk --split test \
+#   --load --num_proc 8
 
 # --- 2026-07-30: refresh the example-count snapshot in utils.py. --------------------------
 # Metadata only, no audio. Re-run if a training config is added or WorldSpeech is revised, and

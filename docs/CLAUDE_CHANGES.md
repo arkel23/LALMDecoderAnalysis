@@ -1,5 +1,56 @@
 # Change log
 
+## 2026-07-30 (fourth pass) — the WorldSpeech "malformed files" problem is an env problem
+
+Comparing `pip list` from the remote host that *can* read WorldSpeech against the two local
+conda envs identified the cause, and it is not libsndfile or Opus.
+
+| | `pytorch` (local) | `asr` (local) | remote host |
+|---|---|---|---|
+| `datasets` | 5.0.0 | 4.5.0 | 4.5.0 |
+| `transformers` | 5.14.1 | 4.57.5 | 4.57.5 |
+| `soundfile` | **absent** | 0.14.0 | 0.13.1 |
+| `torchcodec` | **absent** | 0.9.1 | 0.9.1 |
+| `torchaudio` | **absent** | absent | 2.9.1+cu130 |
+| ffmpeg/libsndfile `.so` | **0** | 18 | — |
+| `scipy` | present | **absent** | — |
+
+`pytorch` has **no audio backend whatsoever**: `datasets` 5.0.0 decodes `Audio` through
+torchcodec, and neither torchcodec nor soundfile is installed, so *every* audio read fails
+there regardless of codec. `asr` matches the remote host closely — including `transformers`
+4.57.5, which is exactly the `transformers_version` logged by the runs — so `asr` is the env
+that reproduces how training consumed data.
+
+**Retested in `asr`, and the blocker is gone.** The three configs recorded upstream as
+undecodable (`examples/explore_datasets.py:30`, "Supported file format but file is malformed")
+all decode correctly via torchcodec at 24 kHz: `la_va` 29.54 s, `si_lk` 29.34 s, `tl_ph` 0.80 s,
+and `ta_in` 18.01 s for the first test clip of each. The libsndfile error string means an env
+without torchcodec fell back to soundfile; it was never a property of the corpus.
+
+Consequences:
+
+- **`CLAUDE.md` corrected.** It stated "There is no `asr` env on this machine, whatever older
+  docs say." Both halves were wrong: `asr` exists and it is the only local env that can read
+  audio. The file now carries the split — analysis and `plotter.sh` in `pytorch` (it has scipy,
+  which `asr` lacks), anything loading a dataset in `asr`.
+- **`EVAL_DATASET_PLAN.md`'s top-priority tier is unblocked.** Adding matched WorldSpeech `test`
+  eval configs was written up as blocked on a decode bug; it is ordinary work.
+- **The interleave guard is version-robust.** It was originally verified on `datasets` 5.0.0;
+  re-run under `asr`/`datasets` 4.5.0 — the version the runs actually used — it passes
+  identically, which matters because the earlier verification and the runs were on different
+  major versions.
+- **A real bug in `verify_dataset_durations.py`, found because the env difference forced the
+  question.** Its `make_audio_length_fn` was a verbatim copy of the upstream function, which
+  reads `audio['array']`. Under `datasets` 4.x with torchcodec the `Audio` feature yields an
+  `AudioDecoder` instead, so dict access raises and the bare `except` would have assigned the
+  corrupt sentinel to **every** clip — reporting a whole corpus as broken and filtering the
+  split away. The `--load` path had never been exercised, so this was live. It now handles both
+  shapes, and `--load` has been run for real: `ta_in` + `ta_lk` `test`, 1690 == 466 + 1224,
+  0 undecodable, 0 removed by the duration filter, loaded counts matching builder metadata.
+  That independently reproduces on `test` what was reported on `train`.
+
+---
+
 ## 2026-07-30 (third pass) — the ta_in "anomaly" was mine, not the data's
 
 A direct test on the real datasets refuted the last remaining suspicion about `ta_in`, and the

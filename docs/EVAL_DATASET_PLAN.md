@@ -34,14 +34,18 @@ cross-language comparisons mix two different quantities.
 single change that makes the existing numbers interpretable, because it gives every language
 an in-domain point to sit beside its FLEURS point.
 
-Cost is not zero, and should be budgeted honestly:
+This tier was previously believed to be blocked by a decode bug. **It is not** — the blocker
+was an environment problem and it is resolved:
 
-- Only three WorldSpeech eval configs exist today —
-  `configs/datasets/short_ml/worldspeech_{la_va,si_lk,tl_ph}_test.yaml` — and **all three fail
-  to decode in this environment**: `examples/explore_datasets.py:30` records a real
-  libsndfile/Opus error (`Supported file format but file is malformed`). That is an
-  environment/dependency limitation rather than a data problem, but it blocks this tier until
-  resolved.
+- Only three WorldSpeech eval configs exist today
+  (`configs/datasets/short_ml/worldspeech_{la_va,si_lk,tl_ph}_test.yaml`), and an upstream note
+  (`examples/explore_datasets.py:30`) records all three failing with a libsndfile error,
+  `Supported file format but file is malformed`. Retested 2026-07-30: **all three decode
+  correctly** in the `asr` conda env, via torchcodec, at 24 kHz (29.5 s, 29.3 s and 0.8 s for
+  the first test clip of each). The `pytorch` env has no audio backend at all -- `datasets`
+  5.0.0 with neither soundfile nor torchcodec -- which is where the "malformed" reading came
+  from. Use `asr` for anything that loads audio.
+- So adding the eight matched `test` configs is ordinary work, not blocked research.
 - WorldSpeech defines a 95/5 train/test split per country-language pair, so the test split
   exists for every trained config.
 - The `duration`-column inconsistency that forced the `crs_sc` cleaning pass could affect
@@ -105,7 +109,7 @@ it proposed.
 
 ## Recommended order
 
-1. Resolve the WorldSpeech Opus/libsndfile decode error, then add the eight `test` configs.
+1. Add the eight matched WorldSpeech `test` configs (no decode blocker; use the `asr` env).
 2. Re-run the existing grid's evaluation on both domains, in-domain and FLEURS.
 3. Zero-shot cross-language sweep on FLEURS.
 4. Add EdAcc.
