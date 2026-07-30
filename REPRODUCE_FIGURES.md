@@ -15,6 +15,8 @@ All figures are written by `plot_curve.py` into `results_all/plots/s0/`.
 | `s0_curve_evalloss_vs_audio_hours.png` | Eval loss on the same axes — separates "still learning" from "CER is noisy". |
 | `s0_curve_trainloss_vs_audio_hours.png` | Training loss on the same axes. |
 | `s0_curve_crs_ood.png` | The `crs_sc` cell alone: the language unseen by both encoder and decoder. |
+| `s0_volume_interaction.png` | **The headline figure.** Region-match effect against training-stream size, one point per language. |
+| `s0_volume_interaction_relative.png` | The same effect as a share of baseline CER, so the volume/difficulty confound is visible rather than argued. |
 
 ## Why `plot_curve.py` rather than `plot.py`
 
@@ -41,6 +43,15 @@ the same style/context/palette/font/figsize/dpi arguments, and the same save con
   variants*, because the sixth model (the Qwen3-4B control) is still training and is filtered
   out. Update the title in `plotter.sh` when it finishes — a caption describing data the
   declared filter removed is a defect that shipped in a sibling repo.
+- **symlog on the volume figures.** One language sits at -14.7 CER while the rest are within
+  +/-1.2. A linear y-axis compresses six of seven points into an unreadable band; a log axis
+  cannot render a signed effect at all. `--symlog_y 1.0` is linear within +/-1 and logarithmic
+  outside, which is the only scaling that shows both.
+- **Deterministic hue order.** `plot_curve.get_hue_order` sorts hue levels it does not find in
+  `METHODS_DIC`. It previously iterated a `set`, and CPython randomises string hashing per
+  process, so region colours changed between renders while point positions stayed identical --
+  the exact silent-colour-shift defect the repo warns about. Renders are now byte-identical
+  across processes; that is worth re-checking after any change to the function.
 - **Log axes.** Both axes are log on the CER figures. Seaborn's line artists are not
   registered in the axes' data limits, so switching to log after drawing can leave a linear
   lower bound of 0 that matplotlib collapses to (~0, 1], rendering an empty panel with no

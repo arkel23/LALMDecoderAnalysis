@@ -70,6 +70,9 @@ done
 # Pass --load to additionally download audio and run the duration-consistency and interleave
 # assertions. That is opt-in because it is tens of GB; it has been run for the Tamil pair and
 # both checks passed (interleave lossless, zero samples removed).
+# Also screens for the strict-cap data-loss bug: it reports ta_lk's 100%-at-cap share as a
+# KNOWN, documented issue (docs/UPSTREAM_FIXES.md) rather than failing, so the guard gates on
+# NEW regressions. Snapshot-first, so it works offline and deterministically.
 if [ ! -f "data/dataset_checks/disco-eth_WorldSpeech_ta_in-ta_lk_train.csv" ]; then
   python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
     --dataset_configs ta_in ta_lk --split train
@@ -110,6 +113,14 @@ python -u analyze_region_match.py \
 python -u analyze_ood_crs.py \
   --input_file "$ACC/t1_sample_efficiency.csv" \
   --output_file "$ACC/t3_crs_ood.csv"
+
+# The headline analysis: does the region-match benefit depend on training-data volume? Consumes
+# t2 (per-language contrasts) and t4 (reconstructed stream sizes), so it runs after both.
+python -u analyze_volume_interaction.py \
+  --region_file "$ACC/t2_region_match.csv" \
+  --accounting_file "$ACC/t4_data_accounting_by_language.csv" \
+  --output_file "$ACC/t5_volume_interaction.csv" \
+  --stats_file "$ACC/t5_volume_stats.csv"
 
 # --- 4. Figures --------------------------------------------------------------------
 # mkdir -p on the plot subdir happened above: plot.py only creates --results_dir, so a
@@ -152,6 +163,27 @@ python -u plot_curve.py --input_file "$HIST" \
   --log_scale_x --log_scale_y --fig_size 8 5 \
   --title 'Seychellois Creole, unseen by encoder AND decoder\n(5 finished TinyAya variants; Qwen3-4B control still training)' \
   --output_file s0/s0_curve_crs_ood --results_dir results_all/plots
+
+# The headline figure. symlog on y because one language sits at -14.7 CER while the rest are
+# within +/-1.2: a linear axis compresses six of seven points into an unreadable band, and a log
+# axis cannot render a signed effect at all.
+python -u plot_curve.py --input_file "$ACC/t5_volume_interaction.csv" \
+  --kind scatter --x_var_name stream_post_filter --y_var_name delta_vs_mismatched \
+  --hue_var_name region --annotate_var_name dataset --hline 0 \
+  --log_scale_x --symlog_y 1.0 --legend_outside --fig_size 7.5 4.6 --font_scale 0.9 \
+  --title 'Region-matched decoder benefit decays with training-data volume' \
+  --output_file s0/s0_volume_interaction --results_dir results_all/plots
+
+# The same effect relative to baseline CER. This is the confound made visible rather than
+# argued: data volume and baseline error rate are collinear across these languages, so the
+# relative view is what a reader needs to judge the claim.
+python -u plot_curve.py --input_file "$ACC/t5_volume_interaction.csv" \
+  --kind scatter --x_var_name stream_post_filter \
+  --y_var_name relative_delta_vs_mismatched_pct \
+  --hue_var_name region --annotate_var_name dataset --hline 0 \
+  --log_scale_x --symlog_y 1.0 --legend_outside --fig_size 7.5 4.6 --font_scale 0.9 \
+  --title 'Same effect as a share of baseline CER (the difficulty confound)' \
+  --output_file s0/s0_volume_interaction_relative --results_dir results_all/plots
 
 # --- 5. Verification guards --------------------------------------------------------
 # Always last, and they fail loudly rather than letting an inconsistency reach a document.

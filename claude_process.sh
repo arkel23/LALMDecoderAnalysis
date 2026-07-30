@@ -98,3 +98,35 @@ set -u
 #   python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
 #     --dataset_configs "$cfg" --split train
 # done
+
+# --- 2026-07-30: screen every WorldSpeech training config for clips at the duration cap. ----
+# This is what found the ta_lk loss: 100/100 sampled clips at exactly 30.00 s, against a strict
+# `< 30` filter, so the whole config is deleted. Metadata only, no audio downloaded. Results are
+# frozen into utils.CONFIG_DURATION_AT_CAP; re-run if a config is added or WorldSpeech is revised.
+# Spent -- leave commented. Note the endpoint 500s for uncached configs, which is why the
+# snapshot, not the endpoint, is authoritative in the checker.
+#
+# for cfg in en_us fr_ca es_es es_mx hi_in sw_ke sw_tz ha_ng ha_td ta_in ta_lk mr_in id_id; do
+#   python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
+#     --dataset_configs "$cfg" --split train --known_at_cap
+# done
+
+# --- 2026-07-30: negative-test the at-cap screen. RUN, both directions correct. -------------
+# ta_lk must FAIL when not acknowledged, and hi_in must PASS. Spent -- leave commented.
+#
+# python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
+#   --dataset_configs ta_lk --split train --known_at_cap   # expect exit 1
+# python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
+#   --dataset_configs hi_in --split train                  # expect exit 0
+
+# --- 2026-07-30: prove plot_curve's hue order is deterministic. RUN, byte-identical. --------
+# It previously iterated a set, so region colours changed between renders while positions stayed
+# identical. Spent -- leave commented; re-run after touching get_hue_order.
+#
+# for i in 1 2; do
+#   python -u plot_curve.py --input_file results_all/acc/t5_volume_interaction.csv \
+#     --kind scatter --x_var_name stream_post_filter --y_var_name delta_vs_mismatched \
+#     --hue_var_name region --annotate_var_name dataset --hline 0 --log_scale_x --symlog_y 1.0 \
+#     --legend_outside --output_file s0/s0_volume_interaction --results_dir results_all/plots
+#   md5sum results_all/plots/s0/s0_volume_interaction.png
+# done

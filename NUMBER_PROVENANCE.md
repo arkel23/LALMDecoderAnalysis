@@ -21,7 +21,9 @@ sibling repo. Printing uses round-half-**up**, not Python's banker's default.
 | `results_all/acc/t3_crs_ood.csv` | `analyze_ood_crs.py` | the crs_sc out-of-distribution cell |
 | `results_all/acc/t4_data_accounting.csv` | `analyze_data_accounting.py` | per-run stream reconstruction |
 | `results_all/acc/t4_data_accounting_by_language.csv` | `analyze_data_accounting.py` | per-language stream vs authoritative example counts |
-| `data/dataset_checks/*.csv` | `verify_dataset_durations.py` | per-config example counts; with `--load`, duration consistency and interleave integrity |
+| `results_all/acc/t5_volume_interaction.csv` | `analyze_volume_interaction.py` | per-language effect size against training-stream size |
+| `results_all/acc/t5_volume_stats.csv` | `analyze_volume_interaction.py` | correlations, drop-one robustness, collinearity, partial correlation |
+| `data/dataset_checks/*.csv` | `verify_dataset_durations.py` | per-config example counts and at-cap fractions; with `--load`, duration consistency and interleave integrity |
 
 ## Definitions that a reader could otherwise get wrong
 
@@ -51,13 +53,25 @@ sibling repo. Printing uses round-half-**up**, not Python's banker's default.
   about the run, not evidence of corrupt or missing data. Integrity is checked only by
   `verify_dataset_durations.py`, against the real datasets.
 
+- **`stream_post_filter`** — the volume axis. Pre-filter example counts minus each config's
+  at-cap fraction (`utils.CONFIG_DURATION_AT_CAP`), because the strict `< 30 s` cap removes
+  clips before the model sees them. For `ta_in` that is 32,107 → 8,846. Comparing against the
+  *pre*-filter count is what made Tamil look like a data-integrity problem.
+- **Why `ta_in` is not excluded.** The region-match contrast is within-language: every variant
+  saw the identical stream, so the loss cannot bias it. Excluding the language would remove the
+  only low-resource cell, which is the point of the headline analysis.
+- **Absolute vs relative effect.** Both are reported. The absolute Δ correlates with volume at
+  rho = 0.964; the relative Δ (as % of baseline CER) only at rho = 0.714, p = 0.071. Volume and
+  baseline CER are collinear (rho = -0.679), so the two candidate explanations are entangled and
+  the partial correlation is reported for both the full set (inconclusive) and the six
+  non-extreme languages (significant).
+
 ## Known-unverified inputs
 
-- **Why `ta_in`'s reconstructed stream matches one training config rather than the sum of
-  both.** Either the run consumed one config, or the epoch counter is unreliable for that run;
-  the logs do not distinguish them. This is *not* a data question — the Tamil data is verified
-  clean. Its practical consequence is only that Tamil is the smallest-data cell, which is why
-  its region-match term is treated as provisional.
+- **Whether the volume decay is driven by data volume or by task difficulty.** They are
+  collinear across these languages and the partial correlation is inconclusive over all seven.
+  Only a within-language volume manipulation can separate them — re-running Tamil at full volume
+  while keeping the low-volume runs.
 - The expected stream size for `crs_sc`, which trains on the `ERISLab/WorldSpeech` mirror
   (`train_val_exc_clean`); that split is not in the example-count snapshot.
 - The matched-variant premise (identical base/tokenizer/parameter count across the four
@@ -71,7 +85,11 @@ sibling repo. Printing uses round-half-**up**, not Python's banker's default.
   the real `ta_in` + `ta_lk` splits with `verify_dataset_durations.py --load`.
 - **The Tamil configs contain no corrupt or mislabelled clips.** The duration-consistency
   filter removes **zero** samples from `ta_in` + `ta_lk`, so the corpus `duration` column
-  agrees with the decoded audio.
+  agrees with the decoded audio. The Tamil data loss was caused by the *duration cap*, not by
+  data quality.
+- **`ta_in`'s reconstructed stream matches one config because the cap removed the other.**
+  Resolved: 100 % of `ta_lk` sits at exactly 30.00 s and the cap is strict. The epoch-counter
+  reconstruction was accurate throughout (8,825 inferred vs 8,846 true).
 - **The `crs_sc` `_clean` splits are all genuinely cleaned** — train, val and test carry the
   same duration-consistency filter. The committed upstream example only demonstrates it on
   test, which is why it can look otherwise.

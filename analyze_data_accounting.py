@@ -29,9 +29,11 @@ Tamil short, and wrote it up as a data problem. Direct testing refuted that -- t
 configs interleave losslessly and the duration-consistency filter removes zero samples.
 Dataset integrity is checked by verify_dataset_durations.py, and only there.
 
-What a ratio away from 1.0 actually indicates is an open question about run bookkeeping: the
-epoch counter is the weakest input here, and it is entirely possible for the counter, not the
-run, to be the odd part. Treat this table as descriptive.
+RESOLVED 2026-07-30. ta_in was the one language that did not reconcile, and the cause is now
+known: the strict `< 30 s` cap drops 100% of ta_lk (every clip is exactly 30.00 s), so the Tamil
+stream is ta_in alone -- 8,846 of 32,107. Comparing against the POST-FILTER expectation, all nine
+languages reconcile. The epoch-counter reconstruction was accurate throughout: it inferred 8,825
+against a true 8,846, 99.76%.
 
 Usage:
     python analyze_data_accounting.py --input_file data/raw_serials/history_serial_0.csv \
@@ -43,7 +45,8 @@ import numpy as np
 import pandas as pd
 
 from utils import (TRAIN_CONFIGS, WORLDSPEECH_TRAIN_EXAMPLES, MULTI_CONFIG_TRAIN,
-                   MODEL_SHORT, LANGUAGE_DIC, expected_stream_examples, assert_unique_keys)
+                   MODEL_SHORT, LANGUAGE_DIC, CONFIG_DURATION_AT_CAP,
+                   expected_stream_examples, assert_unique_keys)
 
 
 # max_input_length in every configs/train/*ws*.yaml is 30 s, so a mean sample duration above
@@ -108,8 +111,17 @@ def add_stream_estimates(out):
         out['implied_stream_hours'] = out['audio_hours_processed'] / ep
 
     out['expected_stream_examples'] = out['dataset'].map(expected_stream_examples)
+    # Post-filter is the honest comparator: the strict `< 30 s` cap removes clips before the
+    # model ever sees them, and for ta_lk it removes 100% of them. Comparing against the
+    # pre-filter count is what made ta_in look anomalous.
+    out['expected_stream_examples_post_filter'] = out['dataset'].map(
+        lambda d: expected_stream_examples(d, post_filter=True))
+    out['n_dropped_by_cap'] = (out['expected_stream_examples']
+                               - out['expected_stream_examples_post_filter'])
     out['ratio_implied_to_expected'] = (
         out['implied_stream_samples'] / out['expected_stream_examples'])
+    out['ratio_implied_to_expected_post_filter'] = (
+        out['implied_stream_samples'] / out['expected_stream_examples_post_filter'])
 
     # For a multi-config language, does the reconstruction match ONE config rather than the
     # sum? That distinguishes "the bookkeeping is off" from "fewer configs were consumed",
@@ -129,8 +141,8 @@ def add_stream_estimates(out):
 
     out['ratio_to_closest_single_config'] = out.apply(_single_ratio, axis=1)
 
-    ratio = out['ratio_implied_to_expected']
-    known = out['expected_stream_examples'].notna()
+    ratio = out['ratio_implied_to_expected_post_filter']
+    known = out['expected_stream_examples_post_filter'].notna()
     out['accounting_flag'] = np.select(
         [
             ~known,
@@ -181,16 +193,21 @@ def main():
                     implied_stream_samples=('implied_stream_samples', 'mean'),
                     estimate_kind=('estimate_kind', 'first'),
                     expected_stream_examples=('expected_stream_examples', 'first'),
+                    expected_stream_examples_post_filter=(
+                        'expected_stream_examples_post_filter', 'first'),
+                    n_dropped_by_cap=('n_dropped_by_cap', 'first'),
                     ratio_implied_to_expected=('ratio_implied_to_expected', 'mean'),
+                    ratio_implied_to_expected_post_filter=(
+                        'ratio_implied_to_expected_post_filter', 'mean'),
                     ratio_to_closest_single_config=('ratio_to_closest_single_config', 'mean'),
                     accounting_flag=('accounting_flag', 'first'))
-               .sort_values('ratio_implied_to_expected'))
+               .sort_values('expected_stream_examples_post_filter'))
     by_lang.to_csv(args.per_language_file, index=False, float_format=FLOAT_FORMAT)
     print(f'Wrote {len(by_lang)} rows to {args.per_language_file}\n')
 
-    show = ['dataset', 'epochs_logged', 'audio_hours_processed', 'implied_stream_samples',
-            'expected_stream_examples', 'ratio_implied_to_expected',
-            'ratio_to_closest_single_config', 'accounting_flag']
+    show = ['dataset', 'epochs_logged', 'implied_stream_samples', 'expected_stream_examples',
+            'n_dropped_by_cap', 'expected_stream_examples_post_filter',
+            'ratio_implied_to_expected_post_filter', 'accounting_flag']
     print(by_lang[show].round(2).to_string(index=False))
 
     odd = by_lang[by_lang['accounting_flag'] == 'does_not_reconcile_see_docstring']

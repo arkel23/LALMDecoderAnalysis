@@ -23,10 +23,15 @@ datasets 4.5.0 and 5.0.0), and the reported `duration` column agrees with the de
 
 Two modes, because the cheap one is usually enough:
 
-  default        Metadata only. Reads num_examples per config from the dataset builder --
-                 authoritative, no audio downloaded, instant. Checks that the arithmetic an
-                 interleaved stream must satisfy (combined == sum of parts) is what the
-                 accounting assumes.
+  default        Metadata only, no audio downloaded. Reads num_examples per config from the
+                 dataset builder, and samples the `duration` column via the datasets-server
+                 `rows` endpoint to measure the fraction of clips AT OR ABOVE the duration cap.
+                 That second check is the important one: the upstream filter keeps a clip when
+                 `length < max_input_length`, a STRICT comparison, so a corpus pre-segmented
+                 into fixed windows exactly at the cap is deleted in its entirety. That is not
+                 hypothetical -- it silently removed 100% of WorldSpeech ta_lk (23,261 clips,
+                 72.4% of the intended Tamil training stream) and went unnoticed until the
+                 resulting pseudo-effect had become this study's headline number.
   --load         The full check: loads the splits map-style, computes audio_length_s from the
                  decoded arrays, asserts len(interleaved) == sum of parts on the real objects,
                  and applies the duration-consistency filter, reporting exactly how many
@@ -57,6 +62,8 @@ import sys
 import argparse
 
 import pandas as pd
+
+from utils import CONFIG_DURATION_AT_CAP, KNOWN_AT_CAP_CONFIGS
 
 # Duration-consistency tolerance, in seconds. A clip is kept when the decoded audio length
 # and the corpus `duration` column agree to within this. Matches the tolerance used when the
@@ -133,6 +140,45 @@ def metadata_counts(dataset_path, configs, split):
                 'n_examples': None, 'num_bytes': None, 'available_splits': None,
                 'error': f'{type(exc).__name__}: {exc}',
             })
+    return pd.DataFrame(rows)
+
+
+def duration_at_cap(dataset_path, configs, split, max_input_length, sample_rows):
+    """Fraction of sampled clips at or above the cap, per config. No audio downloaded.
+
+    Uses the datasets-server `rows` endpoint, which returns the metadata columns as JSON with
+    audio as a URL rather than bytes. The endpoint returns HTTP 500 for configs it has not
+    cached; those are reported as `unknown` rather than as passing, because a screen that
+    silently skips is worse than no screen at all.
+    """
+    import json
+    import urllib.request
+    import urllib.parse
+
+    rows = []
+    for cfg in configs:
+        q = urllib.parse.urlencode({'dataset': dataset_path, 'config': cfg, 'split': split,
+                                    'offset': 0, 'length': sample_rows})
+        rec = {'dataset_path': dataset_path, 'dataset_config': cfg, 'split': split,
+               'n_sampled': 0, 'frac_at_cap': None, 'n_at_cap': None,
+               'duration_min': None, 'duration_max': None, 'status': None}
+        try:
+            url = f'https://datasets-server.huggingface.co/rows?{q}'
+            with urllib.request.urlopen(url, timeout=60) as r:
+                js = json.load(r)
+            durs = [row['row'].get('duration') for row in js.get('rows', [])]
+            durs = [d for d in durs if isinstance(d, (int, float))]
+            if not durs:
+                rec['status'] = 'unknown_no_duration_column'
+            else:
+                at_cap = [d for d in durs if d >= max_input_length]
+                rec.update(n_sampled=len(durs), n_at_cap=len(at_cap),
+                           frac_at_cap=len(at_cap) / len(durs),
+                           duration_min=min(durs), duration_max=max(durs),
+                           status='sampled')
+        except Exception as exc:
+            rec['status'] = f'unknown_{type(exc).__name__}'
+        rows.append(rec)
     return pd.DataFrame(rows)
 
 
@@ -223,6 +269,15 @@ def parse_args():
     p.add_argument('--num_proc', type=int, default=20)
     p.add_argument('--tol', type=float, default=DEFAULT_TOL)
     p.add_argument('--audio_col_name', type=str, default='audio')
+    p.add_argument('--max_input_length', type=float, default=30.0,
+                   help='The training cap. Clips at or above it are dropped (strict `<`).')
+    p.add_argument('--at_cap_threshold', type=float, default=0.5,
+                   help='Fail if this fraction or more of sampled clips sit at/above the cap.')
+    p.add_argument('--known_at_cap', nargs='*', type=str, default=list(KNOWN_AT_CAP_CONFIGS),
+                   help='Configs already known and documented as gutted by the cap; reported '
+                        'but not failed. Pass an empty list to fail on them too.')
+    p.add_argument('--sample_rows', type=int, default=100,
+                   help='Rows to sample per config for the duration screen.')
     p.add_argument('--output_file', type=str, default=None,
                    help='Where to write the summary CSV. Defaults to a name derived from '
                         'the dataset path, configs and split under data/dataset_checks/.')
@@ -250,6 +305,55 @@ def main():
     total = meta['n_examples'].sum()
     print(f'\nsum of parts (metadata): {int(total)} examples')
 
+    # The at-cap screen. This is the check that would have caught the ta_lk loss up front.
+    print(f'\nduration screen against max_input_length={args.max_input_length} '
+          f'(strict `<`, so clips AT the cap are dropped):')
+    cap = duration_at_cap(args.dataset_path, args.dataset_configs, args.split,
+                          args.max_input_length, args.sample_rows)
+    print(cap[['dataset_config', 'n_sampled', 'n_at_cap', 'frac_at_cap',
+               'duration_min', 'duration_max', 'status']].to_string(index=False))
+    # The frozen snapshot in utils.CONFIG_DURATION_AT_CAP is AUTHORITATIVE, and the live
+    # sample only cross-checks it. That ordering matters: the datasets-server endpoint returns
+    # HTTP 500 for uncached configs and its cache expires, so a screen that depended on it
+    # would silently degrade to "inconclusive, exit 0" -- which is how this bug survived in the
+    # first place. With the snapshot first, the guard is offline, deterministic, and still
+    # fails loudly on a known-bad config.
+    cap['frac_at_cap_snapshot'] = cap['dataset_config'].map(CONFIG_DURATION_AT_CAP)
+    for _, r in cap.iterrows():
+        cfg = r['dataset_config']
+        snap, live = r['frac_at_cap_snapshot'], r['frac_at_cap']
+        source = 'snapshot' if pd.notna(snap) else ('live sample' if pd.notna(live) else None)
+        frac = snap if pd.notna(snap) else live
+
+        if source is None:
+            check(f'{cfg}: duration screen is conclusive', False,
+                  f"no snapshot entry and the live endpoint gave {r['status']} -- "
+                  f"add the config to utils.CONFIG_DURATION_AT_CAP or retry when cached")
+            continue
+
+        over = frac >= args.at_cap_threshold
+        known = cfg in args.known_at_cap
+        if over and known:
+            # Acknowledged, analysed, awaiting the upstream fix. Loud but not a failure --
+            # otherwise this guard would red-flag every pipeline run indefinitely and get
+            # muted, which is worse than reporting it.
+            print(f'[KNOWN] {cfg}: {frac:.0%} of clips at/above the '
+                  f'{args.max_input_length:g}s cap [{source}] -- documented in '
+                  f'docs/UPSTREAM_FIXES.md, not counted as a new failure')
+        else:
+            check(f'{cfg}: under {args.at_cap_threshold:.0%} of clips at/above the '
+                  f'{args.max_input_length:g}s cap [{source}]',
+                  not over,
+                  f'{frac:.0%} at/above cap'
+                  + ('  -> THE STRICT `<` CAP WILL DELETE THIS SHARE OF THE CONFIG'
+                     if over else ''))
+
+        # Disagreement means the snapshot is stale, which is itself worth failing on.
+        if pd.notna(snap) and pd.notna(live) and abs(snap - live) > 0.1:
+            check(f'{cfg}: snapshot agrees with the live sample', False,
+                  f'snapshot {snap:.0%} vs live {live:.0%} -- refresh '
+                  f'utils.CONFIG_DURATION_AT_CAP')
+
     if args.load:
         per_config, summary = full_check(
             args.dataset_path, args.dataset_configs, args.split,
@@ -276,8 +380,9 @@ def main():
               'duration-consistency and interleave assertions)')
 
     out.to_csv(out_file, index=False, float_format=FLOAT_FORMAT)
-    meta.to_csv(out_file.replace('.csv', '_per_config.csv'), index=False,
-                float_format=FLOAT_FORMAT)
+    per_cfg = meta.merge(cap, on=['dataset_path', 'dataset_config', 'split'], how='left')
+    per_cfg.to_csv(out_file.replace('.csv', '_per_config.csv'), index=False,
+                   float_format=FLOAT_FORMAT)
     print(f'\nWrote {out_file}')
 
     print(f'\n{"ALL CHECKS PASSED" if ok else "SOME CHECKS FAILED"}')

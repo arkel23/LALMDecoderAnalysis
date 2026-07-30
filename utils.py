@@ -105,6 +105,15 @@ EXCLUDED_MODELS_AGGREGATE = [
 ]
 
 
+# NOTE -- ta_in is deliberately NOT excluded, and must not be.
+# A filter bug cost it 72.4% of its intended training data (see MAX_INPUT_LENGTH_S), and an
+# earlier draft proposed dropping the language for that reason. That was wrong. The region-match
+# contrast is computed WITHIN a language: all four decoder variants consumed the identical
+# 8,846-clip stream, so the loss reduced every arm equally and cannot bias the comparison. It
+# only relocates Tamil on the data-volume axis, where it is the grid's only genuinely
+# low-resource point -- and the most informative one. See analyze_volume_interaction.py.
+
+
 def is_excluded_from_aggregate(model_id, dataset):
     return any(e['model_id'] == model_id and e['dataset'] == dataset
                for e in EXCLUDED_MODELS_AGGREGATE)
@@ -221,7 +230,53 @@ WORLDSPEECH_TRAIN_EXAMPLES = {
 }
 
 
-def expected_stream_examples(language):
+# --- The duration cap, and the silent data loss it caused ----------------------------
+# Every configs/train/*ws*.yaml sets max_input_length: 30, and the upstream filter keeps a clip
+# when `length < max_input_length` -- a STRICT comparison. So a clip of exactly 30.000 s is
+# DROPPED, not kept.
+#
+# That interacts catastrophically with a corpus pre-segmented into fixed 30-second windows.
+# WorldSpeech ta_lk is exactly that: 100/100 sampled rows sit at 30.00 s, so all 23,261 clips
+# fail the filter and the Tamil training stream collapses to ta_in alone -- 8,846 of 32,107
+# intended clips, a 72.4% silent loss. Confirmed directly by filtering the interleaved stream.
+MAX_INPUT_LENGTH_S = 30
+
+# Fraction of each config's clips at or above MAX_INPUT_LENGTH_S, i.e. removed by the filter.
+# FROZEN SNAPSHOT, measured 2026-07-30 without downloading audio: the datasets-server `rows`
+# endpoint for a 100-row sample of the `duration` column, cross-checked against the
+# `statistics` endpoint's min/max where it was available. Regenerate with
+# verify_dataset_durations.py.
+#
+# Only ta_lk is total. fr_ca loses ~4% (4/100 sampled >= 30 s, max 52.54 s). hi_in, sw_ke and
+# ha_ng sampled 0/100 at the cap. en_us (max 20.00), es_es (25.00), es_mx (20.00) and sw_tz
+# (29.98) are bounded below the cap by their published duration statistics.
+CONFIG_DURATION_AT_CAP = {
+    'ta_lk': 1.00,
+    # ta_in: 0.00 is not a sample, it is proven. Filtering the interleaved ta_in+ta_lk stream
+    # with the real training filter leaves exactly 8,846 rows == len(ta_in), so every ta_in
+    # clip survived the cap and every ta_lk clip was removed.
+    'ta_in': 0.00,
+    'fr_ca': 0.04,
+    'hi_in': 0.00,
+    'sw_ke': 0.00,
+    'ha_ng': 0.00,
+    'en_us': 0.00,
+    'es_es': 0.00,
+    'es_mx': 0.00,
+    'sw_tz': 0.00,
+    # ta_in, ha_td, mr_in, id_id: the rows endpoint returned HTTP 500 (config not cached), but
+    # each language's stream reconciles with its full example count in t4, which is independent
+    # evidence that the cap is not removing a material share.
+}
+
+
+# Configs already known to be gutted by the strict cap, with the loss analysed and written up
+# (docs/UPSTREAM_FIXES.md). The screen acknowledges these instead of failing on them forever, so
+# it gates on NEW regressions rather than on a documented problem awaiting an upstream fix.
+KNOWN_AT_CAP_CONFIGS = ('ta_lk',)
+
+
+def expected_stream_examples(language, post_filter=False):
     """Total examples in a language's training stream.
 
     Sound because interleaving is lossless: 'all_exhausted_without_replacement' never
@@ -235,7 +290,14 @@ def expected_stream_examples(language):
         return None
     _, configs, _ = entry
     counts = [WORLDSPEECH_TRAIN_EXAMPLES.get(c) for c in configs]
-    return sum(counts) if all(c is not None for c in counts) else None
+    if not all(c is not None for c in counts):
+        return None
+    if not post_filter:
+        return sum(counts)
+    # Post-filter: subtract each config's at-cap share. This is what the model actually saw,
+    # and it is what makes ta_in reconcile (32,107 -> 8,846) instead of looking anomalous.
+    return sum(c * (1.0 - CONFIG_DURATION_AT_CAP.get(cfg, 0.0))
+               for cfg, c in zip(configs, counts))
 
 
 # --- Datasets and metrics -----------------------------------------------------------

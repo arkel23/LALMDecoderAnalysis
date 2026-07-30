@@ -114,51 +114,61 @@ distinct examples, in both the map-style and streaming paths, while plain `all_e
 would oversample the smaller one to 122×. This was a known issue upstream and it is fixed;
 it should not be re-raised.
 
-### 4.1 Data integrity is verified; one bookkeeping question remains
+### 4.1 Root cause found, and it produced the study's central finding
 
-**The datasets are clean.** `verify_dataset_durations.py --load` was run on the real
-`disco-eth/WorldSpeech` `ta_in` + `ta_lk` train splits and confirms two things directly:
-`len(interleaved) == len(ta_in) + len(ta_lk)`, so interleaving loses nothing; and the
-duration-consistency filter removes **zero** samples, so the corpus `duration` column agrees
-with the decoded audio throughout. There is no corruption and no silent sample loss.
+**The mechanism.** `make_audio_length_filter_fn` keeps a clip when `length < max_input_length` —
+a *strict* comparison — and every `configs/train/*ws*.yaml` sets `max_input_length: 30`.
+WorldSpeech `ta_lk` is pre-segmented into fixed 30-second windows (100/100 sampled rows at
+exactly 30.00 s), so every one of its clips fails `30.0 < 30`. Filtering the interleaved Tamil
+stream with the real training filter leaves exactly **8,846** rows, i.e. `len(ta_in)`, out of an
+intended **32107**: **23,261 clips — 72.4 % of the intended Tamil training data — were silently
+discarded.** Tamil consequently has the worst accuracy in the grid, a best CER of **43.63**.
 
-That matters because an earlier version of this assessment claimed otherwise. It compared a
-reconstructed stream size against hour figures taken from a summarised reading of the
-WorldSpeech paper, found Tamil short, and wrote it up as a data-integrity problem. Those hour
-figures were the weakest input in the analysis and they produced a false positive. They have
-been replaced by example counts read from the HuggingFace dataset builder metadata, which are
-authoritative and cheap to obtain.
+This also vindicates the reconstruction in `analyze_data_accounting.py`, which inferred a stream
+of 8,825 against a true 8,846 (99.76 %). Against the *post-filter* expectation all nine languages
+now reconcile. Screened blast radius: only `ta_lk` is total; `fr_ca` loses ~4 %; `ta_in` loses 0 %
+(proven, not sampled); `hi_in`/`sw_ke`/`ha_ng` sample 0/100 at the cap; `en_us`/`es_es`/`es_mx`/
+`sw_tz` are bounded below it by their own duration statistics. Written up for upstream in
+`docs/UPSTREAM_FIXES.md`; not fixed here.
 
-With that correction, `results_all/acc/t4_data_accounting_by_language.csv` reads:
+**Tamil is not excluded, and excluding it would have been a mistake.** The region-match contrast
+is computed *within* a language: all four variants consumed the identical 8,846-clip stream, so
+the loss reduced every arm equally and cannot bias the comparison. It only relocates Tamil on the
+data-volume axis, where it becomes the grid's only genuinely low-resource cell.
 
-| language | epochs | implied stream samples | expected examples | ratio | ratio to nearest single config | verdict |
+**What that reveals.** Ordering the seven usable languages by training-stream size
+(`t5_volume_interaction.csv`), the matched-decoder benefit decays monotonically:
+
+| language | region | stream | epochs | Δ vs mismatched | baseline CER | relative Δ (%) |
 |---|---|---|---|---|---|---|
-| ta_in | 58.01 | 8825.46 | 32107 | 0.27 | **1.00** | does not reconcile |
-| en_us | 1.00 | 512000.00 | 666718 | 0.77 | — | never exhausted; lower bound |
-| hi_in | 1.00 | 512000.00 | 577382 | 0.89 | — | never exhausted; lower bound |
-| id_id | 5.02 | 102093.72 | 101112 | 1.01 | — | reconciles |
-| ha_ng | 18.05 | 28371.94 | 27255 | 1.04 | 1.84 | reconciles |
-| mr_in | 8.10 | 63241.11 | 58201 | 1.09 | — | reconciles |
-| fr_fr | 2.24 | 228367.53 | 207449 | 1.10 | — | reconciles |
-| sw_ke | 1.41 | 362863.22 | 302088 | 1.20 | 1.81 | reconciles |
-| crs_sc | 1.29 | 398133.75 | — | — | — | expected size unknown (ERISLab mirror) |
+| `ta_in` | fire | 8846 | 58.01 | **-14.70** | 58.33 | -25.20 |
+| `ha_ng` | earth | 27255 | 18.05 | -1.19 | 34.62 | -3.42 |
+| `mr_in` | fire | 58201 | 8.10 | -0.44 | 14.01 | -3.14 |
+| `id_id` | water | 101112 | 5.02 | -0.40 | 6.14 | -6.44 |
+| `fr_fr` | water | 199151 | 2.24 | -0.43 | 6.79 | -6.33 |
+| `sw_ke` | earth | 302088 | 1.41 | -0.15 | 13.68 | -1.06 |
+| `hi_in` | fire | 577382 | 1.00 | **1.06** | 12.05 | 8.80 |
 
-Eight of nine reconcile, including the other two multi-config languages, whose reconstructions
-match their **summed** streams (`ha_ng` 1.04, `sw_ke` 1.20) and clearly not a single config
-(1.84, 1.81). Tamil is the exception, and the shape of the exception is specific: its
-reconstruction matches **one config to within 0.24 %** rather than the sum.
+Spearman **rho = 0.964, p = 0.0005**. Only `id_id` and `fr_fr` are rank-swapped, and their Δ
+differ by 0.03 CER. It **survives dropping the extreme point**: rho = 0.943, p = 0.0048 over the
+remaining six — so this is not an outlier artefact.
 
-This is a question about run bookkeeping, **not** about data. Two readings fit and the
-available evidence does not separate them: either the Tamil run consumed one config rather
-than both, or the epoch counter — the weakest input in the reconstruction — is unreliable for
-this run. Nothing else in the logs distinguishes them.
+**The confound, measured rather than argued.** Data volume and baseline error rate are collinear
+(rho = -0.679, p = 0.0938): the low-data languages are also the hard ones, and a constant
+*relative* benefit would masquerade as a growing *absolute* one. Three results, all reported:
 
-What it means for the analysis is narrower, and worth stating plainly: Tamil has the least
-training data in the grid on either reading, it has the worst CER (43.63 best), and it
-contributes the largest single term to the region-match effect (−14.70 CER). A large effect
-measured in the smallest data regime is the one most likely to be regime-specific rather than
-a decoder-specialisation effect, so that term is treated as provisional — on data-volume
-grounds, not on data-quality grounds.
+- log-stream vs **relative** Δ: rho = 0.714, p = 0.0713 with all seven, and rho = 0.543,
+  p = 0.2657 without `ta_in` — the trend is real but markedly weaker in relative terms.
+- Partial correlation of log-stream with absolute Δ controlling for baseline CER, **all seven**:
+  r = 0.137, p = 0.77 — inconclusive, because removing a covariate from seven points leaves
+  df = 4.
+- The same partial correlation **excluding `ta_in`**: r = 0.838, p = 0.04. Among the six
+  non-extreme languages, where volume and difficulty are much less entangled (rho = -0.486),
+  volume predicts the effect even after difficulty is removed.
+
+So the honest position is that the decay is robust, and the mechanism is *probably* data volume,
+but the cross-language comparison cannot establish that on its own. Breaking the entanglement
+needs a within-language volume manipulation, which is §7's first recommendation.
 
 ## 5. What the existing logs already support, at zero GPU cost
 
@@ -263,16 +273,40 @@ train/val cleaning is not visible there, but it was applied when the splits were
 
 ## 8. The framing this data can actually support
 
-Not *"specialising the decoder's SFT data improves listening"* — the grid cannot resolve an
-effect that size. What it can support, honestly:
+> Under a matched connector-only recipe across nine languages and three regional TinyAya decoder
+> variants, the benefit of matching a decoder's regional specialisation to the target language
+> **decays monotonically with training-data volume** — from -14.70 CER at 8,846 training
+> utterances to +1.06 CER at 577,382 (Spearman rho = 0.964, p = 0.0005; rho = 0.943, p = 0.0048
+> with the extreme point removed). Where data is plentiful the effect is bounded within about
+> 1 CER, so a general decoder suffices; where data is scarce, matching the decoder's region is
+> worth more than any other choice available in the pipeline. Data volume and task difficulty are
+> collinear across these languages (rho = -0.679) and the cross-language comparison cannot fully
+> separate them: the partial correlation controlling for baseline error rate is inconclusive over
+> all seven languages (r = 0.137, p = 0.77) though significant over the six non-extreme ones
+> (r = 0.838, p = 0.04). Separately, variants differ in **sample efficiency** — `fire` reaches a
+> given error rate fastest (mean rank 1.69) and `global` slowest (3.19) — and that ordering is
+> not the accuracy ordering. On a language unseen by both encoder and decoder, variant choice is
+> immaterial (1.88 CER spread against 0.64-1.65 run noise).
 
-> Under a fixed connector-only recipe across 10 languages and three regional decoder variants,
-> region-matched decoders are directionally but not significantly better (6/7 languages,
-> p = 0.16, 95 % CI [−6.55, +0.12] CER); the design's minimum detectable effect is 7 CER points,
-> which bounds what a single-seed 4×10 grid can establish. Variants differ more in *sample
-> efficiency* than in final accuracy, and on a language unseen by both encoder and decoder the
-> choice of variant is immaterial (1.88 CER spread against 0.64–1.65 run noise).
+Why this is the right frame:
 
-That is a negative result with a measured power bound, an orthogonal sample-efficiency finding,
-and an OOD boundary condition. It is publishable as a rigorous null; the same data presented as
-a win is what a reviewer would take apart.
+- **It matches the project's actual motivation.** This was always a low-resource SLU project.
+  "Match the decoder's region when data is scarce, use a general one otherwise" is directly
+  actionable, and it turns the earlier bounded null into the *high-resource half* of a scaling
+  result rather than the whole story.
+- **It is a mechanism, not a leaderboard.** The publication assessment's own gate is that a
+  leaderboard caps the venue at a workshop while a mechanistic finding lifts it. An interaction
+  with data volume is that finding, and it required no new infrastructure — only reading the
+  existing runs correctly.
+- **It subsumes the earlier results instead of discarding them.** The bounded null becomes the
+  high-resource asymptote; the sample-efficiency ordering becomes the dynamics counterpart; the
+  `crs_sc` result becomes the boundary case where neither component has seen the language.
+- **The bug is a genuine methods contribution.** A strict inequality against a corpus
+  pre-segmented exactly at the duration cap destroyed 72.4 % of one language's training data and
+  manufactured a -14.70 CER pseudo-effect that was on course to be reported as the study's
+  strongest result. Any study using fixed-window corpora with a duration cap is exposed.
+  `verify_dataset_durations.py` is the reusable screen, and it fails on a config whose clips sit
+  at the cap.
+- **What it must not claim.** That decoder specialisation improves listening accuracy in
+  general — it does not, above roughly 60k utterances. And not that data volume is the proven
+  driver: that awaits the paired manipulation.

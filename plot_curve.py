@@ -19,6 +19,9 @@ font/figsize/dpi/save-format arguments, the same results_dir + output_file + ext
 convention, and utils.filter_df / METHODS_DIC / DATASETS_DIC / LANGUAGE_DIC for labelling.
 
 Three things it adds that plot.py lacks:
+  --kind             line (default) or scatter, with --annotate_var_name to label points.
+                     scatter is what the data-volume interaction figure needs: one point per
+                     language, not a curve.
   --facet_var_name   per-language grid via seaborn relplot
   --errorbar         EXPLICIT. seaborn's lineplot default is ('ci', 95) with bootstrapping,
                      which silently draws a confidence band whenever several rows share an
@@ -57,6 +60,13 @@ CURVE_VAR_DIC = {
     'train/epoch': 'Epoch (wandb estimate; unreliable under streaming)',
     'dataset': 'Language',
     'model_id': 'Decoder variant',
+    'stream_post_filter': 'Training utterances available (post-filter)',
+    'delta_vs_mismatched': 'Matched - mismatched CER  (negative = matched better)',
+    'delta_vs_global': 'Matched - global CER  (negative = matched better)',
+    'relative_delta_vs_mismatched_pct': 'Matched - mismatched, % of baseline CER',
+    'epochs_logged': 'Passes over the training stream',
+    'baseline_cer': 'Baseline CER (mismatched mean)',
+    'region': 'TinyAya region',
 }
 
 
@@ -82,7 +92,13 @@ def get_hue_order(present):
         if label in present and label not in seen:
             seen.add(label)
             out.append(label)
-    for label in present:                      # anything unmapped, stable order
+    # sorted(), NOT plain set iteration. `present` is a set, and CPython randomises string
+    # hashing per process, so iterating it gives a DIFFERENT order on different runs -- which
+    # silently reassigns colours between renders while point positions and labels stay
+    # pixel-identical. That is the exact failure mode this function exists to prevent, and it
+    # bit the region-hued volume figure: 'earth' rendered orange on one run and blue on the
+    # next. Any hue level not in METHODS_DIC must therefore get a deterministic order.
+    for label in sorted(present, key=str):
         if label not in seen:
             seen.add(label)
             out.append(label)
@@ -146,15 +162,19 @@ def make_plot(args, df):
 
     common = dict(
         x=args.x_var_name, y=args.y_var_name, hue=args.hue_var_name,
-        hue_order=hue_order, style=args.style_var_name,
-        linewidth=args.line_width, errorbar=args.errorbar, data=df,
+        hue_order=hue_order, style=args.style_var_name, data=df,
     )
-    if args.marker:
-        common.update(marker=args.marker, markers=True)
+    if args.kind == 'line':
+        common.update(linewidth=args.line_width, errorbar=args.errorbar)
+        if args.marker:
+            common.update(marker=args.marker, markers=True)
+    else:
+        common.update(s=args.point_size)
+        common.pop('hue_order') if args.hue_var_name is None else None
 
     if args.facet_var_name:
         grid = sns.relplot(
-            kind='line', col=args.facet_var_name, col_wrap=args.col_wrap,
+            kind=args.kind, col=args.facet_var_name, col_wrap=args.col_wrap,
             facet_kws={'sharey': args.share_y, 'sharex': args.share_x},
             height=args.facet_height, aspect=args.facet_aspect, **common)
         axes = grid.axes.flat
@@ -165,11 +185,25 @@ def make_plot(args, df):
             grid.legend.set_title(label_for(args.hue_var_name))
         fig = grid.figure
     else:
-        ax = sns.lineplot(**common)
+        ax = (sns.lineplot(**common) if args.kind == 'line'
+              else sns.scatterplot(**common))
+        # Point labels: with one point per language an unlabelled scatter is unreadable.
+        if args.annotate_var_name:
+            for _, r in df.iterrows():
+                ax.annotate(str(r[args.annotate_var_name]),
+                            (r[args.x_var_name], r[args.y_var_name]),
+                            textcoords='offset points', xytext=(5, 4),
+                            fontsize=plt.rcParams['font.size'] * 0.8)
+        if args.hline is not None:
+            ax.axhline(args.hline, color='0.4', linewidth=1.0, linestyle='--', zorder=0)
         ax.set_xlabel(args.x_label or label_for(args.x_var_name))
         ax.set_ylabel(args.y_label or label_for(args.y_var_name))
         if args.hue_var_name:
-            ax.legend(title=label_for(args.hue_var_name), loc=args.loc_legend)
+            if args.legend_outside:
+                ax.legend(title=label_for(args.hue_var_name), loc='center left',
+                          bbox_to_anchor=(1.02, 0.5), frameon=False)
+            else:
+                ax.legend(title=label_for(args.hue_var_name), loc=args.loc_legend)
         axes = [ax]
         fig = ax.figure
 
@@ -178,6 +212,8 @@ def make_plot(args, df):
             ax.set_xscale('log')
         if args.log_scale_y:
             ax.set_yscale('log')
+        if args.symlog_y:
+            ax.set_yscale('symlog', linthresh=args.symlog_y)
         # Seaborn's line artists are not registered in the axes' data limits, so switching
         # to a log scale after drawing leaves the linear lower bound of 0, which matplotlib
         # collapses to (~0, 1] -- rendering an empty panel with no error. Set the limits
@@ -216,6 +252,12 @@ def parse_args():
     p.add_argument('--y_var_name', type=str, default='eval/cer')
     p.add_argument('--hue_var_name', type=str, default='model_id')
     p.add_argument('--style_var_name', type=str, default=None)
+    p.add_argument('--kind', type=str, default='line', choices=['line', 'scatter'])
+    p.add_argument('--annotate_var_name', type=str, default=None,
+                   help='Column whose value labels each point (scatter only).')
+    p.add_argument('--point_size', type=float, default=90.0)
+    p.add_argument('--hline', type=float, default=None,
+                   help='Draw a reference line at this y value, e.g. 0 for a no-effect line.')
     p.add_argument('--facet_var_name', type=str, default=None)
     p.add_argument('--col_wrap', type=int, default=5)
     p.add_argument('--facet_height', type=float, default=2.6)
@@ -231,6 +273,15 @@ def parse_args():
     # Axes
     p.add_argument('--log_scale_x', action='store_true')
     p.add_argument('--log_scale_y', action='store_true')
+    # symlog is what a signed effect size with one extreme point needs: a plain linear axis
+    # lets the outlier compress every other point into an unreadable band near zero, and a
+    # log axis cannot show negative values at all.
+    p.add_argument('--symlog_y', type=float, default=None,
+                   metavar='LINTHRESH',
+                   help='Symmetric log y-axis, linear within +/-LINTHRESH of zero.')
+    p.add_argument('--legend_outside', action='store_true',
+                   help='Place the legend outside the axes -- an in-axes legend hid two '
+                        'points in the volume figure.')
     p.add_argument('--y_lim', nargs='*', type=float, default=None)
 
     # Style -- same names and defaults as plot.py

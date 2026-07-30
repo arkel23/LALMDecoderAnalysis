@@ -22,7 +22,8 @@ import utils
 from utils import (CORE_VARIANTS, LANGUAGE_REGION, LANGUAGE_DIC, METHODS_DIC, MODEL_SHORT,
                    MODEL_FAMILY, TRAIN_EVAL_MATCH, EXCLUDED_MODELS_AGGREGATE,
                    MULTI_CONFIG_TRAIN, WORLDSPEECH_TRAIN_EXAMPLES, TRAIN_CONFIGS,
-                   expected_stream_examples,
+                   expected_stream_examples, CONFIG_DURATION_AT_CAP, MAX_INPUT_LENGTH_S,
+                   KNOWN_AT_CAP_CONFIGS,
                    add_language_columns, assert_unique_keys, half_up,
                    is_excluded_from_aggregate)
 
@@ -110,6 +111,58 @@ check('expected_stream_examples is None for crs_sc (ERISLab mirror not in snapsh
       expected_stream_examples('crs_sc') is None)
 check('every example count is a positive int',
       all(isinstance(v, int) and v > 0 for v in WORLDSPEECH_TRAIN_EXAMPLES.values()))
+
+# --- 1b. The duration cap and its silent data loss ----------------------------------
+# The defect that produced this study's central finding, pinned so it cannot regress quietly.
+print('\n--- 1b. duration cap ---')
+
+
+def _upstream_filter(length, min_input_length=None, max_input_length=MAX_INPUT_LENGTH_S):
+    """The upstream comparison, reproduced. Strict `<`, which is the whole problem."""
+    if min_input_length and max_input_length:
+        return length > min_input_length and length < max_input_length
+    if min_input_length:
+        return length > min_input_length
+    return length < max_input_length
+
+
+check('MAX_INPUT_LENGTH_S is 30', MAX_INPUT_LENGTH_S == 30)
+check('a 29.99 s clip is KEPT', _upstream_filter(29.99))
+check('a clip at exactly the cap is DROPPED -- the bug', not _upstream_filter(30.0))
+check('a 30.01 s clip is dropped', not _upstream_filter(30.01))
+
+check('ta_lk is recorded as 100% at the cap',
+      CONFIG_DURATION_AT_CAP['ta_lk'] == 1.00)
+check('ta_in is recorded as 0% at the cap (proven by the filter test, not sampled)',
+      CONFIG_DURATION_AT_CAP['ta_in'] == 0.00)
+check('fr_ca is recorded as a partial loss',
+      0 < CONFIG_DURATION_AT_CAP['fr_ca'] < 0.5)
+check('every at-cap fraction is a proportion',
+      all(0.0 <= v <= 1.0 for v in CONFIG_DURATION_AT_CAP.values()))
+check('ta_lk is the only config in KNOWN_AT_CAP_CONFIGS',
+      tuple(KNOWN_AT_CAP_CONFIGS) == ('ta_lk',))
+check('every known-at-cap config is actually at/above the threshold in the snapshot',
+      all(CONFIG_DURATION_AT_CAP.get(c, 0) >= 0.5 for c in KNOWN_AT_CAP_CONFIGS))
+
+# The arithmetic that resolved the Tamil anomaly.
+check('ta_in pre-filter stream is 32107 (8846 + 23261)',
+      expected_stream_examples('ta_in') == 32107)
+check('ta_in POST-filter stream is 8846 -- ta_lk entirely removed',
+      expected_stream_examples('ta_in', post_filter=True) == 8846)
+check('the cap costs ta_in 23261 clips',
+      expected_stream_examples('ta_in')
+      - expected_stream_examples('ta_in', post_filter=True) == 23261)
+check('post_filter never exceeds pre-filter for any language',
+      all(expected_stream_examples(l, post_filter=True) <= expected_stream_examples(l)
+          for l in TRAIN_CONFIGS if expected_stream_examples(l) is not None))
+check('languages with no at-cap loss are unchanged by post_filter',
+      all(expected_stream_examples(l, post_filter=True) == expected_stream_examples(l)
+          for l in ('hi_in', 'sw_ke', 'ha_ng', 'id_id', 'mr_in', 'en_us')))
+
+# ta_in must NOT be excluded: the loss hit every decoder arm equally, so the within-language
+# contrast is unbiased, and dropping the language would discard the only low-resource cell.
+check('ta_in is NOT excluded from aggregates for any core variant',
+      not any(is_excluded_from_aggregate(m, 'ta_in') for m in METHODS_DIC))
 
 # --- 2. Model dicts -----------------------------------------------------------------
 print('\n--- 2. model dicts ---')

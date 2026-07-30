@@ -107,6 +107,14 @@ it proposed.
 - **IndicVoices / Kathbath** — no configs; access was gated, later granted, still unwired.
 - **WaxalNLP** — no configs; `dag_asr` (Dagbani) has a known upstream `CastError`.
 
+## The training-side item that now outranks all of these
+
+Re-run Tamil at full volume with the duration cap fixed (`docs/UPSTREAM_FIXES.md`), **keeping**
+the existing low-volume runs under a new serial. That is a paired within-language volume
+manipulation and it is the only way to separate "scarce data" from "hard language" in the
+headline interaction (`PLAN_ASSESSMENT.md` §4.1). Four runs. Every eval tier below is worth
+less until it is done, because they all measure a quantity whose driver is still ambiguous.
+
 ## Recommended order
 
 1. Add the eight matched WorldSpeech `test` configs (no decode blocker; use the `asr` env).

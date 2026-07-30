@@ -1,5 +1,71 @@
 # Change log
 
+## 2026-07-30 (fifth pass) — a filter bug becomes the study's central finding
+
+The strict `< 30 s` duration cap silently discarded 72.4 % of the Tamil training data, and
+understanding that changed the paper's claim rather than just one table.
+
+### Root cause
+
+`make_audio_length_filter_fn` keeps a clip when `length < max_input_length` — strict — and every
+`configs/train/*ws*.yaml` sets `max_input_length: 30`. WorldSpeech `ta_lk` is pre-segmented into
+fixed 30-second windows (100/100 sampled rows at exactly 30.00 s), so every clip fails `30.0 < 30`.
+Filtering the interleaved Tamil stream leaves exactly **8,846** rows == `len(ta_in)`, out of an
+intended 32,107. **23,261 clips lost, with nothing in the logs reporting it.**
+
+This vindicates `analyze_data_accounting.py`, which inferred 8,825 against a true 8,846 (99.76 %).
+Against the post-filter expectation all nine languages now reconcile. Written up for upstream in
+the new **`docs/UPSTREAM_FIXES.md`**; QuantizedASR is not modified.
+
+### The mistake I nearly shipped
+
+I planned to **exclude** Tamil as a contaminated cell. That was wrong, and the correction is the
+finding. The region-match contrast is computed *within* a language: all four variants consumed the
+identical 8,846-clip stream, so the loss reduced every arm equally and cannot bias the comparison.
+It only relocates Tamil on the data-volume axis, where it is the grid's only genuinely
+low-resource cell — the most informative point, not a corrupt one. `utils.py` now carries an
+explicit note against re-introducing the exclusion, and a test asserts `ta_in` is in no exclusion
+list.
+
+### The finding
+
+Ordering the seven usable languages by training-stream size, the matched-decoder benefit decays
+monotonically from **-14.70 CER at 8,846 utterances to +1.06 at 577,382**: Spearman
+**rho = 0.964, p = 0.0005**, surviving removal of the extreme point (**rho = 0.943, p = 0.0048**).
+
+Reported with the confound rather than around it: volume and baseline CER are collinear
+(rho = -0.679), the *relative* effect trends only weakly (rho = 0.714, p = 0.0713), and the
+partial correlation controlling for difficulty is inconclusive over all seven (r = 0.137, p = 0.77,
+df = 4) though significant over the six non-extreme languages (r = 0.838, p = 0.04). The decisive
+test is a within-language volume manipulation — re-run Tamil at full volume, keep the low-volume
+runs — which is exactly the 4-run budget available.
+
+### Added
+
+- **`analyze_volume_interaction.py`** → `t5_volume_interaction.csv`, `t5_volume_stats.csv`.
+- **Two figures**: the decay curve and its relative-effect companion, so the confound is visible.
+- **`utils.py`**: `MAX_INPUT_LENGTH_S`, `CONFIG_DURATION_AT_CAP` (frozen at-cap screen),
+  `KNOWN_AT_CAP_CONFIGS`, and `expected_stream_examples(post_filter=)`.
+- **`verify_dataset_durations.py`**: an at-cap screen for any config. Snapshot-first with the live
+  datasets-server sample as cross-check, because the endpoint 500s for uncached configs and a
+  screen that degrades to "inconclusive, exit 0" is how this bug survived. Known-bad configs are
+  reported as `[KNOWN]` so the guard gates on new regressions instead of failing forever.
+- 77 unit checks (up from 79 total across both test scripts), 29 ordering claims, 94 numbers.
+
+### Two bugs found in my own code along the way
+
+- **`plot_curve.get_hue_order` was non-deterministic.** It iterated a `set` for hue levels absent
+  from `METHODS_DIC`, and CPython randomises string hashing per process — so region colours
+  changed between renders while point positions and labels stayed pixel-identical. That is the
+  exact silent-colour-shift defect the repo conventions warn about, reproduced by me. Now sorted;
+  verified byte-identical across processes, and confirmed the old path really did vary
+  (`PYTHONHASHSEED=3` gives a different set order than 1 or 2).
+- **A `--load` path that had never run.** `make_audio_length_filter_fn` copied the upstream dict
+  access, but under `datasets` 4.x with torchcodec the `Audio` feature yields an `AudioDecoder`,
+  so the bare `except` would have marked every clip corrupt. Fixed and exercised for real.
+
+---
+
 ## 2026-07-30 (fourth pass) — the WorldSpeech "malformed files" problem is an env problem
 
 Comparing `pip list` from the remote host that *can* read WorldSpeech against the two local

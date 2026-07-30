@@ -34,6 +34,8 @@ T1 = os.path.join(ACC, 't1_sample_efficiency.csv')
 T2S = os.path.join(ACC, 't2_region_match_stats.csv')
 T3 = os.path.join(ACC, 't3_crs_ood.csv')
 T4L = os.path.join(ACC, 't4_data_accounting_by_language.csv')
+T5 = os.path.join(ACC, 't5_volume_interaction.csv')
+T5S = os.path.join(ACC, 't5_volume_stats.csv')
 RAW = os.path.join('data', 'raw_serials', 'raw_serial_0.csv')
 
 CORE = ('earth', 'fire', 'global', 'water')
@@ -117,22 +119,35 @@ DERIVED = [
     ('base minus regional parameter delta', lambda: _base_param_delta(), 0),
 
     # Data accounting, per language: epochs, reconstructed stream, expected examples, ratio.
-    # epochs and the reconstructed stream are printed for every language, including crs_sc.
-    *[(f'accounting {lang} / {col}', (lambda lang=lang, col=col: _acc(lang, col)), nd)
-      for lang in ('ta_in', 'ha_ng', 'crs_sc', 'sw_ke', 'hi_in', 'id_id', 'mr_in', 'en_us',
-                   'fr_fr')
-      for col, nd in (('epochs_logged', 2), ('implied_stream_samples', 2))],
-    # The ratio is only defined where the expected size is known -- crs_sc trains on the
-    # ERISLab mirror, whose split is not in the example-count snapshot, so it prints as "-".
-    *[(f'accounting {lang} / ratio_implied_to_expected',
-       (lambda lang=lang: _acc(lang, 'ratio_implied_to_expected')), 2)
-      for lang in ('ta_in', 'ha_ng', 'sw_ke', 'hi_in', 'id_id', 'mr_in', 'en_us', 'fr_fr')],
-    *[(f'accounting {lang} / expected_stream_examples',
-       (lambda lang=lang: _acc(lang, 'expected_stream_examples')), 0)
-      for lang in ('ta_in', 'ha_ng', 'sw_ke', 'hi_in', 'id_id', 'mr_in', 'en_us', 'fr_fr')],
-    *[(f'accounting {lang} / ratio_to_closest_single_config',
-       (lambda lang=lang: _acc(lang, 'ratio_to_closest_single_config')), 2)
-      for lang in ('ta_in', 'ha_ng', 'sw_ke')],
+    # The accounting numbers §4.1 actually prints. The per-language reconstruction table was
+    # superseded by the volume table, so only the Tamil figures that carry the argument remain:
+    # the reconstruction's accuracy (8,825 inferred vs 8,846 true) and the size of the loss.
+    ('ta_in reconstructed stream',
+     lambda: _acc('ta_in', 'implied_stream_samples'), 0),
+    ('ta_in post-filter expected stream',
+     lambda: _acc('ta_in', 'expected_stream_examples_post_filter'), 0),
+    ('ta_in pre-filter expected stream',
+     lambda: _acc('ta_in', 'expected_stream_examples'), 0),
+    ('ta_in clips dropped by the cap',
+     lambda: _acc('ta_in', 'n_dropped_by_cap'), 0),
+
+    # The volume-interaction table and its statistics.
+    *[(f'volume {lang} / {col}', (lambda lang=lang, col=col: _t5(lang, col)), nd)
+      for lang in ('ta_in', 'ha_ng', 'mr_in', 'id_id', 'fr_fr', 'sw_ke', 'hi_in')
+      for col, nd in (('stream_post_filter', 0), ('epochs_logged', 2),
+                      ('delta_vs_mismatched', 2), ('baseline_cer', 2),
+                      ('relative_delta_vs_mismatched_pct', 2))],
+    *[(f'volume stats {sub} / {col}',
+       (lambda sub=sub, col=col: _t5s(sub, 'log10_stream', 'delta_vs_mismatched', col)), nd)
+      for sub in ('all_languages', 'excluding_ta_in')
+      for col, nd in (('spearman_rho', 3), ('spearman_p', 4))],
+    ('volume stats partial pearson_r',
+     lambda: _t5s('all_languages', 'log10_stream|baseline_cer',
+                  'delta_vs_mismatched', 'pearson_r'), 3),
+    ('volume stats partial pearson_p',
+     lambda: _t5s('all_languages', 'log10_stream|baseline_cer',
+                  'delta_vs_mismatched', 'pearson_p'), 2),
+    ('n_dropped_by_cap for ta_in', lambda: _t5('ta_in', 'n_dropped_by_cap'), 0),
 
     # The ta_in region-match term, and its best CER -- both quoted in the small-data caveat.
     ('ta_in delta_vs_mismatched', lambda: _t2_delta('ta_in'), 2),
@@ -154,6 +169,28 @@ def _t2_delta(lang):
             & (d['analysis'] == 'primary_excluding_failed_runs')]
     assert len(sel) == 1, f'{lang} matched {len(sel)} rows'
     return sel.iloc[0]['delta_vs_mismatched']
+
+
+def _t5(lang, col):
+    d = load(T5)
+    sel = d[d['dataset'] == lang]
+    assert len(sel) == 1, f'{lang} matched {len(sel)} rows in {T5}'
+    return sel.iloc[0][col]
+
+
+def _t5s(subset, x, y, col):
+    d = load(T5S)
+    sel = d[(d['subset'] == subset) & (d['x'] == x) & (d['y'] == y)]
+    assert len(sel) == 1, f'{subset}/{x}/{y} matched {len(sel)} rows in {T5S}'
+    return float(sel.iloc[0][col])
+
+
+def _monotone_except_one():
+    """Delta should increase with stream size, with exactly one adjacent rank inversion."""
+    d = load(T5).sort_values('stream_post_filter')
+    vals = list(d['delta_vs_mismatched'])
+    inversions = sum(1 for a, b in zip(vals, vals[1:]) if a > b)
+    return inversions == 1
 
 
 def _regional_params():
@@ -211,22 +248,43 @@ ORDERINGS = [
     ('all four regional/global variants share one parameter count',
      lambda: _regional_params() > 0),
 
-    # Data accounting. ta_in is the sole non-reconciling cell and its signature is that it
-    # matches ONE config rather than the sum -- unlike the other two multi-config languages.
-    # A data correction could flip any of this without moving a printed digit.
-    ('ta_in is the only language that does not reconcile',
-     lambda: list(load(T4L).query(
-         "accounting_flag == 'does_not_reconcile_see_docstring'")['dataset']) == ['ta_in']),
-    ("ta_in's reconstruction matches a single config within 1%",
-     lambda: abs(float(_acc('ta_in', 'ratio_to_closest_single_config')) - 1.0) < 0.01),
-    ('ha_ng and sw_ke match their SUMMED streams, not a single config',
-     lambda: all(abs(float(_acc(l, 'ratio_implied_to_expected')) - 1.0)
-                 < abs(float(_acc(l, 'ratio_to_closest_single_config')) - 1.0)
-                 for l in ('ha_ng', 'sw_ke'))),
-    ('every language with a known expected size except ta_in reconciles',
-     lambda: set(load(T4L).query(
-         "accounting_flag == 'reconciles'")['dataset'])
-     == {'id_id', 'ha_ng', 'mr_in', 'fr_fr', 'sw_ke'}),
+    # Data accounting. Once the strict `< 30 s` cap is accounted for, NOTHING fails to
+    # reconcile -- ta_in's apparent anomaly was the 23,261 dropped ta_lk clips.
+    ('no language fails to reconcile post-filter',
+     lambda: load(T4L).query(
+         "accounting_flag == 'does_not_reconcile_see_docstring'").empty),
+    ('ta_in reconciles once the cap loss is accounted for',
+     lambda: abs(float(_acc('ta_in', 'ratio_implied_to_expected_post_filter')) - 1.0) < 0.05),
+    ('ta_in did NOT reconcile against the pre-filter count (the loss is real, not a fudge)',
+     lambda: float(_acc('ta_in', 'ratio_implied_to_expected')) < 0.5),
+    ('ta_in is the only language losing clips to the cap besides fr_fr',
+     lambda: set(load(T4L).query("n_dropped_by_cap > 0")['dataset']) == {'ta_in', 'fr_fr'}),
+    ('every language with a known expected size reconciles post-filter',
+     lambda: set(load(T4L).query("accounting_flag == 'reconciles'")['dataset'])
+     == {'id_id', 'ha_ng', 'mr_in', 'fr_fr', 'sw_ke', 'ta_in'}),
+
+    # The headline interaction. These are the claims a data correction would silently break.
+    ('the region-match effect is monotone in stream rank except the id_id/fr_fr swap',
+     lambda: _monotone_except_one()),
+    ('the volume correlation is strong and significant with all languages',
+     lambda: (_t5s('all_languages', 'log10_stream', 'delta_vs_mismatched', 'spearman_rho') > 0.9
+              and _t5s('all_languages', 'log10_stream', 'delta_vs_mismatched',
+                       'spearman_p') < 0.01)),
+    ('it SURVIVES dropping the extreme point -- not an outlier artefact',
+     lambda: (_t5s('excluding_ta_in', 'log10_stream', 'delta_vs_mismatched',
+                   'spearman_rho') > 0.9
+              and _t5s('excluding_ta_in', 'log10_stream', 'delta_vs_mismatched',
+                       'spearman_p') < 0.01)),
+    ('volume and baseline CER are collinear, so the two explanations are entangled',
+     lambda: _t5s('all_languages', 'log10_stream', 'baseline_cer', 'spearman_rho') < -0.5),
+    ('the RELATIVE effect shows a weaker, non-significant trend -- stated, not hidden',
+     lambda: _t5s('all_languages', 'log10_stream',
+                  'relative_delta_vs_mismatched_pct', 'spearman_p') > 0.05),
+    ('the partial correlation is NOT significant with all languages (inconclusive, df=4)',
+     lambda: _t5s('all_languages', 'log10_stream|baseline_cer',
+                  'delta_vs_mismatched', 'pearson_p') > 0.05),
+    ('only ta_in and fr_fr lose clips to the cap in the volume table',
+     lambda: set(load(T5).query("n_dropped_by_cap > 0")['dataset']) == {'ta_in', 'fr_fr'}),
     ('ta_in has the worst best_cer in the grid (the small-data regime)',
      lambda: (lambda d: d.loc[d['best_cer'].idxmax(), 'dataset'])(
          load(T1).query("state == 'finished'").groupby('dataset', as_index=False)

@@ -1,0 +1,23 @@
+subset,n,x,y,spearman_rho,spearman_p,pearson_r,pearson_p,note,df_residual
+all_languages,7,log10_stream,delta_vs_mismatched,0.964286,0.000454,0.778685,0.039124,,
+all_languages,7,log10_stream,delta_vs_global,0.964286,0.000454,0.767707,0.043878,,
+all_languages,7,log10_stream,relative_delta_vs_mismatched_pct,0.714286,0.071344,0.829062,0.021114,,
+all_languages,7,stream_post_filter,delta_vs_mismatched,0.964286,0.000454,0.479520,0.276211,,
+all_languages,7,stream_post_filter,delta_vs_global,0.964286,0.000454,0.433681,0.330997,,
+all_languages,7,stream_post_filter,relative_delta_vs_mismatched_pct,0.714286,0.071344,0.729303,0.062891,,
+all_languages,7,epochs_logged,delta_vs_mismatched,-0.964286,0.000454,-0.976753,0.000156,,
+all_languages,7,epochs_logged,delta_vs_global,-0.964286,0.000454,-0.979981,0.000108,,
+all_languages,7,epochs_logged,relative_delta_vs_mismatched_pct,-0.714286,0.071344,-0.871655,0.010565,,
+all_languages,7,log10_stream,baseline_cer,-0.678571,0.093750,,,collinearity of the two candidate explanations,
+all_languages,7,log10_stream|baseline_cer,delta_vs_mismatched,,,0.136679,0.770127,partial correlation; low df means a null here is inconclusive,4.000000
+excluding_ta_in,6,log10_stream,delta_vs_mismatched,0.942857,0.004805,0.880830,0.020456,,
+excluding_ta_in,6,log10_stream,delta_vs_global,0.942857,0.004805,0.800008,0.055996,,
+excluding_ta_in,6,log10_stream,relative_delta_vs_mismatched_pct,0.542857,0.265703,0.610825,0.197714,,
+excluding_ta_in,6,stream_post_filter,delta_vs_mismatched,0.942857,0.004805,0.938292,0.005594,,
+excluding_ta_in,6,stream_post_filter,delta_vs_global,0.942857,0.004805,0.567775,0.239854,,
+excluding_ta_in,6,stream_post_filter,relative_delta_vs_mismatched_pct,0.542857,0.265703,0.863677,0.026609,,
+excluding_ta_in,6,epochs_logged,delta_vs_mismatched,-0.942857,0.004805,-0.750825,0.085397,,
+excluding_ta_in,6,epochs_logged,delta_vs_global,-0.942857,0.004805,-0.875926,0.022137,,
+excluding_ta_in,6,epochs_logged,relative_delta_vs_mismatched_pct,-0.542857,0.265703,-0.312139,0.546998,,
+excluding_ta_in,6,log10_stream,baseline_cer,-0.485714,0.328723,,,collinearity of the two candidate explanations,
+excluding_ta_in,6,log10_stream|baseline_cer,delta_vs_mismatched,,,0.837897,0.037286,partial correlation; low df means a null here is inconclusive,3.000000
