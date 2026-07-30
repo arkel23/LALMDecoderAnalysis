@@ -61,6 +61,22 @@ for serial in "${SERIALS[@]}"; do
   fi
 done
 
+# --- 1b. Dataset example counts ----------------------------------------------------
+# Authoritative num_examples per training config, straight from the dataset builder metadata
+# (no audio downloaded). This is what the accounting compares against -- it replaced an
+# hours snapshot recovered from a summarised reading of the WorldSpeech paper, which was the
+# weakest input in the analysis and produced a false data-integrity finding.
+#
+# Pass --load to additionally download audio and run the duration-consistency and interleave
+# assertions. That is opt-in because it is tens of GB; it has been run for the Tamil pair and
+# both checks passed (interleave lossless, zero samples removed).
+if [ ! -f "data/dataset_checks/disco-eth_WorldSpeech_ta_in-ta_lk_train.csv" ]; then
+  python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
+    --dataset_configs ta_in ta_lk --split train
+else
+  echo "Skipping dataset metadata check (exists)"
+fi
+
 # --- 2. Sanity gate ----------------------------------------------------------------
 # Cheap, and it runs before anything derives numbers: per-dataset run counts and state
 # breakdowns, so a half-finished grid is visible rather than silently averaged.

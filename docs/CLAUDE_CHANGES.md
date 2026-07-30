@@ -1,5 +1,68 @@
 # Change log
 
+## 2026-07-30 (third pass) — the ta_in "anomaly" was mine, not the data's
+
+A direct test on the real datasets refuted the last remaining suspicion about `ta_in`, and the
+input that produced it has been replaced.
+
+### What was tested, and what it showed
+
+`disco-eth/WorldSpeech`, configs `ta_in` + `ta_lk`, split `train`, loaded map-style with
+`audio_length_s` computed from the decoded arrays:
+
+* `len(interleaved) == len(ta_in) + len(ta_lk)` — interleaving loses nothing on real data.
+* The duration-consistency filter (`|audio_length_s − duration| < 1 s`) removed **zero**
+  samples — no corrupt clips, no mislabelled durations.
+
+Both mechanisms the previous pass had proposed for a Tamil data problem are therefore false.
+
+### The bad input: hours recovered from prose
+
+The flag came from comparing a reconstructed stream size against per-language hour figures
+taken from a **summarised web fetch** of the WorldSpeech paper's table — not from reading the
+table. That was the weakest-provenance input in the whole analysis, and it was gating a
+finding. It claimed 240 h for `ta_lk`, which cannot be right for 23,261 clips.
+
+Replaced by `utils.WORLDSPEECH_TRAIN_EXAMPLES`: `num_examples` per training config, read from
+the HuggingFace dataset builder metadata. Authoritative, instant, no audio downloaded. Also
+added `TRAIN_CONFIGS` (the `(path, configs, split)` each language trained on) and
+`expected_stream_examples()`, which sums the parts — valid precisely because interleaving is
+lossless.
+
+### What the corrected accounting says
+
+Eight of nine languages reconcile, including the other two multi-config languages, whose
+reconstructions match their **summed** streams (`ha_ng` 1.04, `sw_ke` 1.20) and not a single
+config (1.84, 1.81). `ta_in` is the exception, and its reconstruction matches **one config to
+within 0.24 %** (ratio to expected 0.27; to nearest single config 1.00).
+
+That is a bookkeeping question, not a data question: either the run consumed one config, or the
+epoch counter is unreliable for it, and the logs do not separate the two. The only consequence
+kept in the analysis is that Tamil is the smallest-data cell, has the worst CER, and carries
+the largest region-match term (−14.70) — so that term is provisional on **data-volume**
+grounds, not data-quality grounds. `t4`'s docstring now states explicitly that it is not an
+integrity check.
+
+### New: `verify_dataset_durations.py`
+
+The test above, generalised into a checker for any `--dataset_path --dataset_configs --split`,
+so the next suspicion of this kind is tested before it is written down. Two modes: metadata
+only (instant, authoritative counts, wired into `plotter.sh`) and `--load` (downloads audio,
+asserts the interleave arithmetic on real objects, and reports exactly how many samples the
+duration filter removes). The `--load` invocation is recorded in `claude_process.sh`.
+
+### Also caught
+
+`analyze_region_match.py` still referenced a renamed column and `set -e` — added in the
+previous pass — aborted the run rather than letting it through. The checker then flagged a
+`crs_sc` ratio that is legitimately undefined (its ERISLab mirror split is not in the snapshot)
+and is now excluded from that specific check rather than being papered over.
+
+Rebuild after the corrections: exit 0, **79** checks pass, 21 ordering claims unbroken, 85
+numbers verified against their CSVs.
+
+---
+
 ## 2026-07-30 (later) — three corrections after review
 
 Three claims from the first pass were wrong or misplaced. All are corrected in code, not just
@@ -36,7 +99,8 @@ The earlier plan proposed a dataset-hours utility inside QuantizedASR. That repo
 touched. **`analyze_data_accounting.py`** (new) reconstructs each training stream from logged
 scalars alone — `global_step × batch_size × gradient_accumulation_steps`, audio seconds, and
 the epoch counter, which under streaming counts stream consumptions — and compares it against
-a **frozen WorldSpeech hour snapshot** now in `utils.WORLDSPEECH_HOURS` (arXiv:2605.09167,
+a **frozen WorldSpeech hour snapshot** in `utils.WORLDSPEECH_HOURS` (arXiv:2605.09167,
+*since removed -- replaced by `WORLDSPEECH_TRAIN_EXAMPLES`, see the third-pass entry*;
 copied as objective raw data, never referenced live).
 
 Each entry carries a `scope`, which is load-bearing: only four languages support a direct
@@ -45,7 +109,9 @@ three (`en_us`, `fr_fr`, `es_419`) have only a language-level aggregate over con
 never used. Comparing without reading the scope manufactures discrepancies.
 
 Result: **`ta_in` is the sole anomaly** — implied stream 34.82 h against a lower bound of
-240 h, ratio 0.15, so the true shortfall exceeds 6.7×. Every other comparable language
+240 h, ratio 0.15, so the true shortfall exceeds 6.7×.
+*(SUPERSEDED by the third pass: the 240 h figure came from a summarised reading of the paper
+and was wrong. Direct testing shows the Tamil data is clean. See the entry above.)* Every other comparable language
 reconciles (`ha_ng` 1.00, `crs_sc` 1.03, `sw_ke` 1.04, `id_id` 1.28; `mr_in` 2.07 is above
 published, which is not a data-loss failure). With interleaving ruled out, the remaining
 candidate is the silent filter path: clips of 30 s or more dropped, and undecodable clips

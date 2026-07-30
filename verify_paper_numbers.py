@@ -116,14 +116,28 @@ DERIVED = [
     ('regional variant parameter count', lambda: _regional_params(), 0),
     ('base minus regional parameter delta', lambda: _base_param_delta(), 0),
 
-    # Data accounting, per language: epochs, implied stream hours, published hours, ratio.
+    # Data accounting, per language: epochs, reconstructed stream, expected examples, ratio.
+    # epochs and the reconstructed stream are printed for every language, including crs_sc.
     *[(f'accounting {lang} / {col}', (lambda lang=lang, col=col: _acc(lang, col)), nd)
-      for lang in ('ta_in', 'ha_ng', 'crs_sc', 'sw_ke', 'hi_in', 'id_id', 'mr_in')
-      for col, nd in (('epochs_logged', 2), ('implied_stream_hours', 2),
-                      ('worldspeech_hours', 0), ('ratio_implied_to_published', 2))],
+      for lang in ('ta_in', 'ha_ng', 'crs_sc', 'sw_ke', 'hi_in', 'id_id', 'mr_in', 'en_us',
+                   'fr_fr')
+      for col, nd in (('epochs_logged', 2), ('implied_stream_samples', 2))],
+    # The ratio is only defined where the expected size is known -- crs_sc trains on the
+    # ERISLab mirror, whose split is not in the example-count snapshot, so it prints as "-".
+    *[(f'accounting {lang} / ratio_implied_to_expected',
+       (lambda lang=lang: _acc(lang, 'ratio_implied_to_expected')), 2)
+      for lang in ('ta_in', 'ha_ng', 'sw_ke', 'hi_in', 'id_id', 'mr_in', 'en_us', 'fr_fr')],
+    *[(f'accounting {lang} / expected_stream_examples',
+       (lambda lang=lang: _acc(lang, 'expected_stream_examples')), 0)
+      for lang in ('ta_in', 'ha_ng', 'sw_ke', 'hi_in', 'id_id', 'mr_in', 'en_us', 'fr_fr')],
+    *[(f'accounting {lang} / ratio_to_closest_single_config',
+       (lambda lang=lang: _acc(lang, 'ratio_to_closest_single_config')), 2)
+      for lang in ('ta_in', 'ha_ng', 'sw_ke')],
 
-    # The ta_in region-match term the accounting anomaly puts in doubt.
+    # The ta_in region-match term, and its best CER -- both quoted in the small-data caveat.
     ('ta_in delta_vs_mismatched', lambda: _t2_delta('ta_in'), 2),
+    ('ta_in best_cer', lambda: (
+        load(T1).query("dataset == 'ta_in' and state == 'finished'")['best_cer'].min()), 2),
 ]
 
 
@@ -197,29 +211,35 @@ ORDERINGS = [
     ('all four regional/global variants share one parameter count',
      lambda: _regional_params() > 0),
 
-    # Data accounting: ta_in is the sole anomaly, and everything else reconciles. If a data
-    # correction ever changes that, no printed digit in the prose would move on its own.
-    ('ta_in is the ONLY language flagged far-below-published',
+    # Data accounting. ta_in is the sole non-reconciling cell and its signature is that it
+    # matches ONE config rather than the sum -- unlike the other two multi-config languages.
+    # A data correction could flip any of this without moving a printed digit.
+    ('ta_in is the only language that does not reconcile',
      lambda: list(load(T4L).query(
-         "accounting_flag == 'IMPLIED_STREAM_FAR_BELOW_PUBLISHED'")['dataset']) == ['ta_in']),
-    ('every comparable language except ta_in has ratio >= 0.5',
-     lambda: bool((load(T4L).query(
-         "worldspeech_scope in ['config', 'lower_bound'] and dataset != 'ta_in'"
-     )['ratio_implied_to_published'] >= 0.5).all())),
+         "accounting_flag == 'does_not_reconcile_see_docstring'")['dataset']) == ['ta_in']),
+    ("ta_in's reconstruction matches a single config within 1%",
+     lambda: abs(float(_acc('ta_in', 'ratio_to_closest_single_config')) - 1.0) < 0.01),
+    ('ha_ng and sw_ke match their SUMMED streams, not a single config',
+     lambda: all(abs(float(_acc(l, 'ratio_implied_to_expected')) - 1.0)
+                 < abs(float(_acc(l, 'ratio_to_closest_single_config')) - 1.0)
+                 for l in ('ha_ng', 'sw_ke'))),
+    ('every language with a known expected size except ta_in reconciles',
+     lambda: set(load(T4L).query(
+         "accounting_flag == 'reconciles'")['dataset'])
+     == {'id_id', 'ha_ng', 'mr_in', 'fr_fr', 'sw_ke'}),
+    ('ta_in has the worst best_cer in the grid (the small-data regime)',
+     lambda: (lambda d: d.loc[d['best_cer'].idxmax(), 'dataset'])(
+         load(T1).query("state == 'finished'").groupby('dataset', as_index=False)
+         .agg(best_cer=('best_cer', 'min'))) == 'ta_in'),
     ('ta_in carries the largest-magnitude region-match delta',
      lambda: (lambda d: d.loc[d['delta_vs_mismatched'].abs().idxmax(), 'dataset'])(
          load(os.path.join(ACC, 't2_region_match.csv')).query(
              "analysis == 'primary_excluding_failed_runs'"
          ).dropna(subset=['delta_vs_mismatched'])) == 'ta_in'),
-    # es_419 has no finished runs yet, so it is absent from the by-language table. The claim
-    # is that nothing OUTSIDE the aggregated-published set is scoped not_comparable, and that
-    # the ones present are scoped that way -- not that all three are present.
-    ('only en_us / fr_fr / es_419 are scoped not_comparable',
-     lambda: set(load(T4L).query("worldspeech_scope == 'not_comparable'")['dataset'])
-     <= {'en_us', 'fr_fr', 'es_419'}),
-    ('the aggregated-published languages present are all scoped not_comparable',
-     lambda: {'en_us', 'fr_fr'}
-     <= set(load(T4L).query("worldspeech_scope == 'not_comparable'")['dataset'])),
+    ('en_us and hi_in never exhausted their streams, so are lower bounds only',
+     lambda: set(load(T4L).query(
+         "accounting_flag == 'stream_never_exhausted_lower_bound_only'")['dataset'])
+     == {'en_us', 'hi_in'}),
     ('every language reports an estimate_kind',
      lambda: load(T4L)['estimate_kind'].isin(['estimate', 'lower_bound']).all()),
     ('mean sample duration is within the 30 s cap for every run',

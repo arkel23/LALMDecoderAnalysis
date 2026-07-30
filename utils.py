@@ -175,32 +175,68 @@ MULTI_CONFIG_TRAIN = {
     'sw_ke': ('sw_ke', 'sw_tz'),
 }
 
-# --- WorldSpeech published hours: FROZEN SNAPSHOT ------------------------------------
-# Copied 2026-07-30 from the WorldSpeech report (arXiv:2605.09167v1, "WorldSpeech: A
-# Multilingual Speech Corpus from Around the World", Asonitis et al., ETH Zurich; 65k hours
-# across 76 languages, CC BY 4.0). Objective, non-analytical raw data, copied as a frozen
-# snapshot rather than referenced live, so a later correction upstream cannot silently
-# reopen a finished analysis.
-#
-# 'scope' is load-bearing and must be read before comparing anything to these numbers:
-#   config       -- the figure is for exactly the config used in training.
-#   lower_bound  -- training interleaves this config with a second one whose published hours
-#                   we do not have, so the true combined stream is LARGER than this.
-#   not_comparable -- the report gives only a language-level total aggregated over many
-#                   country configs, while training used one specific (and different) config.
-#                   e.g. French trains on fr_ca but the report aggregates all French.
-WORLDSPEECH_HOURS = {
-    'crs_sc': {'hours': 1602, 'scope': 'config',         'note': 'crs_sc'},
-    'hi_in':  {'hours': 1707, 'scope': 'config',         'note': 'in_hi'},
-    'mr_in':  {'hours': 114,  'scope': 'config',         'note': 'in_mr'},
-    'id_id':  {'hours': 340,  'scope': 'config',         'note': 'id_id'},
-    'ha_ng':  {'hours': 126,  'scope': 'lower_bound',    'note': 'ha_ng only; ha_td unknown'},
-    'sw_ke':  {'hours': 1006, 'scope': 'lower_bound',    'note': 'tz_sw only; sw_ke unknown'},
-    'ta_in':  {'hours': 240,  'scope': 'lower_bound',    'note': 'ta_lk only; ta_in unknown'},
-    'en_us':  {'hours': 5312, 'scope': 'not_comparable', 'note': 'aggregated over all English configs'},
-    'fr_fr':  {'hours': 6029, 'scope': 'not_comparable', 'note': 'aggregated; training uses fr_ca'},
-    'es_419': {'hours': 6792, 'scope': 'not_comparable', 'note': 'aggregated; training uses es_es/es_mx'},
+# --- Training stream composition ------------------------------------------------------
+# The (dataset_path, configs, split) each language's connector was trained on, from the
+# upstream configs/train/*ws*.yaml. Used to look up authoritative example counts.
+TRAIN_CONFIGS = {
+    'en_us':  ('disco-eth/WorldSpeech', ('en_us',),          'train'),
+    'fr_fr':  ('disco-eth/WorldSpeech', ('fr_ca',),          'train'),
+    'es_419': ('disco-eth/WorldSpeech', ('es_es',),          'train'),
+    'hi_in':  ('disco-eth/WorldSpeech', ('hi_in',),          'train'),
+    'id_id':  ('disco-eth/WorldSpeech', ('id_id',),          'train'),
+    'mr_in':  ('disco-eth/WorldSpeech', ('mr_in',),          'train'),
+    'sw_ke':  ('disco-eth/WorldSpeech', ('sw_ke', 'sw_tz'),  'train'),
+    'ta_in':  ('disco-eth/WorldSpeech', ('ta_in', 'ta_lk'),  'train'),
+    'ha_ng':  ('disco-eth/WorldSpeech', ('ha_ng', 'ha_td'),  'train'),
+    'crs_sc': ('ERISLab/WorldSpeech',   ('crs_sc',),         'train_val_exc_clean'),
 }
+
+# --- WorldSpeech example counts: FROZEN SNAPSHOT -------------------------------------
+# num_examples per training config, read 2026-07-30 from the HuggingFace dataset builder
+# metadata (authoritative, and cheap -- no audio downloaded). Regenerate with
+# verify_dataset_durations.py.
+#
+# This replaced an earlier hours-based snapshot taken from a summarised web fetch of the
+# WorldSpeech paper's table. That snapshot was the weakest input in the analysis and it
+# produced a false positive: it implied Tamil should hold ~240 h, which disagreed with the
+# reconstructed stream and was written up as a data-integrity problem. It was not one. Direct
+# testing on the real data (verify_dataset_durations.py --load) showed the Tamil configs
+# interleave losslessly and that the duration-consistency filter removes ZERO samples.
+# Compare against example counts, which have real provenance -- not against numbers recovered
+# from prose.
+WORLDSPEECH_TRAIN_EXAMPLES = {
+    'en_us':  666718,
+    'fr_ca':  207449,
+    'es_es':  866048,
+    'es_mx':  205972,
+    'hi_in':  577382,
+    'sw_ke':  101774,
+    'sw_tz':  200314,
+    'ha_ng':  11865,
+    'ha_td':  15390,
+    'ta_in':  8846,
+    'ta_lk':  23261,
+    'mr_in':  58201,
+    'id_id':  101112,
+}
+
+
+def expected_stream_examples(language):
+    """Total examples in a language's training stream.
+
+    Sound because interleaving is lossless: 'all_exhausted_without_replacement' never
+    recycles an exhausted config, so a combined stream is exactly the sum of its parts
+    (verify_interleave_semantics.py, and confirmed on the real Tamil configs).
+    Returns None when any part is unknown -- crs_sc trains on an ERISLab mirror whose split
+    is not in the snapshot.
+    """
+    entry = TRAIN_CONFIGS.get(language)
+    if not entry:
+        return None
+    _, configs, _ = entry
+    counts = [WORLDSPEECH_TRAIN_EXAMPLES.get(c) for c in configs]
+    return sum(counts) if all(c is not None for c in counts) else None
+
 
 # --- Datasets and metrics -----------------------------------------------------------
 # Keyed on the dataset_name that standarize_df builds: dataset_path_dataset_split.

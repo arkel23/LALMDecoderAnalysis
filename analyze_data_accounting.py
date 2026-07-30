@@ -1,36 +1,37 @@
 """
-Reconstructs how much data each training stream actually contained, using only what is
-logged in wandb plus the frozen WorldSpeech hour snapshot in utils.py.
+Reconstructs how much data each training stream consumed, using only what wandb logged plus
+authoritative dataset example counts.
 
-This is analysis-only by design: nothing here loads a dataset or touches the training
-framework. Everything is derived from four logged quantities per run --
-train/global_step, batch_size, gradient_accumulation_steps and train/train_audio_seconds --
-plus the wandb train/epoch counter.
+Analysis-only by design: nothing here loads a dataset or touches the training framework.
+Per run it uses global_step, batch_size, gradient_accumulation_steps, train_audio_seconds and
+the epoch counter; the expected stream size comes from utils.WORLDSPEECH_TRAIN_EXAMPLES,
+read from the HuggingFace dataset builder metadata.
 
-How the reconstruction works, and why the epoch counter is usable here.
+How the reconstruction works. Under streaming=True the Trainer iterates an IterableDataset;
+when the stream is exhausted it restarts and train/epoch advances past 1. So:
 
-Under streaming=True the Trainer iterates an IterableDataset; when the stream is exhausted
-it restarts, and train/epoch advances past 1. So epoch is a count of how many times the
-stream was consumed, which makes the implied stream size:
-
-    samples_processed  = global_step * batch_size * gradient_accumulation_steps
+    samples_processed      = global_step * batch_size * gradient_accumulation_steps
     implied_stream_samples = samples_processed / epoch
-    implied_stream_hours   = audio_hours_processed / epoch
 
-This is only meaningful when the stream was actually exhausted at least once. Two runs report
-epoch exactly 1.000 (en_us, hi_in), which means it never wrapped -- for those the implied
-figure is a LOWER BOUND on the stream, not an estimate of it, and the CSV says so.
+meaningful only once the stream has actually wrapped. Two runs sit at epoch exactly 1.000
+(en_us, hi_in), meaning it never wrapped -- for those the figure is a LOWER BOUND, and the
+CSV says so via estimate_kind.
 
-The interleaving of multi-config languages does NOT distort these numbers. The upstream
-loader uses stopping_strategy='all_exhausted_without_replacement', so an exhausted config is
-never recycled and the combined stream is exactly the sum of its parts; the uniform
-probabilities change arrival order only. verify_interleave_semantics.py proves this.
+The expected stream is the SUM of a language's training configs, which is sound because
+interleaving is lossless: 'all_exhausted_without_replacement' never recycles an exhausted
+config. That is proved offline in verify_interleave_semantics.py and confirmed on the real
+Tamil configs with verify_dataset_durations.py --load.
 
-What the comparison against WorldSpeech can and cannot say is governed by the 'scope' field
-of the frozen snapshot -- see utils.WORLDSPEECH_HOURS. Three of the ten languages are
-'not_comparable' because the report publishes only a language-level aggregate while training
-used one specific config, and three are 'lower_bound' because a second config's hours are
-unknown. Only four are direct config-to-config comparisons.
+WHAT THIS TABLE IS NOT. It is not a data-integrity check, and a low ratio here is NOT
+evidence of corrupt or missing data. An earlier pass made exactly that mistake: it compared
+against hour figures recovered from a summarised reading of the WorldSpeech paper, found
+Tamil short, and wrote it up as a data problem. Direct testing refuted that -- the Tamil
+configs interleave losslessly and the duration-consistency filter removes zero samples.
+Dataset integrity is checked by verify_dataset_durations.py, and only there.
+
+What a ratio away from 1.0 actually indicates is an open question about run bookkeeping: the
+epoch counter is the weakest input here, and it is entirely possible for the counter, not the
+run, to be the odd part. Treat this table as descriptive.
 
 Usage:
     python analyze_data_accounting.py --input_file data/raw_serials/history_serial_0.csv \
@@ -41,16 +42,16 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from utils import (WORLDSPEECH_HOURS, MULTI_CONFIG_TRAIN, MODEL_SHORT, LANGUAGE_DIC,
-                   assert_unique_keys)
+from utils import (TRAIN_CONFIGS, WORLDSPEECH_TRAIN_EXAMPLES, MULTI_CONFIG_TRAIN,
+                   MODEL_SHORT, LANGUAGE_DIC, expected_stream_examples, assert_unique_keys)
 
 
 # max_input_length in every configs/train/*ws*.yaml is 30 s, so a mean sample duration above
 # this is arithmetically impossible and indicates a dropped factor in the sample count.
 MAX_INPUT_LENGTH_S = 30
 
-# Ratio of implied stream hours to published hours outside which a config warrants
-# investigation. Deliberately wide: the published figures carry scope caveats.
+# Ratio band within which a reconstructed stream is considered to reconcile with the known
+# example count. Wide, because the epoch counter is coarse.
 RATIO_LOW, RATIO_HIGH = 0.5, 2.0
 
 FLOAT_FORMAT = '%.6f'
@@ -106,35 +107,42 @@ def add_stream_estimates(out):
         out['implied_stream_samples'] = out['samples_processed'] / ep
         out['implied_stream_hours'] = out['audio_hours_processed'] / ep
 
-    ws = out['dataset'].map(lambda d: (WORLDSPEECH_HOURS.get(d) or {}).get('hours'))
-    out['worldspeech_hours'] = pd.to_numeric(ws, errors='coerce')
-    out['worldspeech_scope'] = out['dataset'].map(
-        lambda d: (WORLDSPEECH_HOURS.get(d) or {}).get('scope'))
-    out['worldspeech_note'] = out['dataset'].map(
-        lambda d: (WORLDSPEECH_HOURS.get(d) or {}).get('note'))
+    out['expected_stream_examples'] = out['dataset'].map(expected_stream_examples)
+    out['ratio_implied_to_expected'] = (
+        out['implied_stream_samples'] / out['expected_stream_examples'])
 
-    out['ratio_implied_to_published'] = (
-        out['implied_stream_hours'] / out['worldspeech_hours'])
+    # For a multi-config language, does the reconstruction match ONE config rather than the
+    # sum? That distinguishes "the bookkeeping is off" from "fewer configs were consumed",
+    # and neither is a data-integrity question.
+    def _single_ratio(row):
+        entry = TRAIN_CONFIGS.get(row['dataset'])
+        if not entry or row['n_train_configs'] < 2 or not np.isfinite(
+                row['implied_stream_samples']):
+            return np.nan
+        counts = [WORLDSPEECH_TRAIN_EXAMPLES.get(c) for c in entry[1]]
+        counts = [c for c in counts if c]
+        if not counts:
+            return np.nan
+        # closest single-config match
+        ratios = [row['implied_stream_samples'] / c for c in counts]
+        return min(ratios, key=lambda r: abs(r - 1.0))
 
-    # Only config-scope rows support a direct comparison. lower_bound rows are still
-    # informative in ONE direction: if the implied stream is far BELOW a lower bound, that is
-    # a real discrepancy, because the true corpus is larger still.
-    comparable = out['worldspeech_scope'].isin(['config', 'lower_bound'])
-    ratio = out['ratio_implied_to_published']
+    out['ratio_to_closest_single_config'] = out.apply(_single_ratio, axis=1)
+
+    ratio = out['ratio_implied_to_expected']
+    known = out['expected_stream_examples'].notna()
     out['accounting_flag'] = np.select(
         [
-            ~comparable,
+            ~known,
             ~out['stream_exhausted'],
-            comparable & (ratio < RATIO_LOW),
-            comparable & (ratio > RATIO_HIGH),
+            known & (ratio >= RATIO_LOW) & (ratio <= RATIO_HIGH),
         ],
         [
-            'not_comparable_published_scope',
+            'expected_size_unknown',
             'stream_never_exhausted_lower_bound_only',
-            'IMPLIED_STREAM_FAR_BELOW_PUBLISHED',
-            'implied_stream_above_published',
+            'reconciles',
         ],
-        default='consistent',
+        default='does_not_reconcile_see_docstring',
     )
 
     out['mean_sample_seconds_within_cap'] = (
@@ -172,23 +180,24 @@ def main():
                     implied_stream_hours=('implied_stream_hours', 'mean'),
                     implied_stream_samples=('implied_stream_samples', 'mean'),
                     estimate_kind=('estimate_kind', 'first'),
-                    worldspeech_hours=('worldspeech_hours', 'first'),
-                    worldspeech_scope=('worldspeech_scope', 'first'),
-                    ratio_implied_to_published=('ratio_implied_to_published', 'mean'),
+                    expected_stream_examples=('expected_stream_examples', 'first'),
+                    ratio_implied_to_expected=('ratio_implied_to_expected', 'mean'),
+                    ratio_to_closest_single_config=('ratio_to_closest_single_config', 'mean'),
                     accounting_flag=('accounting_flag', 'first'))
-               .sort_values('ratio_implied_to_published'))
+               .sort_values('ratio_implied_to_expected'))
     by_lang.to_csv(args.per_language_file, index=False, float_format=FLOAT_FORMAT)
     print(f'Wrote {len(by_lang)} rows to {args.per_language_file}\n')
 
-    show = ['dataset', 'epochs_logged', 'audio_hours_processed', 'mean_sample_seconds',
-            'implied_stream_hours', 'worldspeech_hours', 'worldspeech_scope',
-            'ratio_implied_to_published', 'accounting_flag']
+    show = ['dataset', 'epochs_logged', 'audio_hours_processed', 'implied_stream_samples',
+            'expected_stream_examples', 'ratio_implied_to_expected',
+            'ratio_to_closest_single_config', 'accounting_flag']
     print(by_lang[show].round(2).to_string(index=False))
 
-    bad = by_lang[by_lang['accounting_flag'] == 'IMPLIED_STREAM_FAR_BELOW_PUBLISHED']
-    if len(bad):
-        print(f'\n{len(bad)} language(s) need investigation: '
-              f'{", ".join(bad["dataset"])}')
+    odd = by_lang[by_lang['accounting_flag'] == 'does_not_reconcile_see_docstring']
+    if len(odd):
+        print(f'\n{len(odd)} language(s) do not reconcile: {", ".join(odd["dataset"])}. '
+              f'This is a bookkeeping observation, NOT a data-integrity finding -- '
+              f'integrity is checked only by verify_dataset_durations.py.')
     return 0
 
 

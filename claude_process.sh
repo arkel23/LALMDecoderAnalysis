@@ -69,3 +69,24 @@ set -u
 #   cp /tmp/utils_backup.py utils.py
 #   python analyze_region_match.py > /dev/null && python verify_paper_numbers.py 2>&1 | grep "broken"
 # '
+
+# --- 2026-07-30: verify the Tamil training configs directly. RUN, both checks passed. ------
+# Settles a suspicion an earlier pass wrote down without testing: that uniform interleave
+# probabilities oversampled the smaller config, and that a duration-column inconsistency was
+# silently dropping Tamil samples. Neither is true.
+#   len(interleaved) == len(ta_in) + len(ta_lk)   -- interleaving loses nothing
+#   duration-consistency filter removed 0 samples -- no corrupt or mislabelled clips
+# Downloads ~7 GB of audio, so it is opt-in and NOT in plotter.sh (which runs the instant
+# metadata-only mode instead). Spent -- leave commented.
+#
+# python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
+#   --dataset_configs ta_in ta_lk --split train --load --num_proc 20
+
+# --- 2026-07-30: refresh the example-count snapshot in utils.py. --------------------------
+# Metadata only, no audio. Re-run if a training config is added or WorldSpeech is revised, and
+# paste the counts into utils.WORLDSPEECH_TRAIN_EXAMPLES.
+#
+# for cfg in en_us fr_ca es_es es_mx hi_in sw_ke sw_tz ha_ng ha_td ta_in ta_lk mr_in id_id; do
+#   python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
+#     --dataset_configs "$cfg" --split train
+# done

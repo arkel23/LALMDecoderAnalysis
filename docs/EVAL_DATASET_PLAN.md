@@ -44,9 +44,9 @@ Cost is not zero, and should be budgeted honestly:
   resolved.
 - WorldSpeech defines a 95/5 train/test split per country-language pair, so the test split
   exists for every trained config.
-- The `duration`-column inconsistency that forced the `crs_sc` cleaning pass may affect other
-  configs -- `ta_in` shows exactly that signature (`PLAN_ASSESSMENT.md` §4.1). Run the
-  duration-consistency check before trusting a new split.
+- The `duration`-column inconsistency that forced the `crs_sc` cleaning pass could affect
+  other configs, so run `verify_dataset_durations.py --load` on a new split before trusting
+  it. Already checked: `ta_in` + `ta_lk` are clean (zero samples removed).
 
 ## 2. Same-language, different domain — already in hand, needs reframing
 
@@ -105,12 +105,11 @@ it proposed.
 
 ## Recommended order
 
-1. Duration-consistency check on the `ta_in`/`ta_lk` configs (blocks trusting the largest
-   region-match term).
-2. Resolve the WorldSpeech Opus/libsndfile decode error, then add the eight `test` configs.
-3. Re-run the existing grid's evaluation on both domains, in-domain and FLEURS.
-4. Zero-shot cross-language sweep on FLEURS.
-5. Add EdAcc.
+1. Resolve the WorldSpeech Opus/libsndfile decode error, then add the eight `test` configs.
+2. Re-run the existing grid's evaluation on both domains, in-domain and FLEURS.
+3. Zero-shot cross-language sweep on FLEURS.
+4. Add EdAcc.
 
-Tiers 3 and 4 are evaluation-only and need no retraining, so they can run against the existing
-checkpoints as soon as tier 1 lands.
+Steps 2-4 are evaluation-only and need no retraining, so they can run against the existing
+checkpoints as soon as step 1 lands. Run `verify_dataset_durations.py` on any newly introduced
+`dataset_path` first -- metadata mode is instant, and `--load` settles duration consistency.

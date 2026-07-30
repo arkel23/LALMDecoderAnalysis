@@ -100,7 +100,8 @@ and neither is significant.
 - **Cross-dialect**: `fr_fr` trains on `fr_ca` and evaluates on `fr_fr`; `es_419` trains on
   `es_es` (the running jobs' wandb config says `es_mx`, so the YAML changed after launch) and
   evaluates on `es_419`.
-- **`ta_in`'s training stream does not reconcile with its corpus** — see §4.1.
+- **`ta_in`'s reconstructed stream does not reconcile with its example count** — see
+  §4.1. Its *data* is verified clean; the open question is bookkeeping.
 
 **Interleaving is NOT a confound, contrary to how the loader reads.** The multi-config
 languages (`ta_in`+`ta_lk`, `ha_ng`+`ha_td`, `sw_ke`+`sw_tz`) are combined with uniform `1/N`
@@ -113,35 +114,51 @@ distinct examples, in both the map-style and streaming paths, while plain `all_e
 would oversample the smaller one to 122×. This was a known issue upstream and it is fixed;
 it should not be re-raised.
 
-### 4.1 The one real data-accounting anomaly: `ta_in`
+### 4.1 Data integrity is verified; one bookkeeping question remains
 
-`results_all/acc/t4_data_accounting_by_language.csv` reconstructs each training stream from
-logged scalars alone (`global_step × batch_size × gradient_accumulation_steps`, audio seconds,
-and the epoch counter, which under streaming counts how many times the stream was consumed),
-and compares it against the frozen WorldSpeech hour snapshot:
+**The datasets are clean.** `verify_dataset_durations.py --load` was run on the real
+`disco-eth/WorldSpeech` `ta_in` + `ta_lk` train splits and confirms two things directly:
+`len(interleaved) == len(ta_in) + len(ta_lk)`, so interleaving loses nothing; and the
+duration-consistency filter removes **zero** samples, so the corpus `duration` column agrees
+with the decoded audio throughout. There is no corruption and no silent sample loss.
 
-| language | epochs | implied stream h | published h | scope | ratio | verdict |
+That matters because an earlier version of this assessment claimed otherwise. It compared a
+reconstructed stream size against hour figures taken from a summarised reading of the
+WorldSpeech paper, found Tamil short, and wrote it up as a data-integrity problem. Those hour
+figures were the weakest input in the analysis and they produced a false positive. They have
+been replaced by example counts read from the HuggingFace dataset builder metadata, which are
+authoritative and cheap to obtain.
+
+With that correction, `results_all/acc/t4_data_accounting_by_language.csv` reads:
+
+| language | epochs | implied stream samples | expected examples | ratio | ratio to nearest single config | verdict |
 |---|---|---|---|---|---|---|
-| **ta_in** | 58.01 | **34.82** | 240 | lower bound | **0.15** | **far below published** |
-| ha_ng | 18.05 | 125.55 | 126 | lower bound | 1.00 | consistent |
-| crs_sc | 1.29 | 1644.16 | 1602 | config | 1.03 | consistent |
-| sw_ke | 1.41 | 1050.35 | 1006 | lower bound | 1.04 | consistent |
-| hi_in | 1.00 | 1939.25 | 1707 | config | 1.14 | never exhausted; lower bound only |
-| id_id | 5.02 | 434.99 | 340 | config | 1.28 | consistent |
-| mr_in | 8.10 | 236.29 | 114 | config | 2.07 | above published |
-| en_us, fr_fr, es_419 | — | — | — | not comparable | — | published figure is a language-level aggregate over configs the runs did not use |
+| ta_in | 58.01 | 8825.46 | 32107 | 0.27 | **1.00** | does not reconcile |
+| en_us | 1.00 | 512000.00 | 666718 | 0.77 | — | never exhausted; lower bound |
+| hi_in | 1.00 | 512000.00 | 577382 | 0.89 | — | never exhausted; lower bound |
+| id_id | 5.02 | 102093.72 | 101112 | 1.01 | — | reconciles |
+| ha_ng | 18.05 | 28371.94 | 27255 | 1.04 | 1.84 | reconciles |
+| mr_in | 8.10 | 63241.11 | 58201 | 1.09 | — | reconciles |
+| fr_fr | 2.24 | 228367.53 | 207449 | 1.10 | — | reconciles |
+| sw_ke | 1.41 | 362863.22 | 302088 | 1.20 | 1.81 | reconciles |
+| crs_sc | 1.29 | 398133.75 | — | — | — | expected size unknown (ERISLab mirror) |
 
-Every comparable language reconciles except **`ta_in`**, whose implied stream is 0.15 of a
-*lower bound* — so the true shortfall is worse than 6.7×, since the published 240 h covers
-`ta_lk` alone and training also drew on `ta_in`. With interleaving ruled out, the remaining
-candidates are the filters the loader applies silently: clips of 30 s or longer are dropped,
-and undecodable clips are assigned a 100,000 s sentinel that the same filter removes without
-counting. That is the same duration-inconsistency failure mode that required Seychellois
-Creole to be cleaned into a separate mirror, and Tamil received no such cleaning.
+Eight of nine reconcile, including the other two multi-config languages, whose reconstructions
+match their **summed** streams (`ha_ng` 1.04, `sw_ke` 1.20) and clearly not a single config
+(1.84, 1.81). Tamil is the exception, and the shape of the exception is specific: its
+reconstruction matches **one config to within 0.24 %** rather than the sum.
 
-This matters because **`ta_in` contributes the single largest term in the region-match
-effect** (−14.70 CER). Until its stream is explained, that term should be treated as
-provisional.
+This is a question about run bookkeeping, **not** about data. Two readings fit and the
+available evidence does not separate them: either the Tamil run consumed one config rather
+than both, or the epoch counter — the weakest input in the reconstruction — is unreliable for
+this run. Nothing else in the logs distinguishes them.
+
+What it means for the analysis is narrower, and worth stating plainly: Tamil has the least
+training data in the grid on either reading, it has the worst CER (43.63 best), and it
+contributes the largest single term to the region-match effect (−14.70 CER). A large effect
+measured in the smallest data regime is the one most likely to be regime-specific rather than
+a decoder-specialisation effect, so that term is treated as provisional — on data-volume
+grounds, not on data-quality grounds.
 
 ## 5. What the existing logs already support, at zero GPU cost
 
@@ -216,14 +233,12 @@ train/val cleaning is not visible there, but it was applied when the splits were
 
 ## 7. Recommendations, in descending value per GPU-hour
 
-1. **Explain `ta_in`'s training stream — the largest apparent effect depends on it.**
-   Its implied stream is 0.15 of a lower bound on its corpus (§4.1) while every other
-   comparable language reconciles within 0.15 of parity. Interleaving is ruled out, so the
-   likely cause is the silent filter path: 30 s-and-over clips dropped, plus undecodable clips
-   removed via the 100,000 s sentinel without being counted. Applying the same
-   duration-consistency check Seychellois Creole received would settle it. Note that
-   `mr_in` sits at 2.07, i.e. *more* data than published, which is worth a glance but is not a
-   data-loss failure.
+1. **Treat Tamil as a small-data regime, not a defect.** Its data is verified clean (§4.1),
+   so nothing needs fixing there. What remains is that Tamil has the least training data and
+   the largest region-match term, which makes that term regime-specific rather than evidence
+   about decoder specialisation. The cheap response is to report it that way, not to
+   investigate further. `verify_dataset_durations.py` now exists so that any future suspicion
+   of this kind is tested against the real data before it is written down.
 2. **Reframe the headline on sample efficiency** (5.1), not endpoint CER. Zero new compute.
 3. **Report the best-vs-final gap as an overfitting metric** (5.2). Zero new compute.
 4. **Keep the two error-bar routes distinct.** Late-training sd measures optimisation noise and

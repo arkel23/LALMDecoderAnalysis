@@ -21,7 +21,8 @@ import pandas as pd
 import utils
 from utils import (CORE_VARIANTS, LANGUAGE_REGION, LANGUAGE_DIC, METHODS_DIC, MODEL_SHORT,
                    MODEL_FAMILY, TRAIN_EVAL_MATCH, EXCLUDED_MODELS_AGGREGATE,
-                   MULTI_CONFIG_TRAIN, WORLDSPEECH_HOURS,
+                   MULTI_CONFIG_TRAIN, WORLDSPEECH_TRAIN_EXAMPLES, TRAIN_CONFIGS,
+                   expected_stream_examples,
                    add_language_columns, assert_unique_keys, half_up,
                    is_excluded_from_aggregate)
 
@@ -92,19 +93,23 @@ check('the multi-config languages are recorded, without implying oversampling',
 check('every multi-config language lists exactly 2 configs',
       all(len(v) == 2 for v in MULTI_CONFIG_TRAIN.values()))
 
-# The published-hours snapshot must carry a scope for every language, because three of the
-# ten are not comparable config-to-config and would otherwise read as discrepancies.
-check('WORLDSPEECH_HOURS covers all 10 languages',
-      set(WORLDSPEECH_HOURS) == EXPECTED_LANGUAGES)
-check('every WORLDSPEECH_HOURS entry declares a scope',
-      all(v.get('scope') in ('config', 'lower_bound', 'not_comparable')
-          for v in WORLDSPEECH_HOURS.values()))
-check('en_us, fr_fr, es_419 are marked not_comparable (aggregated published totals)',
-      all(WORLDSPEECH_HOURS[k]['scope'] == 'not_comparable'
-          for k in ('en_us', 'fr_fr', 'es_419')))
-check('the multi-config languages are marked lower_bound',
-      all(WORLDSPEECH_HOURS[k]['scope'] == 'lower_bound'
-          for k in ('ta_in', 'ha_ng', 'sw_ke')))
+# The example-count snapshot replaced an hours snapshot taken from a summarised reading of
+# the WorldSpeech paper. That was the weakest input in the analysis and it produced a false
+# data-integrity finding, so these pin the replacement's shape.
+check('every training config in TRAIN_CONFIGS has a known example count',
+      all(all(c in WORLDSPEECH_TRAIN_EXAMPLES for c in cfgs)
+          for lang, (path, cfgs, split) in TRAIN_CONFIGS.items()
+          if path == 'disco-eth/WorldSpeech'))
+check('TRAIN_CONFIGS covers all 10 languages', set(TRAIN_CONFIGS) == EXPECTED_LANGUAGES)
+check('the multi-config languages in TRAIN_CONFIGS match MULTI_CONFIG_TRAIN',
+      {l for l, (_, c, _) in TRAIN_CONFIGS.items() if len(c) > 1}
+      == set(MULTI_CONFIG_TRAIN))
+check('expected_stream_examples sums the parts for ta_in (8846 + 23261)',
+      expected_stream_examples('ta_in') == 8846 + 23261)
+check('expected_stream_examples is None for crs_sc (ERISLab mirror not in snapshot)',
+      expected_stream_examples('crs_sc') is None)
+check('every example count is a positive int',
+      all(isinstance(v, int) and v > 0 for v in WORLDSPEECH_TRAIN_EXAMPLES.values()))
 
 # --- 2. Model dicts -----------------------------------------------------------------
 print('\n--- 2. model dicts ---')

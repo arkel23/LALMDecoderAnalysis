@@ -19,8 +19,10 @@ Three things this script is deliberately careful about:
 3. It flags non-clean cells rather than silently pooling them. fr_fr and es_419 are
    cross-dialect (trained on one dialect, evaluated on another), and any language whose
    training stream does not reconcile with the published corpus size is carried through from
-   the data-accounting table -- currently ta_in, whose implied stream is ~7x below a lower
-   bound on its corpus. Interleaving is NOT among these flags: the upstream loader uses
+   the data-accounting table -- currently ta_in, whose reconstruction matches one training
+   config rather than the sum of both. That is a bookkeeping observation, not a data problem:
+   the Tamil data is verified clean (verify_dataset_durations.py). Interleaving is NOT among
+   these flags either, because the upstream loader uses
    'all_exhausted_without_replacement', so the combined stream is exactly the sum of its
    parts (proved in verify_interleave_semantics.py).
 
@@ -152,7 +154,7 @@ def main():
     # see which cells rest on a training stream that does not reconcile with its corpus.
     if os.path.exists(args.accounting_file):
         acc = pd.read_csv(args.accounting_file)[
-            ['dataset', 'accounting_flag', 'ratio_implied_to_published']]
+            ['dataset', 'accounting_flag', 'ratio_implied_to_expected']]
         assert_unique_keys(acc, ['dataset'], label='t4 by-language join key')
         table = table.merge(acc, on='dataset', how='left')
 
