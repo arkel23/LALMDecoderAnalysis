@@ -1,0 +1,17 @@
+dataset,region,train_eval_match,matched_variant,matched,matched_excluded,mismatched_mean,n_mismatched,global,usable_primary,delta_vs_mismatched,delta_vs_global,analysis,accounting_flag,ratio_implied_to_expected
+en_us,water,clean,water,17.060000,True,4.665000,2,4.960000,False,12.395000,12.100000,primary_excluding_failed_runs,stream_never_exhausted_lower_bound_only,0.767941
+fr_fr,water,dialect_mismatch,water,6.360000,False,6.790000,2,6.610000,True,-0.430000,-0.250000,primary_excluding_failed_runs,reconciles,1.100837
+ha_ng,earth,clean,earth,33.430000,False,34.615000,2,35.030000,True,-1.185000,-1.600000,primary_excluding_failed_runs,reconciles,1.040981
+hi_in,fire,clean,fire,13.110000,False,12.050000,2,13.180000,True,1.060000,-0.070000,primary_excluding_failed_runs,stream_never_exhausted_lower_bound_only,0.886761
+id_id,water,clean,water,5.740000,False,6.135000,2,6.050000,True,-0.395000,-0.310000,primary_excluding_failed_runs,reconciles,1.009709
+mr_in,fire,clean,fire,13.570000,False,14.010000,2,14.140000,True,-0.440000,-0.570000,primary_excluding_failed_runs,reconciles,1.086598
+sw_ke,earth,clean,earth,13.530000,False,13.675000,2,12.600000,True,-0.145000,0.930000,primary_excluding_failed_runs,reconciles,1.201184
+ta_in,fire,clean,fire,43.630000,False,58.325000,2,61.210000,True,-14.695000,-17.580000,primary_excluding_failed_runs,reconciles,0.274876
+en_us,water,clean,water,17.060000,False,4.665000,2,4.960000,True,12.395000,12.100000,sensitivity_including_all_runs,stream_never_exhausted_lower_bound_only,0.767941
+fr_fr,water,dialect_mismatch,water,6.360000,False,6.790000,2,6.610000,True,-0.430000,-0.250000,sensitivity_including_all_runs,reconciles,1.100837
+ha_ng,earth,clean,earth,33.430000,False,34.615000,2,35.030000,True,-1.185000,-1.600000,sensitivity_including_all_runs,reconciles,1.040981
+hi_in,fire,clean,fire,13.110000,False,12.050000,2,13.180000,True,1.060000,-0.070000,sensitivity_including_all_runs,stream_never_exhausted_lower_bound_only,0.886761
+id_id,water,clean,water,5.740000,False,6.135000,2,6.050000,True,-0.395000,-0.310000,sensitivity_including_all_runs,reconciles,1.009709
+mr_in,fire,clean,fire,13.570000,False,14.010000,2,14.140000,True,-0.440000,-0.570000,sensitivity_including_all_runs,reconciles,1.086598
+sw_ke,earth,clean,earth,13.530000,False,13.675000,2,12.600000,True,-0.145000,0.930000,sensitivity_including_all_runs,reconciles,1.201184
+ta_in,fire,clean,fire,43.630000,False,58.325000,2,61.210000,True,-14.695000,-17.580000,sensitivity_including_all_runs,reconciles,0.274876

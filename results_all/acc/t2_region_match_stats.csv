@@ -1,0 +1,5 @@
+contrast,n_languages,mean_delta,median_delta,n_favouring_matched,ci95_low,ci95_high,sd_delta,wilcoxon_W,wilcoxon_p,min_detectable_effect,analysis,metric
+matched_vs_mismatched,7,-2.318571,-0.430000,6,-6.548286,0.121429,5.498424,5.000000,0.156250,6.967434,primary_excluding_failed_runs,best_cer
+matched_vs_global,7,-2.778571,-0.310000,6,-7.827143,0.095714,6.569202,5.000000,0.156250,8.324292,primary_excluding_failed_runs,best_cer
+matched_vs_mismatched,8,-0.479375,-0.412500,6,-5.651906,4.380000,7.278383,12.000000,0.460938,8.390631,sensitivity_including_all_runs,best_cer
+matched_vs_global,8,-0.918750,-0.280000,6,-6.755094,4.187562,8.041205,12.000000,0.460938,9.270024,sensitivity_including_all_runs,best_cer

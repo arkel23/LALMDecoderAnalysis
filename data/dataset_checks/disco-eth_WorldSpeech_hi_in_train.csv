@@ -1,0 +1,2 @@
+dataset_path,dataset_configs,split,n_configs,n_examples_sum_of_parts,mode
+disco-eth/WorldSpeech,hi_in,train,1,577382,metadata_only

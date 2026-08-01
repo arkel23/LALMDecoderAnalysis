@@ -13,7 +13,25 @@ grows a paper.
 - Work happens **locally**, under `/home/edwinrios/analysis/` — not `/mnt/c/...` (far less
   disk) and not the remote host. Anything CPU-bound (metrics, correlations, paper builds)
   runs here.
-- Conda env: **`pytorch`**. There is no `asr` env on this machine, whatever older docs say.
+- Conda envs: **two, and which one you need depends on the task.** (The previous claim here --
+  "there is no `asr` env on this machine" -- was wrong. It exists, and it is the only one that
+  can read audio.)
+
+  | | `pytorch` | `asr` |
+  |---|---|---|
+  | `datasets` | 5.0.0 | **4.5.0** (what the training runs used) |
+  | `transformers` | 5.14.1 | **4.57.5** (matches `transformers_version` in wandb) |
+  | `soundfile` / `torchcodec` | **absent / absent** | 0.14.0 / **0.9.1** |
+  | ffmpeg+libsndfile shared objects | **0** | 18 |
+  | `scipy` | present | **absent** |
+
+  - **Analysis, figures, verification -> `pytorch`.** It has scipy, which
+    `analyze_region_match.py` needs. `bash plotter.sh` runs here.
+  - **Anything that loads a dataset -> `asr`.** `pytorch` has *no audio backend at all*
+    (`datasets` 5.0.0 with neither soundfile nor torchcodec), so every audio read fails there.
+    `verify_dataset_durations.py --load` must run in `asr`.
+  - `asr` closely matches the remote GPU host, including `transformers` 4.57.5, so it is the
+    right env for reproducing anything about how the training runs consumed data.
 - The remote host `ubuntu@140.114.79.186` (`server-3090`, 1 x RTX 3090 24 GB) is for
   **GPU work and large-scale jobs**. As of 2026-07-31 all downloads, checkpoints and
   experiment scratch go under **`/hdd10tb/edwin/`** (9.1 TB) — one subfolder per job.

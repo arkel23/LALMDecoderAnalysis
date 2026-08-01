@@ -1,0 +1,2 @@
+dataset_path,dataset_configs,split,n_configs,n_examples_sum_of_parts,n_examples_interleaved,interleave_lossless,audio_hours_computed,n_corrupt_sentinel,duration_tol_s,n_removed_by_duration_filter,duration_consistent
+disco-eth/WorldSpeech,ta_in+ta_lk,test,2,1690,1690,True,11.998487,0,1.000000,0,True

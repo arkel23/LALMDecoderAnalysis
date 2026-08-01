@@ -19,8 +19,7 @@ import pandas as pd
 # wandb runs sharing a training/eval configuration, and SERIAL_DIC maps it to the label
 # used in figure legends.
 SERIAL_DIC = {
-    # 600: 'Connector-only SFT',   # --freeze_encoder --freeze_decoder (SLAM-style)
-    # 601: 'Decoder LoRA',
+    0: 'Connector-only SFT',   # --freeze_encoder --freeze_decoder (SLAM-style)
 }
 
 SERIALS_EXPLANATIONS = []
@@ -51,29 +50,272 @@ def get_canonical_labels(present=None):
 # The whole point of the project: these differ ONLY in the data composition used for their
 # post-training. Verify that claim against the official Tiny Aya report before drawing a
 # causal conclusion (see HANDOVER.md, "Correctness risks").
+# NOTE: the seeded keys said 'q2a_whisper_small_tiny_aya_*'. Those match nothing -- the runs
+# use whisper-MEDIUM and the full HF paths below. Verified against wandb serial 0.
 METHODS_DIC = {
-    'q2a_whisper_small_tiny_aya_base': 'TinyAya-base',
-    'q2a_whisper_small_tiny_aya_global': 'TinyAya-global',
-    'q2a_whisper_small_tiny_aya_earth': 'TinyAya-earth',
-    'q2a_whisper_small_tiny_aya_fire': 'TinyAya-fire',
-    'q2a_whisper_small_tiny_aya_water': 'TinyAya-water',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-base': 'TinyAya-base',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-global': 'TinyAya-global',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-earth': 'TinyAya-earth',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-fire': 'TinyAya-fire',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-water': 'TinyAya-water',
+    'q2a_openai/whisper-medium_Qwen/Qwen3-4B': 'Qwen3-4B',
 }
 
+# Short label keyed on the variant suffix, for tables that group by decoder rather than
+# by the full model_id string.
+MODEL_SHORT = {
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-base': 'base',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-global': 'global',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-earth': 'earth',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-fire': 'fire',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-water': 'water',
+    'q2a_openai/whisper-medium_Qwen/Qwen3-4B': 'qwen3-4b',
+}
+
+# The four variants that were run across the whole language grid. base and Qwen3-4B exist
+# only for crs_sc, so any cross-language aggregate must be restricted to these four or it
+# silently compares a 10-language mean against a 1-language mean.
+CORE_VARIANTS = ('earth', 'fire', 'global', 'water')
+
 # Grouping for figures that aggregate variants (e.g. regional vs non-regional).
+# Qwen3-4B is not a TinyAya variant at all -- it is the non-Aya control, and it belongs in
+# a topline reference row, never in the controlled comparison.
 MODEL_FAMILY = {
-    'q2a_whisper_small_tiny_aya_base': 'Non-regional',
-    'q2a_whisper_small_tiny_aya_global': 'Non-regional',
-    'q2a_whisper_small_tiny_aya_earth': 'Regional',
-    'q2a_whisper_small_tiny_aya_fire': 'Regional',
-    'q2a_whisper_small_tiny_aya_water': 'Regional',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-base': 'Non-regional',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-global': 'Non-regional',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-earth': 'Regional',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-fire': 'Regional',
+    'q2a_openai/whisper-medium_CohereLabs/tiny-aya-water': 'Regional',
+    'q2a_openai/whisper-medium_Qwen/Qwen3-4B': 'Non-Aya control',
 }
 
 # Models logged but excluded from aggregates, with the reason. Keep the raw data; exclude
 # at analysis time only, and state the reason in the paper.
-EXCLUDED_MODELS_AGGREGATE = []
+#
+# The en_us/water run converges to ~20 CER while earth/fire/global reach 4.5-5.4 on the
+# identical eval set. Its curve (225 -> 60 -> 33 -> 25 -> 21 -> 20) is a converged-but-bad
+# optimisation, not a late spike, so it is a failed run rather than a decoder effect.
+EXCLUDED_MODELS_AGGREGATE = [
+    {
+        'model_id': 'q2a_openai/whisper-medium_CohereLabs/tiny-aya-water',
+        'dataset': 'en_us',
+        'reason': 'optimisation failure: converges to ~20 CER vs 4.5-5.4 for the other '
+                  'three variants on the identical eval set',
+    },
+]
+
+
+# NOTE -- ta_in is deliberately NOT excluded, and must not be.
+# A filter bug cost it 72.4% of its intended training data (see MAX_INPUT_LENGTH_S), and an
+# earlier draft proposed dropping the language for that reason. That was wrong. The region-match
+# contrast is computed WITHIN a language: all four decoder variants consumed the identical
+# 8,846-clip stream, so the loss reduced every arm equally and cannot bias the comparison. It
+# only relocates Tamil on the data-volume axis, where it is the grid's only genuinely
+# low-resource point -- and the most informative one. See analyze_volume_interaction.py.
+
+
+def is_excluded_from_aggregate(model_id, dataset):
+    return any(e['model_id'] == model_id and e['dataset'] == dataset
+               for e in EXCLUDED_MODELS_AGGREGATE)
+
+
+# --- Languages ----------------------------------------------------------------------
+# TinyAya regional groupings. Earth = African, Fire = South Asian, Water = APAC / West
+# Asia / Europe.
+#
+# crs_sc (Seychellois Creole) is deliberately None, NOT 'earth'. It is an African language,
+# but it is officially supported by neither Whisper nor TinyAya, so it is the one cell where
+# BOTH the encoder and the decoder are unseen. That makes it an out-of-distribution transfer
+# probe rather than a region-matched cell, and including it in the matched-vs-mismatched test
+# would be comparing a different thing. It is reported separately.
+LANGUAGE_REGION = {
+    'ha_ng': 'earth',
+    'sw_ke': 'earth',
+    'hi_in': 'fire',
+    'mr_in': 'fire',
+    'ta_in': 'fire',
+    'en_us': 'water',
+    'fr_fr': 'water',
+    'es_419': 'water',
+    'id_id': 'water',
+    'crs_sc': None,
+}
+
+LANGUAGE_STATUS = {
+    'crs_sc': 'ood_encoder_and_decoder',
+}
+
+LANGUAGE_DIC = {
+    'crs_sc': 'Seychellois Creole',
+    'en_us': 'English',
+    'es_419': 'Spanish (LatAm)',
+    'fr_fr': 'French',
+    'ha_ng': 'Hausa',
+    'hi_in': 'Hindi',
+    'id_id': 'Indonesian',
+    'mr_in': 'Marathi',
+    'sw_ke': 'Swahili',
+    'ta_in': 'Tamil',
+}
+
+# Cells where the training condition is NOT a clean match for the eval condition. These are
+# not errors to drop, but they are not interchangeable with the clean cells either, and a
+# region-level claim that leans on them is weaker than it looks.
+#
+# NOTE on interleaving, which used to be listed here and is NOT a confound:
+# ta_in+ta_lk, ha_ng+ha_td and sw_ke+sw_tz are loaded by interleave_datasets with uniform
+# 1/N probabilities, which reads as though the smaller config would be oversampled. It is
+# not. The strategy is 'all_exhausted_without_replacement', so an exhausted config is never
+# recycled and the interleaved stream is exactly the sum of its parts, each example once.
+# verify_interleave_semantics.py proves this empirically (125 == 100 + 25, no duplicates, in
+# both the map-style and streaming paths). The uniform probabilities affect only ARRIVAL
+# ORDER, not how many times an example is seen. Do not re-add this as a confound.
+TRAIN_EVAL_MATCH = {
+    'fr_fr': 'dialect_mismatch',      # trains fr_ca, evaluates fr_fr
+    'es_419': 'dialect_mismatch',     # trains es_es (wandb says es_mx), evaluates es_419
+}
+
+# Languages whose training stream is built from more than one WorldSpeech config. Recorded
+# because it changes what the published per-config hour count means (it becomes a lower bound
+# on the combined stream), not because the interleaving distorts sampling.
+MULTI_CONFIG_TRAIN = {
+    'ta_in': ('ta_in', 'ta_lk'),
+    'ha_ng': ('ha_ng', 'ha_td'),
+    'sw_ke': ('sw_ke', 'sw_tz'),
+}
+
+# --- Training stream composition ------------------------------------------------------
+# The (dataset_path, configs, split) each language's connector was trained on, from the
+# upstream configs/train/*ws*.yaml. Used to look up authoritative example counts.
+TRAIN_CONFIGS = {
+    'en_us':  ('disco-eth/WorldSpeech', ('en_us',),          'train'),
+    'fr_fr':  ('disco-eth/WorldSpeech', ('fr_ca',),          'train'),
+    'es_419': ('disco-eth/WorldSpeech', ('es_es',),          'train'),
+    'hi_in':  ('disco-eth/WorldSpeech', ('hi_in',),          'train'),
+    'id_id':  ('disco-eth/WorldSpeech', ('id_id',),          'train'),
+    'mr_in':  ('disco-eth/WorldSpeech', ('mr_in',),          'train'),
+    'sw_ke':  ('disco-eth/WorldSpeech', ('sw_ke', 'sw_tz'),  'train'),
+    'ta_in':  ('disco-eth/WorldSpeech', ('ta_in', 'ta_lk'),  'train'),
+    'ha_ng':  ('disco-eth/WorldSpeech', ('ha_ng', 'ha_td'),  'train'),
+    'crs_sc': ('ERISLab/WorldSpeech',   ('crs_sc',),         'train_val_exc_clean'),
+}
+
+# --- WorldSpeech example counts: FROZEN SNAPSHOT -------------------------------------
+# num_examples per training config, read 2026-07-30 from the HuggingFace dataset builder
+# metadata (authoritative, and cheap -- no audio downloaded). Regenerate with
+# verify_dataset_durations.py.
+#
+# This replaced an earlier hours-based snapshot taken from a summarised web fetch of the
+# WorldSpeech paper's table. That snapshot was the weakest input in the analysis and it
+# produced a false positive: it implied Tamil should hold ~240 h, which disagreed with the
+# reconstructed stream and was written up as a data-integrity problem. It was not one. Direct
+# testing on the real data (verify_dataset_durations.py --load) showed the Tamil configs
+# interleave losslessly and that the duration-consistency filter removes ZERO samples.
+# Compare against example counts, which have real provenance -- not against numbers recovered
+# from prose.
+WORLDSPEECH_TRAIN_EXAMPLES = {
+    'en_us':  666718,
+    'fr_ca':  207449,
+    'es_es':  866048,
+    'es_mx':  205972,
+    'hi_in':  577382,
+    'sw_ke':  101774,
+    'sw_tz':  200314,
+    'ha_ng':  11865,
+    'ha_td':  15390,
+    'ta_in':  8846,
+    'ta_lk':  23261,
+    'mr_in':  58201,
+    'id_id':  101112,
+}
+
+
+# --- The duration cap, and the silent data loss it caused ----------------------------
+# Every configs/train/*ws*.yaml sets max_input_length: 30, and the upstream filter keeps a clip
+# when `length < max_input_length` -- a STRICT comparison. So a clip of exactly 30.000 s is
+# DROPPED, not kept.
+#
+# That interacts catastrophically with a corpus pre-segmented into fixed 30-second windows.
+# WorldSpeech ta_lk is exactly that: 100/100 sampled rows sit at 30.00 s, so all 23,261 clips
+# fail the filter and the Tamil training stream collapses to ta_in alone -- 8,846 of 32,107
+# intended clips, a 72.4% silent loss. Confirmed directly by filtering the interleaved stream.
+MAX_INPUT_LENGTH_S = 30
+
+# Fraction of each config's clips at or above MAX_INPUT_LENGTH_S, i.e. removed by the filter.
+# FROZEN SNAPSHOT, measured 2026-07-30 without downloading audio: the datasets-server `rows`
+# endpoint for a 100-row sample of the `duration` column, cross-checked against the
+# `statistics` endpoint's min/max where it was available. Regenerate with
+# verify_dataset_durations.py.
+#
+# Only ta_lk is total. fr_ca loses ~4% (4/100 sampled >= 30 s, max 52.54 s). hi_in, sw_ke and
+# ha_ng sampled 0/100 at the cap. en_us (max 20.00), es_es (25.00), es_mx (20.00) and sw_tz
+# (29.98) are bounded below the cap by their published duration statistics.
+CONFIG_DURATION_AT_CAP = {
+    'ta_lk': 1.00,
+    # ta_in: 0.00 is not a sample, it is proven. Filtering the interleaved ta_in+ta_lk stream
+    # with the real training filter leaves exactly 8,846 rows == len(ta_in), so every ta_in
+    # clip survived the cap and every ta_lk clip was removed.
+    'ta_in': 0.00,
+    'fr_ca': 0.04,
+    'hi_in': 0.00,
+    'sw_ke': 0.00,
+    'ha_ng': 0.00,
+    'en_us': 0.00,
+    'es_es': 0.00,
+    'es_mx': 0.00,
+    'sw_tz': 0.00,
+    # ta_in, ha_td, mr_in, id_id: the rows endpoint returned HTTP 500 (config not cached), but
+    # each language's stream reconciles with its full example count in t4, which is independent
+    # evidence that the cap is not removing a material share.
+}
+
+
+# Configs already known to be gutted by the strict cap, with the loss analysed and written up
+# (docs/UPSTREAM_FIXES.md). The screen acknowledges these instead of failing on them forever, so
+# it gates on NEW regressions rather than on a documented problem awaiting an upstream fix.
+KNOWN_AT_CAP_CONFIGS = ('ta_lk',)
+
+
+def expected_stream_examples(language, post_filter=False):
+    """Total examples in a language's training stream.
+
+    Sound because interleaving is lossless: 'all_exhausted_without_replacement' never
+    recycles an exhausted config, so a combined stream is exactly the sum of its parts
+    (verify_interleave_semantics.py, and confirmed on the real Tamil configs).
+    Returns None when any part is unknown -- crs_sc trains on an ERISLab mirror whose split
+    is not in the snapshot.
+    """
+    entry = TRAIN_CONFIGS.get(language)
+    if not entry:
+        return None
+    _, configs, _ = entry
+    counts = [WORLDSPEECH_TRAIN_EXAMPLES.get(c) for c in configs]
+    if not all(c is not None for c in counts):
+        return None
+    if not post_filter:
+        return sum(counts)
+    # Post-filter: subtract each config's at-cap share. This is what the model actually saw,
+    # and it is what makes ta_in reconcile (32,107 -> 8,846) instead of looking anomalous.
+    return sum(c * (1.0 - CONFIG_DURATION_AT_CAP.get(cfg, 0.0))
+               for cfg, c in zip(configs, counts))
+
 
 # --- Datasets and metrics -----------------------------------------------------------
-DATASETS_DIC = {}
+# Keyed on the dataset_name that standarize_df builds: dataset_path_dataset_split.
+# Eight languages evaluate on FLEURS, one on WorldSpeech test, one on the ERISLab mirror --
+# so raw CER must never be pooled across languages.
+DATASETS_DIC = {
+    'ERISLab/WorldSpeech_crs_sc_val_clean': 'Seychellois Creole (WS)',
+    'disco-eth/WorldSpeech_ha_ng_test': 'Hausa (WS)',
+    'google/fleurs_en_us_validation': 'English (FLEURS)',
+    'google/fleurs_es_419_validation': 'Spanish (FLEURS)',
+    'google/fleurs_fr_fr_validation': 'French (FLEURS)',
+    'google/fleurs_hi_in_validation': 'Hindi (FLEURS)',
+    'google/fleurs_id_id_validation': 'Indonesian (FLEURS)',
+    'google/fleurs_mr_in_validation': 'Marathi (FLEURS)',
+    'google/fleurs_sw_ke_validation': 'Swahili (FLEURS)',
+    'google/fleurs_ta_in_validation': 'Tamil (FLEURS)',
+}
 
 METRIC_DIC = {
     'acc': 'Accuracy',
@@ -87,6 +329,53 @@ VAR_DIC = {
     'no_params': 'Number of Parameters (10^6)',
     'serial': 'Condition',
 }
+
+
+def half_up(value, decimals):
+    """Round half away from zero, the way a printed number is expected to round.
+
+    Python's built-in round() is banker's rounding: round(5.25, 1) is 5.2, not 5.3. That
+    difference produced two wrong printed numbers in a sibling repo, so every number that
+    reaches a table goes through this instead.
+    """
+    from decimal import Decimal, ROUND_HALF_UP
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    quant = Decimal(1).scaleb(-decimals)
+    return float(Decimal(str(value)).quantize(quant, rounding=ROUND_HALF_UP))
+
+
+def assert_unique_keys(df, key_cols, label=''):
+    """Fail loudly if key_cols does not uniquely identify a row.
+
+    A merge on a non-unique key silently produces the cross product: k rows against k rows
+    becomes k^2 pairs. That is invisible in the output, which just looks like a larger and
+    more reassuring n, and it corrupted a headline table in a sibling repo. Every merge and
+    every paired subtraction in this repo calls this first.
+    """
+    dupes = df.duplicated(subset=key_cols, keep=False)
+    if dupes.any():
+        offenders = df.loc[dupes, key_cols].drop_duplicates()
+        raise AssertionError(
+            f'{label or "df"}: {key_cols} is not unique -- '
+            f'{int(dupes.sum())} duplicated rows across {len(offenders)} key(s):\n'
+            f'{offenders.to_string(index=False)}'
+        )
+    return df
+
+
+def add_language_columns(df, lang_col='dataset'):
+    """Attach region / status / train-eval-match metadata keyed on the language code."""
+    if lang_col not in df.columns:
+        return df
+    df = df.copy()
+    df['language_name'] = df[lang_col].map(LANGUAGE_DIC)
+    df['region'] = df[lang_col].map(LANGUAGE_REGION)
+    df['language_status'] = df[lang_col].map(LANGUAGE_STATUS).fillna('in_domain')
+    df['train_eval_match'] = df[lang_col].map(TRAIN_EVAL_MATCH).fillna('clean')
+    if 'model_id' in df.columns:
+        df['model_short'] = df['model_id'].map(MODEL_SHORT)
+    return df
 
 
 def rename_var(x):
