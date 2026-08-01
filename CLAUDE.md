@@ -14,8 +14,12 @@ grows a paper.
   disk) and not the remote host. Anything CPU-bound (metrics, correlations, paper builds)
   runs here.
 - Conda env: **`pytorch`**. There is no `asr` env on this machine, whatever older docs say.
-- The remote host `ubuntu@140.114.79.186` is for **GPU/model inference only** — generating
-  new transcripts. Download to `/hdd/edwin/`, never to `~`.
+- The remote host `ubuntu@140.114.79.186` (`server-3090`, 1 x RTX 3090 24 GB) is for
+  **GPU work and large-scale jobs**. As of 2026-07-31 all downloads, checkpoints and
+  experiment scratch go under **`/hdd10tb/edwin/`** (9.1 TB) — one subfolder per job.
+  Never `~`, never `/` (~91% full). The old `/hdd/edwin/` and `/media/samsung/` paths
+  are superseded; `/media/samsung` is nearly full. Use `conda activate asr` there.
+  For big downloads prefer `hf download <repo> --local-dir <dir>`.
 - LaTeX: TeX Live 2025, `pdflatex`/`bibtex` work. `pdftoppm` is **not** installed; use
   `mutool draw -r 110 -o out%d.png main.pdf 1-N` to render pages.
 
