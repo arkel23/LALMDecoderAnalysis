@@ -1,5 +1,59 @@
 # Change log
 
+## 2026-08-01 — two new languages, a re-serial, and the volume hypothesis weakens
+
+### wandb hygiene
+`en_us`/water had been run twice under serial 0, breaking the one-row-per-cell contract. New
+**`rename_wandb_serial.py`** (selection by explicit run id, because a re-run is
+config-identical to its original) moved the superseded 2026-07-27 run to **serial 1** and
+rewrote its name suffix. Dry-run by default; applied and verified.
+
+### The grid is now 12 languages
+`am_et` (Amharic, ~40 h) and `ur_pk` (Urdu, ~80 h) fill the low and middle resource tiers, and
+`ta_in` gained `base` + `Qwen3-4B`. `RESOURCE_TIER` encodes the four tiers; all four are now
+populated, which was the point of the additions.
+
+**Spanish changed underneath the analysis.** The Spain-Spanish (`es_es`) runs were deleted and
+re-run from `es_mx`. That halves the cell's stream (866k -> 206k clips) and removes its
+dialect-mismatch flag, since Mexican Spanish is inside the Latin American variety FLEURS
+`es_419` evaluates.
+
+**`en_us`/water is no longer excluded.** It replicated (12.05 vs 17.06, both far worse than the
+other variants), so it is an effect rather than a failed run -- and since water is English's
+matched variant, excluding it had been removing the strongest against-hypothesis point.
+`EXCLUDED_MODELS_AGGREGATE` is now empty.
+
+### The headline result weakened, and that is the finding
+With 7 languages the volume trend was rho 0.96, p 0.0005, robust to dropping Tamil. With 10 it
+is rho 0.721, p 0.0186 -- and **no longer robust** (p 0.0769 without Tamil). The cause is one
+cell: `am_et` has 8,873 clips against `ta_in`'s 8,846 but a delta of +0.64 versus -14.70. Same
+volume, opposite sign. Tamil's outlier is about Tamil, not about being low-resource. Region
+matching itself is a clean null: mean -0.81 CER, p 0.695, MDE 5.42.
+
+### Added
+- **`analyze_loss_metrics.py`** (t6): separates overfitting (eval loss rising after its own
+  minimum) from domain/accent shift (a large train-eval gap with no rise). Overfitting is
+  monotone in resource tier (0.195 / 0.028 / 0.003), and cross-domain evals show a 6x larger
+  generalisation gap with the same near-zero rise -- the two are separable.
+- **`fetch_tinyaya_composition.py`**: parses the Tiny Aya report's Appendix A tables
+  (arXiv:2603.11510, Tables 8-14) into a CSV, turning "specialisation" from a categorical label
+  into a continuous per-language exposure variable. Stdlib-only parser (no lxml). Validated by
+  reproducing each region's printed Subtotal and by checking the mix->variant mapping against
+  the numbers. Caught its own bug: `Subtotal` rows were first counted as languages, inflating
+  every mix total to ~180 %.
+- **`for_quantizedasr/`**: a WorldSpeech in-domain eval config generator and a both-domains
+  eval sweep (serial 420), written in QuantizedASR's style but kept here, since that repo is
+  not modified from this session.
+
+### Corrections
+- The regional definition was wrong: Earth is Africa **+ West Asia**, Water is Asia-Pacific
+  **+ Europe**. No executed language is West Asian so no assignment changed, but the definition
+  is now recorded correctly.
+- Urdu is ambiguous: the report's Table 1 places it in South Asia, Appendix Table 10 under West
+  Asia. Assigned `fire` because the fire mix carries 3.4 % Urdu against 1.3 % earth.
+
+---
+
 ## 2026-07-30 (fifth pass) — a filter bug becomes the study's central finding
 
 The strict `< 30 s` duration cap silently discarded 72.4 % of the Tamil training data, and

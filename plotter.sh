@@ -80,6 +80,16 @@ else
   echo "Skipping dataset metadata check (exists)"
 fi
 
+# --- 1c. Tiny Aya post-training composition ----------------------------------------
+# Parses the report's Appendix A tables into a CSV, turning "specialisation" from a
+# categorical label into a continuous per-language exposure variable. Cached after the first
+# fetch; delete data/tinyaya_report/ to re-download.
+if [ ! -f "data/tinyaya_report/tinyaya_language_composition_wide.csv" ]; then
+  python -u fetch_tinyaya_composition.py
+else
+  echo "Skipping Tiny Aya composition fetch (exists)"
+fi
+
 # --- 2. Sanity gate ----------------------------------------------------------------
 # Cheap, and it runs before anything derives numbers: per-dataset run counts and state
 # breakdowns, so a half-finished grid is visible rather than silently averaged.
@@ -116,6 +126,12 @@ python -u analyze_ood_crs.py \
 
 # The headline analysis: does the region-match benefit depend on training-data volume? Consumes
 # t2 (per-language contrasts) and t4 (reconstructed stream sizes), so it runs after both.
+# Loss diagnostics: separates overfitting (eval loss rising after its own minimum) from
+# domain/accent shift (a large train-eval gap with no rise). Both curves are already logged.
+python -u analyze_loss_metrics.py \
+  --input_file "$HIST" --output_file "$ACC/t6_loss_metrics.csv" \
+  --summary_file "$ACC/t6_loss_by_axis.csv"
+
 python -u analyze_volume_interaction.py \
   --region_file "$ACC/t2_region_match.csv" \
   --accounting_file "$ACC/t4_data_accounting_by_language.csv" \

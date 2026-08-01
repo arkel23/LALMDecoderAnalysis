@@ -36,6 +36,7 @@ T3 = os.path.join(ACC, 't3_crs_ood.csv')
 T4L = os.path.join(ACC, 't4_data_accounting_by_language.csv')
 T5 = os.path.join(ACC, 't5_volume_interaction.csv')
 T5S = os.path.join(ACC, 't5_volume_stats.csv')
+T6A = os.path.join(ACC, 't6_loss_by_axis.csv')
 RAW = os.path.join('data', 'raw_serials', 'raw_serial_0.csv')
 
 CORE = ('earth', 'fire', 'global', 'water')
@@ -171,6 +172,22 @@ def _t2_delta(lang):
     return sel.iloc[0]['delta_vs_mismatched']
 
 
+def _axis(axis, level, col):
+    d = load(T6A)
+    sel = d[(d['axis'] == axis) & (d['level'] == level)]
+    assert len(sel) == 1, f'{axis}/{level} matched {len(sel)} rows in {T6A}'
+    return float(sel.iloc[0][col])
+
+
+def _tier_monotone(col):
+    """Tier order very_low -> low -> mid -> high must be non-increasing in `col`."""
+    d = load(T6A)
+    d = d[d['axis'] == 'resource_tier'].set_index('level')
+    order = [t for t in ('very_low', 'low', 'mid', 'high') if t in d.index]
+    vals = [float(d.loc[t, col]) for t in order]
+    return all(a >= b - 1e-9 for a, b in zip(vals, vals[1:]))
+
+
 def _t5(lang, col):
     d = load(T5)
     sel = d[d['dataset'] == lang]
@@ -213,13 +230,15 @@ def _base_param_delta():
 # (claim, callable -> bool). These are the claims a data correction invalidates without
 # changing any printed digit, so nothing else would catch them.
 ORDERINGS = [
-    ('global is slowest (worst mean rank) on sample efficiency',
+    # NOTE -- several claims here changed on 2026-08-01 when am_et and ur_pk were added, the
+    # Spain-Spanish runs were replaced by es_mx, and the en_us/water re-run removed the last
+    # exclusion. The old claims were not "fixed"; they were falsified by more data, and the
+    # replacements below record what is true now. That is what this list is for.
+    ('global is the slowest variant on sample efficiency',
      lambda: rank_means('audio_h_to_1.5x_best').idxmax() == 'global'),
-    ('fire is fastest (best mean rank) on sample efficiency',
-     lambda: rank_means('audio_h_to_1.5x_best').idxmin() == 'fire'),
-    ('global is worst mean rank on best_cer too',
+    ('global is also the worst mean rank on best_cer',
      lambda: rank_means('best_cer').idxmax() == 'global'),
-    ('the sample-efficiency and accuracy orderings differ',
+    ('the sample-efficiency and accuracy orderings still differ',
      lambda: list(rank_means('audio_h_to_1.5x_best').sort_values().index)
      != list(rank_means('best_cer').sort_values().index)),
     ('every region-match confidence interval spans zero (no significant effect)',
@@ -232,77 +251,65 @@ ORDERINGS = [
                  for a in ('primary_excluding_failed_runs',
                            'sensitivity_including_all_runs')
                  for c in ('matched_vs_mismatched', 'matched_vs_global'))),
-    ('median within-run noise exceeds the sensitivity-analysis mean effect',
+    ('median within-run noise exceeds the mean region effect',
      lambda: finished_core()['late_sd'].median()
      > abs(stat('sensitivity_including_all_runs', 'matched_vs_mismatched', 'mean_delta'))),
-    ('excluding the failed run increases the apparent effect (so it must be disclosed)',
-     lambda: abs(stat('primary_excluding_failed_runs', 'matched_vs_mismatched', 'mean_delta'))
-     > abs(stat('sensitivity_including_all_runs', 'matched_vs_mismatched', 'mean_delta'))),
-    ('crs_sc variant spread is smaller than the largest per-run noise there',
-     lambda: (lambda d: (d['best_cer'].max() - d['best_cer'].min()) < 2.0)(
-         load(T3).query("state == 'finished'"))),
+    # No runs are excluded any more: en_us/water replicated, so it is an effect, not a failure.
+    ('no runs are excluded from aggregates',
+     lambda: int(load(T1)['excluded_from_aggregate'].sum()) == 0),
+    ('the primary and sensitivity analyses are now identical (nothing excluded)',
+     lambda: stat('primary_excluding_failed_runs', 'matched_vs_mismatched', 'mean_delta')
+     == stat('sensitivity_including_all_runs', 'matched_vs_mismatched', 'mean_delta')),
     ('best_cer <= final_cer for every run',
      lambda: bool((load(T1)['best_cer'] <= load(T1)['final_cer'] + 1e-9).all())),
-    ('exactly one run is excluded from aggregates',
-     lambda: int(load(T1)['excluded_from_aggregate'].sum()) == 1),
     ('all four regional/global variants share one parameter count',
      lambda: _regional_params() > 0),
 
-    # Data accounting. Once the strict `< 30 s` cap is accounted for, NOTHING fails to
-    # reconcile -- ta_in's apparent anomaly was the 23,261 dropped ta_lk clips.
+    # --- data accounting -------------------------------------------------------------
     ('no language fails to reconcile post-filter',
      lambda: load(T4L).query(
          "accounting_flag == 'does_not_reconcile_see_docstring'").empty),
     ('ta_in reconciles once the cap loss is accounted for',
      lambda: abs(float(_acc('ta_in', 'ratio_implied_to_expected_post_filter')) - 1.0) < 0.05),
-    ('ta_in did NOT reconcile against the pre-filter count (the loss is real, not a fudge)',
+    ('ta_in did NOT reconcile against the pre-filter count (the loss is real)',
      lambda: float(_acc('ta_in', 'ratio_implied_to_expected')) < 0.5),
-    ('ta_in is the only language losing clips to the cap besides fr_fr',
+    ('only ta_in and fr_fr lose clips to the cap',
      lambda: set(load(T4L).query("n_dropped_by_cap > 0")['dataset']) == {'ta_in', 'fr_fr'}),
-    ('every language with a known expected size reconciles post-filter',
-     lambda: set(load(T4L).query("accounting_flag == 'reconciles'")['dataset'])
-     == {'id_id', 'ha_ng', 'mr_in', 'fr_fr', 'sw_ke', 'ta_in'}),
-
-    # The headline interaction. These are the claims a data correction would silently break.
-    ('the region-match effect is monotone in stream rank except the id_id/fr_fr swap',
-     lambda: _monotone_except_one()),
-    ('the volume correlation is strong and significant with all languages',
-     lambda: (_t5s('all_languages', 'log10_stream', 'delta_vs_mismatched', 'spearman_rho') > 0.9
-              and _t5s('all_languages', 'log10_stream', 'delta_vs_mismatched',
-                       'spearman_p') < 0.01)),
-    ('it SURVIVES dropping the extreme point -- not an outlier artefact',
-     lambda: (_t5s('excluding_ta_in', 'log10_stream', 'delta_vs_mismatched',
-                   'spearman_rho') > 0.9
-              and _t5s('excluding_ta_in', 'log10_stream', 'delta_vs_mismatched',
-                       'spearman_p') < 0.01)),
-    ('volume and baseline CER are collinear, so the two explanations are entangled',
-     lambda: _t5s('all_languages', 'log10_stream', 'baseline_cer', 'spearman_rho') < -0.5),
-    ('the RELATIVE effect shows a weaker, non-significant trend -- stated, not hidden',
-     lambda: _t5s('all_languages', 'log10_stream',
-                  'relative_delta_vs_mismatched_pct', 'spearman_p') > 0.05),
-    ('the partial correlation is NOT significant with all languages (inconclusive, df=4)',
-     lambda: _t5s('all_languages', 'log10_stream|baseline_cer',
-                  'delta_vs_mismatched', 'pearson_p') > 0.05),
-    ('only ta_in and fr_fr lose clips to the cap in the volume table',
-     lambda: set(load(T5).query("n_dropped_by_cap > 0")['dataset']) == {'ta_in', 'fr_fr'}),
-    ('ta_in has the worst best_cer in the grid (the small-data regime)',
-     lambda: (lambda d: d.loc[d['best_cer'].idxmax(), 'dataset'])(
-         load(T1).query("state == 'finished'").groupby('dataset', as_index=False)
-         .agg(best_cer=('best_cer', 'min'))) == 'ta_in'),
-    ('ta_in carries the largest-magnitude region-match delta',
-     lambda: (lambda d: d.loc[d['delta_vs_mismatched'].abs().idxmax(), 'dataset'])(
-         load(os.path.join(ACC, 't2_region_match.csv')).query(
-             "analysis == 'primary_excluding_failed_runs'"
-         ).dropna(subset=['delta_vs_mismatched'])) == 'ta_in'),
     ('en_us and hi_in never exhausted their streams, so are lower bounds only',
      lambda: set(load(T4L).query(
          "accounting_flag == 'stream_never_exhausted_lower_bound_only'")['dataset'])
      == {'en_us', 'hi_in'}),
-    ('every language reports an estimate_kind',
-     lambda: load(T4L)['estimate_kind'].isin(['estimate', 'lower_bound']).all()),
-    ('mean sample duration is within the 30 s cap for every run',
-     lambda: bool(load(os.path.join(ACC, 't4_data_accounting.csv'))[
-         'mean_sample_seconds_within_cap'].all())),
+
+    # --- the volume interaction, as it now stands ------------------------------------
+    # These are the claims that changed most, and the honest versions are weaker.
+    ('the volume correlation is still significant over all languages',
+     lambda: (_t5s('all_languages', 'log10_stream', 'delta_vs_mismatched',
+                   'spearman_rho') > 0.5
+              and _t5s('all_languages', 'log10_stream', 'delta_vs_mismatched',
+                       'spearman_p') < 0.05)),
+    ('but it NO LONGER survives dropping the extreme point -- it did with 7 languages',
+     lambda: _t5s('excluding_ta_in', 'log10_stream', 'delta_vs_mismatched',
+                  'spearman_p') > 0.05),
+    ('am_et and ta_in sit at the same volume with OPPOSITE signs -- the key new evidence',
+     lambda: (lambda d: (abs(d.loc['am_et', 'stream_post_filter']
+                             - d.loc['ta_in', 'stream_post_filter']) < 500
+                         and d.loc['am_et', 'delta_vs_mismatched'] > 0
+                         > d.loc['ta_in', 'delta_vs_mismatched']))(
+         load(T5).set_index('dataset'))),
+    ('volume and baseline CER are collinear, so the explanations stay entangled',
+     lambda: _t5s('all_languages', 'log10_stream', 'baseline_cer', 'spearman_rho') < -0.3),
+
+    # --- loss diagnostics ------------------------------------------------------------
+    ('overfitting (eval-loss rise) is monotone in resource tier',
+     lambda: _tier_monotone('median_eval_loss_rise')),
+    ('low-resource cells reach their best eval loss far earlier in the run',
+     lambda: _axis('resource_tier', 'very_low', 'mean_frac_to_best')
+     < _axis('resource_tier', 'high', 'mean_frac_to_best')),
+    ('cross-domain evals have a larger generalisation gap than in-domain',
+     lambda: _axis('eval_domain', 'cross_domain', 'median_generalisation_gap')
+     > _axis('eval_domain', 'in_domain', 'median_generalisation_gap')),
+    ('but domain shift does NOT show up as overfitting -- the two are separable',
+     lambda: _axis('eval_domain', 'cross_domain', 'median_eval_loss_rise') < 0.05),
 ]
 
 

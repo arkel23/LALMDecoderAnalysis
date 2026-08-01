@@ -130,3 +130,29 @@ set -u
 #     --legend_outside --output_file s0/s0_volume_interaction --results_dir results_all/plots
 #   md5sum results_all/plots/s0/s0_volume_interaction.png
 # done
+
+# --- 2026-08-01: move the superseded en_us/water run off serial 0. RUN, applied. -----------
+# The cell was run twice (n4cot5v7 2026-07-27 best 17.06; pwnz2zno 2026-07-31 best 12.05),
+# which broke the one-row-per-(model, language) contract every analysis table asserts. The
+# ORIGINAL moves to serial 1 so serial 0 stays the canonical grid and the superseded run stays
+# retrievable. Dry run first (the default), then --execute. MUTATES a live W&B project.
+# Spent -- leave commented.
+#
+# python -u rename_wandb_serial.py --run_ids n4cot5v7 --from_serial 0 --to_serial 1
+# python -u rename_wandb_serial.py --run_ids n4cot5v7 --from_serial 0 --to_serial 1 --execute
+
+# --- 2026-08-01: screen the two new languages for the 30 s cap. RUN, both clean. -----------
+# am_et 0/100 at the cap (mean 15.36 s), ur_pk 0/100 (mean 8.36 s). Spent -- leave commented.
+#
+# for cfg in am_et ur_pk ur_in; do
+#   python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
+#     --dataset_configs "$cfg" --split train
+# done
+
+# --- 2026-08-01: generate the WorldSpeech in-domain eval configs. NOT YET RUN in ------------
+# QuantizedASR. These belong to that repo; developed here under for_quantizedasr/ because
+# QuantizedASR is not modified from this session. Copy for_quantizedasr/tools/ and
+# for_quantizedasr/scripts/ into that checkout, then run from its root:
+#
+#   python tools/preprocess/create_yamls_worldspeech_lalm.py   # writes 11 configs
+#   bash scripts/eval_lalm_decoder.sh                          # serial 420, both domains

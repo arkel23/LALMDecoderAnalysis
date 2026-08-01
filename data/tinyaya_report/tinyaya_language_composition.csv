@@ -1,0 +1,293 @@
+language,row_type,report_region,report_table,mix,variant,proportion_pct,source_url
+English,language,English,Table 8,All Regions,global,13.800000,https://arxiv.org/html/2603.11510v1
+English,language,English,Table 8,South Asia,fire,46.200000,https://arxiv.org/html/2603.11510v1
+English,language,English,Table 8,Europe+WA+AP,water,17.000000,https://arxiv.org/html/2603.11510v1
+English,language,English,Table 8,Europe+WA+Af,earth,18.100000,https://arxiv.org/html/2603.11510v1
+Dutch,language,Europe,Table 9,All Regions,global,1.600000,https://arxiv.org/html/2603.11510v1
+Dutch,language,Europe,Table 9,South Asia,fire,0.200000,https://arxiv.org/html/2603.11510v1
+Dutch,language,Europe,Table 9,Europe+WA+AP,water,2.000000,https://arxiv.org/html/2603.11510v1
+Dutch,language,Europe,Table 9,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+French,language,Europe,Table 9,All Regions,global,1.800000,https://arxiv.org/html/2603.11510v1
+French,language,Europe,Table 9,South Asia,fire,0.200000,https://arxiv.org/html/2603.11510v1
+French,language,Europe,Table 9,Europe+WA+AP,water,2.200000,https://arxiv.org/html/2603.11510v1
+French,language,Europe,Table 9,Europe+WA+Af,earth,2.300000,https://arxiv.org/html/2603.11510v1
+Italian,language,Europe,Table 9,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Italian,language,Europe,Table 9,South Asia,fire,0.300000,https://arxiv.org/html/2603.11510v1
+Italian,language,Europe,Table 9,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Italian,language,Europe,Table 9,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+Portuguese,language,Europe,Table 9,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Portuguese,language,Europe,Table 9,South Asia,fire,0.300000,https://arxiv.org/html/2603.11510v1
+Portuguese,language,Europe,Table 9,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Portuguese,language,Europe,Table 9,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+Romanian,language,Europe,Table 9,All Regions,global,1.600000,https://arxiv.org/html/2603.11510v1
+Romanian,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Romanian,language,Europe,Table 9,Europe+WA+AP,water,2.000000,https://arxiv.org/html/2603.11510v1
+Romanian,language,Europe,Table 9,Europe+WA+Af,earth,2.100000,https://arxiv.org/html/2603.11510v1
+Spanish,language,Europe,Table 9,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Spanish,language,Europe,Table 9,South Asia,fire,0.200000,https://arxiv.org/html/2603.11510v1
+Spanish,language,Europe,Table 9,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Spanish,language,Europe,Table 9,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+Czech,language,Europe,Table 9,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Czech,language,Europe,Table 9,South Asia,fire,0.300000,https://arxiv.org/html/2603.11510v1
+Czech,language,Europe,Table 9,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Czech,language,Europe,Table 9,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+Polish,language,Europe,Table 9,All Regions,global,1.400000,https://arxiv.org/html/2603.11510v1
+Polish,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Polish,language,Europe,Table 9,Europe+WA+AP,water,1.700000,https://arxiv.org/html/2603.11510v1
+Polish,language,Europe,Table 9,Europe+WA+Af,earth,1.800000,https://arxiv.org/html/2603.11510v1
+Ukrainian,language,Europe,Table 9,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Ukrainian,language,Europe,Table 9,South Asia,fire,0.200000,https://arxiv.org/html/2603.11510v1
+Ukrainian,language,Europe,Table 9,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Ukrainian,language,Europe,Table 9,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+Russian,language,Europe,Table 9,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Russian,language,Europe,Table 9,South Asia,fire,0.200000,https://arxiv.org/html/2603.11510v1
+Russian,language,Europe,Table 9,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Russian,language,Europe,Table 9,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+Greek,language,Europe,Table 9,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Greek,language,Europe,Table 9,South Asia,fire,0.200000,https://arxiv.org/html/2603.11510v1
+Greek,language,Europe,Table 9,Europe+WA+AP,water,2.000000,https://arxiv.org/html/2603.11510v1
+Greek,language,Europe,Table 9,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+German,language,Europe,Table 9,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+German,language,Europe,Table 9,South Asia,fire,0.200000,https://arxiv.org/html/2603.11510v1
+German,language,Europe,Table 9,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+German,language,Europe,Table 9,Europe+WA+Af,earth,2.300000,https://arxiv.org/html/2603.11510v1
+Danish,language,Europe,Table 9,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Danish,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Danish,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Danish,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Swedish,language,Europe,Table 9,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Swedish,language,Europe,Table 9,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Swedish,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Swedish,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Norwegian,language,Europe,Table 9,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Norwegian,language,Europe,Table 9,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Norwegian,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Norwegian,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Catalan,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Catalan,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Catalan,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Catalan,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Galician,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Galician,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Galician,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Galician,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Welsh,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Welsh,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Welsh,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Welsh,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Irish,language,Europe,Table 9,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Irish,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Irish,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Irish,language,Europe,Table 9,Europe+WA+Af,earth,1.300000,https://arxiv.org/html/2603.11510v1
+Basque,language,Europe,Table 9,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Basque,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Basque,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Basque,language,Europe,Table 9,Europe+WA+Af,earth,1.300000,https://arxiv.org/html/2603.11510v1
+Croatian,language,Europe,Table 9,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Croatian,language,Europe,Table 9,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Croatian,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Croatian,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Latvian,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Latvian,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Latvian,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Latvian,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Lithuanian,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Lithuanian,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Lithuanian,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Lithuanian,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Slovak,language,Europe,Table 9,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Slovak,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Slovak,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Slovak,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Slovenian,language,Europe,Table 9,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Slovenian,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Slovenian,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Slovenian,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Estonian,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Estonian,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Estonian,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Estonian,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Finnish,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Finnish,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Finnish,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Finnish,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Hungarian,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Hungarian,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Hungarian,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Hungarian,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Serbian,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Serbian,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Serbian,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Serbian,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Bulgarian,language,Europe,Table 9,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Bulgarian,language,Europe,Table 9,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Bulgarian,language,Europe,Table 9,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Bulgarian,language,Europe,Table 9,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Europe,Table 9,All Regions,global,38.900000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Europe,Table 9,South Asia,fire,3.900000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Europe,Table 9,Europe+WA+AP,water,47.900000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Europe,Table 9,Europe+WA+Af,earth,51.100000,https://arxiv.org/html/2603.11510v1
+Arabic,language,West Asia,Table 10,All Regions,global,1.800000,https://arxiv.org/html/2603.11510v1
+Arabic,language,West Asia,Table 10,South Asia,fire,0.300000,https://arxiv.org/html/2603.11510v1
+Arabic,language,West Asia,Table 10,Europe+WA+AP,water,2.200000,https://arxiv.org/html/2603.11510v1
+Arabic,language,West Asia,Table 10,Europe+WA+Af,earth,2.300000,https://arxiv.org/html/2603.11510v1
+Persian,language,West Asia,Table 10,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Persian,language,West Asia,Table 10,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Persian,language,West Asia,Table 10,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Persian,language,West Asia,Table 10,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+Urdu,language,West Asia,Table 10,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Urdu,language,West Asia,Table 10,South Asia,fire,3.400000,https://arxiv.org/html/2603.11510v1
+Urdu,language,West Asia,Table 10,Europe+WA+AP,water,1.200000,https://arxiv.org/html/2603.11510v1
+Urdu,language,West Asia,Table 10,Europe+WA+Af,earth,1.300000,https://arxiv.org/html/2603.11510v1
+Turkish,language,West Asia,Table 10,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Turkish,language,West Asia,Table 10,South Asia,fire,0.300000,https://arxiv.org/html/2603.11510v1
+Turkish,language,West Asia,Table 10,Europe+WA+AP,water,2.000000,https://arxiv.org/html/2603.11510v1
+Turkish,language,West Asia,Table 10,Europe+WA+Af,earth,2.200000,https://arxiv.org/html/2603.11510v1
+Maltese,language,West Asia,Table 10,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Maltese,language,West Asia,Table 10,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Maltese,language,West Asia,Table 10,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Maltese,language,West Asia,Table 10,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Hebrew,language,West Asia,Table 10,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Hebrew,language,West Asia,Table 10,South Asia,fire,0.300000,https://arxiv.org/html/2603.11510v1
+Hebrew,language,West Asia,Table 10,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Hebrew,language,West Asia,Table 10,Europe+WA+Af,earth,2.300000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,West Asia,Table 10,All Regions,global,8.900000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,West Asia,Table 10,South Asia,fire,4.500000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,West Asia,Table 10,Europe+WA+AP,water,10.900000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,West Asia,Table 10,Europe+WA+Af,earth,11.700000,https://arxiv.org/html/2603.11510v1
+Hindi,language,South Asia,Table 11,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Hindi,language,South Asia,Table 11,South Asia,fire,5.800000,https://arxiv.org/html/2603.11510v1
+Hindi,language,South Asia,Table 11,Europe+WA+AP,water,0.100000,https://arxiv.org/html/2603.11510v1
+Hindi,language,South Asia,Table 11,Europe+WA+Af,earth,0.100000,https://arxiv.org/html/2603.11510v1
+Marathi,language,South Asia,Table 11,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Marathi,language,South Asia,Table 11,South Asia,fire,3.700000,https://arxiv.org/html/2603.11510v1
+Marathi,language,South Asia,Table 11,Europe+WA+AP,water,0.100000,https://arxiv.org/html/2603.11510v1
+Marathi,language,South Asia,Table 11,Europe+WA+Af,earth,0.100000,https://arxiv.org/html/2603.11510v1
+Bengali,language,South Asia,Table 11,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Bengali,language,South Asia,Table 11,South Asia,fire,3.600000,https://arxiv.org/html/2603.11510v1
+Bengali,language,South Asia,Table 11,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Bengali,language,South Asia,Table 11,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Gujarati,language,South Asia,Table 11,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Gujarati,language,South Asia,Table 11,South Asia,fire,3.600000,https://arxiv.org/html/2603.11510v1
+Gujarati,language,South Asia,Table 11,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Gujarati,language,South Asia,Table 11,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Punjabi,language,South Asia,Table 11,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Punjabi,language,South Asia,Table 11,South Asia,fire,3.400000,https://arxiv.org/html/2603.11510v1
+Punjabi,language,South Asia,Table 11,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Punjabi,language,South Asia,Table 11,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Tamil,language,South Asia,Table 11,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Tamil,language,South Asia,Table 11,South Asia,fire,3.400000,https://arxiv.org/html/2603.11510v1
+Tamil,language,South Asia,Table 11,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Tamil,language,South Asia,Table 11,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Telugu,language,South Asia,Table 11,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Telugu,language,South Asia,Table 11,South Asia,fire,3.600000,https://arxiv.org/html/2603.11510v1
+Telugu,language,South Asia,Table 11,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Telugu,language,South Asia,Table 11,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Nepali,language,South Asia,Table 11,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Nepali,language,South Asia,Table 11,South Asia,fire,3.600000,https://arxiv.org/html/2603.11510v1
+Nepali,language,South Asia,Table 11,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Nepali,language,South Asia,Table 11,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,South Asia,Table 11,All Regions,global,9.100000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,South Asia,Table 11,South Asia,fire,30.700000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,South Asia,Table 11,Europe+WA+AP,water,0.300000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,South Asia,Table 11,Europe+WA+Af,earth,0.300000,https://arxiv.org/html/2603.11510v1
+Tagalog,language,Asia Pacific,Table 12,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Tagalog,language,Asia Pacific,Table 12,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Tagalog,language,Asia Pacific,Table 12,Europe+WA+AP,water,1.200000,https://arxiv.org/html/2603.11510v1
+Tagalog,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Malay,language,Asia Pacific,Table 12,All Regions,global,0.900000,https://arxiv.org/html/2603.11510v1
+Malay,language,Asia Pacific,Table 12,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Malay,language,Asia Pacific,Table 12,Europe+WA+AP,water,1.100000,https://arxiv.org/html/2603.11510v1
+Malay,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Indonesian,language,Asia Pacific,Table 12,All Regions,global,1.600000,https://arxiv.org/html/2603.11510v1
+Indonesian,language,Asia Pacific,Table 12,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Indonesian,language,Asia Pacific,Table 12,Europe+WA+AP,water,2.000000,https://arxiv.org/html/2603.11510v1
+Indonesian,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.100000,https://arxiv.org/html/2603.11510v1
+Vietnamese,language,Asia Pacific,Table 12,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Vietnamese,language,Asia Pacific,Table 12,South Asia,fire,0.300000,https://arxiv.org/html/2603.11510v1
+Vietnamese,language,Asia Pacific,Table 12,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Vietnamese,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.100000,https://arxiv.org/html/2603.11510v1
+Javanese,language,Asia Pacific,Table 12,All Regions,global,0.900000,https://arxiv.org/html/2603.11510v1
+Javanese,language,Asia Pacific,Table 12,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Javanese,language,Asia Pacific,Table 12,Europe+WA+AP,water,1.100000,https://arxiv.org/html/2603.11510v1
+Javanese,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Khmer,language,Asia Pacific,Table 12,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Khmer,language,Asia Pacific,Table 12,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Khmer,language,Asia Pacific,Table 12,Europe+WA+AP,water,1.200000,https://arxiv.org/html/2603.11510v1
+Khmer,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Thai,language,Asia Pacific,Table 12,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Thai,language,Asia Pacific,Table 12,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Thai,language,Asia Pacific,Table 12,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Thai,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Lao,language,Asia Pacific,Table 12,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Lao,language,Asia Pacific,Table 12,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Lao,language,Asia Pacific,Table 12,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Lao,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Chinese,language,Asia Pacific,Table 12,All Regions,global,1.900000,https://arxiv.org/html/2603.11510v1
+Chinese,language,Asia Pacific,Table 12,South Asia,fire,0.500000,https://arxiv.org/html/2603.11510v1
+Chinese,language,Asia Pacific,Table 12,Europe+WA+AP,water,2.300000,https://arxiv.org/html/2603.11510v1
+Chinese,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.200000,https://arxiv.org/html/2603.11510v1
+Burmese,language,Asia Pacific,Table 12,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Burmese,language,Asia Pacific,Table 12,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Burmese,language,Asia Pacific,Table 12,Europe+WA+AP,water,1.300000,https://arxiv.org/html/2603.11510v1
+Burmese,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.000000,https://arxiv.org/html/2603.11510v1
+Japanese,language,Asia Pacific,Table 12,All Regions,global,1.800000,https://arxiv.org/html/2603.11510v1
+Japanese,language,Asia Pacific,Table 12,South Asia,fire,0.300000,https://arxiv.org/html/2603.11510v1
+Japanese,language,Asia Pacific,Table 12,Europe+WA+AP,water,2.200000,https://arxiv.org/html/2603.11510v1
+Japanese,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.100000,https://arxiv.org/html/2603.11510v1
+Korean,language,Asia Pacific,Table 12,All Regions,global,1.700000,https://arxiv.org/html/2603.11510v1
+Korean,language,Asia Pacific,Table 12,South Asia,fire,0.400000,https://arxiv.org/html/2603.11510v1
+Korean,language,Asia Pacific,Table 12,Europe+WA+AP,water,2.100000,https://arxiv.org/html/2603.11510v1
+Korean,language,Asia Pacific,Table 12,Europe+WA+Af,earth,0.100000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Asia Pacific,Table 12,All Regions,global,15.500000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Asia Pacific,Table 12,South Asia,fire,1.800000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Asia Pacific,Table 12,Europe+WA+AP,water,19.200000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Asia Pacific,Table 12,Europe+WA+Af,earth,0.700000,https://arxiv.org/html/2603.11510v1
+Amharic,language,Africa,Table 13,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Amharic,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Amharic,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Amharic,language,Africa,Table 13,Europe+WA+Af,earth,1.300000,https://arxiv.org/html/2603.11510v1
+Hausa,language,Africa,Table 13,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Hausa,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Hausa,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Hausa,language,Africa,Table 13,Europe+WA+Af,earth,1.300000,https://arxiv.org/html/2603.11510v1
+Igbo,language,Africa,Table 13,All Regions,global,1.100000,https://arxiv.org/html/2603.11510v1
+Igbo,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Igbo,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Igbo,language,Africa,Table 13,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Malagasy,language,Africa,Table 13,All Regions,global,0.900000,https://arxiv.org/html/2603.11510v1
+Malagasy,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Malagasy,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Malagasy,language,Africa,Table 13,Europe+WA+Af,earth,1.200000,https://arxiv.org/html/2603.11510v1
+Shona,language,Africa,Table 13,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Shona,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Shona,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Shona,language,Africa,Table 13,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Swahili,language,Africa,Table 13,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Swahili,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Swahili,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Swahili,language,Africa,Table 13,Europe+WA+Af,earth,1.300000,https://arxiv.org/html/2603.11510v1
+Wolof,language,Africa,Table 13,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Wolof,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Wolof,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Wolof,language,Africa,Table 13,Europe+WA+Af,earth,1.400000,https://arxiv.org/html/2603.11510v1
+Xhosa,language,Africa,Table 13,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Xhosa,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Xhosa,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Xhosa,language,Africa,Table 13,Europe+WA+Af,earth,1.300000,https://arxiv.org/html/2603.11510v1
+Yoruba,language,Africa,Table 13,All Regions,global,0.900000,https://arxiv.org/html/2603.11510v1
+Yoruba,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Yoruba,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Yoruba,language,Africa,Table 13,Europe+WA+Af,earth,1.200000,https://arxiv.org/html/2603.11510v1
+Zulu,language,Africa,Table 13,All Regions,global,1.000000,https://arxiv.org/html/2603.11510v1
+Zulu,language,Africa,Table 13,South Asia,fire,0.000000,https://arxiv.org/html/2603.11510v1
+Zulu,language,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Zulu,language,Africa,Table 13,Europe+WA+Af,earth,1.300000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Africa,Table 13,All Regions,global,10.000000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Africa,Table 13,South Asia,fire,0.100000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Africa,Table 13,Europe+WA+AP,water,0.000000,https://arxiv.org/html/2603.11510v1
+Subtotal,subtotal,Africa,Table 13,Europe+WA+Af,earth,13.200000,https://arxiv.org/html/2603.11510v1
+Code,language,Code,Table 14,All Regions,global,3.500000,https://arxiv.org/html/2603.11510v1
+Code,language,Code,Table 14,South Asia,fire,11.700000,https://arxiv.org/html/2603.11510v1
+Code,language,Code,Table 14,Europe+WA+AP,water,4.300000,https://arxiv.org/html/2603.11510v1
+Code,language,Code,Table 14,Europe+WA+Af,earth,4.500000,https://arxiv.org/html/2603.11510v1

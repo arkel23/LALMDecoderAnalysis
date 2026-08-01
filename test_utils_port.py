@@ -23,7 +23,8 @@ from utils import (CORE_VARIANTS, LANGUAGE_REGION, LANGUAGE_DIC, METHODS_DIC, MO
                    MODEL_FAMILY, TRAIN_EVAL_MATCH, EXCLUDED_MODELS_AGGREGATE,
                    MULTI_CONFIG_TRAIN, WORLDSPEECH_TRAIN_EXAMPLES, TRAIN_CONFIGS,
                    expected_stream_examples, CONFIG_DURATION_AT_CAP, MAX_INPUT_LENGTH_S,
-                   KNOWN_AT_CAP_CONFIGS,
+                   KNOWN_AT_CAP_CONFIGS, RESOURCE_TIER, TIER_ORDER, get_eval_domain,
+                   get_accent_match, load_tinyaya_composition,
                    add_language_columns, assert_unique_keys, half_up,
                    is_excluded_from_aggregate)
 
@@ -54,12 +55,12 @@ T1_CSV = os.path.join('results_all', 'acc', 't1_sample_efficiency.csv')
 # would regenerate every table wrongly and pass every value comparison.
 print('\n--- 1. language and region mapping ---')
 
-EXPECTED_LANGUAGES = {'crs_sc', 'en_us', 'es_419', 'fr_fr', 'ha_ng',
-                      'hi_in', 'id_id', 'mr_in', 'sw_ke', 'ta_in'}
+EXPECTED_LANGUAGES = {'crs_sc', 'en_us', 'es_419', 'fr_fr', 'ha_ng', 'hi_in', 'id_id',
+                      'mr_in', 'sw_ke', 'ta_in', 'am_et', 'ur_pk'}
 
-check('LANGUAGE_REGION covers exactly the 10 executed languages',
+check('LANGUAGE_REGION covers exactly the 12 executed languages',
       set(LANGUAGE_REGION) == EXPECTED_LANGUAGES)
-check('LANGUAGE_DIC covers the same 10 languages',
+check('LANGUAGE_DIC covers the same 12 languages',
       set(LANGUAGE_DIC) == EXPECTED_LANGUAGES)
 check('crs_sc has region None (OOD probe, NOT earth)',
       LANGUAGE_REGION['crs_sc'] is None)
@@ -68,10 +69,11 @@ check('exactly one language is region-None',
 check('every non-crs language has a region in {earth, fire, water}',
       all(v in ('earth', 'fire', 'water')
           for k, v in LANGUAGE_REGION.items() if k != 'crs_sc'))
-check('earth = {ha_ng, sw_ke}',
-      {k for k, v in LANGUAGE_REGION.items() if v == 'earth'} == {'ha_ng', 'sw_ke'})
-check('fire = {hi_in, mr_in, ta_in}',
-      {k for k, v in LANGUAGE_REGION.items() if v == 'fire'} == {'hi_in', 'mr_in', 'ta_in'})
+check('earth = {ha_ng, sw_ke, am_et}',
+      {k for k, v in LANGUAGE_REGION.items() if v == 'earth'} == {'ha_ng', 'sw_ke', 'am_et'})
+check('fire = {hi_in, mr_in, ta_in, ur_pk}',
+      {k for k, v in LANGUAGE_REGION.items() if v == 'fire'}
+      == {'hi_in', 'mr_in', 'ta_in', 'ur_pk'})
 check('water = {en_us, es_419, fr_fr, id_id}',
       {k for k, v in LANGUAGE_REGION.items() if v == 'water'}
       == {'en_us', 'es_419', 'fr_fr', 'id_id'})
@@ -81,16 +83,21 @@ check('every region has >=2 languages, so a matched/mismatched contrast exists',
 
 # The non-clean cells must stay flagged: a region claim leaning on them is weaker than it
 # looks, and nothing in the numbers reveals that.
-check('fr_fr and es_419 flagged as dialect_mismatch',
-      TRAIN_EVAL_MATCH.get('fr_fr') == 'dialect_mismatch'
-      and TRAIN_EVAL_MATCH.get('es_419') == 'dialect_mismatch')
+check('fr_fr is flagged as dialect_mismatch (trains fr_ca, evaluates fr_fr)',
+      TRAIN_EVAL_MATCH.get('fr_fr') == 'dialect_mismatch')
+# The Spain-Spanish runs were deleted and re-run from es_mx, which is inside the Latin
+# American variety FLEURS es_419 evaluates -- so it is no longer a mismatch.
+check('es_419 is NOT flagged as dialect_mismatch any more (trains es_mx now)',
+      TRAIN_EVAL_MATCH.get('es_419') is None)
+check('es_419 trains on es_mx, not es_es',
+      TRAIN_CONFIGS['es_419'][1] == ('es_mx',))
 # Interleaving is NOT a confound and must not be re-added as one: the loader uses
 # 'all_exhausted_without_replacement', so the combined stream is exactly the sum of its parts.
 # verify_interleave_semantics.py proves it; this pins the conclusion in the data dicts.
 check('no language is flagged for interleaving (refuted -- see verify_interleave_semantics)',
       not any(v == 'uniform_interleave' for v in TRAIN_EVAL_MATCH.values()))
 check('the multi-config languages are recorded, without implying oversampling',
-      set(MULTI_CONFIG_TRAIN) == {'ta_in', 'ha_ng', 'sw_ke'})
+      set(MULTI_CONFIG_TRAIN) == {'ta_in', 'ha_ng', 'sw_ke', 'ur_pk'})
 check('every multi-config language lists exactly 2 configs',
       all(len(v) == 2 for v in MULTI_CONFIG_TRAIN.values()))
 
@@ -164,6 +171,45 @@ check('languages with no at-cap loss are unchanged by post_filter',
 check('ta_in is NOT excluded from aggregates for any core variant',
       not any(is_excluded_from_aggregate(m, 'ta_in') for m in METHODS_DIC))
 
+# --- 1c. resource tiers, eval axes, and the Tiny Aya composition --------------------
+print('\n--- 1c. tiers, eval axes, composition ---')
+check('RESOURCE_TIER covers all 12 languages', set(RESOURCE_TIER) == EXPECTED_LANGUAGES)
+check('every tier label is known',
+      set(RESOURCE_TIER.values()) <= set(TIER_ORDER))
+check('all four tiers are populated (that was the point of adding am_et and ur_pk)',
+      set(RESOURCE_TIER.values()) == set(TIER_ORDER))
+check('am_et and ta_in are the very-low tier (~40 h)',
+      {k for k, v in RESOURCE_TIER.items() if v == 'very_low'} == {'am_et', 'ta_in'})
+check('ur_pk is the low tier (~80 h)',
+      {k for k, v in RESOURCE_TIER.items() if v == 'low'} == {'ur_pk'})
+check('ha_ng and mr_in are the mid tier (~110-120 h)',
+      {k for k, v in RESOURCE_TIER.items() if v == 'mid'} == {'ha_ng', 'mr_in'})
+
+check('only ha_ng and crs_sc evaluate in-domain (WorldSpeech); the rest are FLEURS',
+      {l for l in EXPECTED_LANGUAGES if get_eval_domain(l) == 'in_domain'}
+      == {'ha_ng', 'crs_sc'})
+check('fr_fr is the only different-accent cell', get_accent_match('fr_fr') == 'different')
+check('es_419 is a related-accent cell, not different', get_accent_match('es_419') == 'related')
+check('en_us is a same-accent cell', get_accent_match('en_us') == 'same')
+
+_comp = load_tinyaya_composition()
+if _comp is None:
+    print('[SKIP] tinyaya composition CSV absent -- run fetch_tinyaya_composition.py')
+else:
+    check('composition covers 11 of the 12 languages (crs_sc is not a Tiny Aya language)',
+          set(_comp['dataset']) == EXPECTED_LANGUAGES - {'crs_sc'})
+    check('every variant column is present',
+          {'earth', 'fire', 'global', 'water'} <= set(_comp.columns))
+    # The exposure numbers must reproduce the regional design, or the join is wrong.
+    check('African languages have their largest exposure in the earth mix',
+          all(_comp.set_index('dataset').loc[l, 'earth']
+              >= max(_comp.set_index('dataset').loc[l, v] for v in ('fire', 'water'))
+              for l in ('am_et', 'ha_ng', 'sw_ke')))
+    check('South Asian languages have their largest exposure in the fire mix',
+          all(_comp.set_index('dataset').loc[l, 'fire']
+              > max(_comp.set_index('dataset').loc[l, v] for v in ('earth', 'water'))
+              for l in ('hi_in', 'mr_in', 'ta_in', 'ur_pk')))
+
 # --- 2. Model dicts -----------------------------------------------------------------
 print('\n--- 2. model dicts ---')
 
@@ -185,15 +231,16 @@ check('MODEL_SHORT values are unique (a duplicate would merge two variants)',
 # --- 3. Exclusions ------------------------------------------------------------------
 print('\n--- 3. aggregate exclusions ---')
 
-check('exactly one excluded run is recorded',
-      len(EXCLUDED_MODELS_AGGREGATE) == 1)
-check('the excluded run is en_us / water',
-      is_excluded_from_aggregate(
-          'q2a_openai/whisper-medium_CohereLabs/tiny-aya-water', 'en_us'))
-check('exclusion is (model, language) specific, not model-wide',
+# en_us/water was excluded as a "failed run" until it was re-run and REPLICATED (best 12.05
+# vs 17.06, both far worse than the other variants). Two bad runs is a real effect, not a
+# failure -- and since water is English's MATCHED variant, excluding it would have removed
+# the grid's strongest against-hypothesis point.
+check('no runs are excluded from aggregates any more',
+      len(EXCLUDED_MODELS_AGGREGATE) == 0)
+check('en_us / water is NOT excluded (it replicates)',
       not is_excluded_from_aggregate(
-          'q2a_openai/whisper-medium_CohereLabs/tiny-aya-water', 'fr_fr'))
-check('every exclusion carries a reason',
+          'q2a_openai/whisper-medium_CohereLabs/tiny-aya-water', 'en_us'))
+check('every exclusion, if any is ever added, carries a reason',
       all(e.get('reason') for e in EXCLUDED_MODELS_AGGREGATE))
 
 # --- 4. Rounding and merge guards ---------------------------------------------------
@@ -301,10 +348,16 @@ else:
                 >= t1['audio_h_to_1.5x_best'].fillna(np.inf) - 1e-9).all()
                and (t1['audio_h_to_1.5x_best'].fillna(np.inf)
                     >= t1['audio_h_to_2x_best'].fillna(np.inf) - 1e-9).all()))
-    check('exactly one row is flagged excluded_from_aggregate',
-          int(t1['excluded_from_aggregate'].sum()) == 1)
-    check('crs_sc is the only language with 6 models',
-          t1[t1['dataset'] == 'crs_sc']['model_id'].nunique() == 6)
+    check('no rows are flagged excluded_from_aggregate (en_us/water replicated)',
+          int(t1['excluded_from_aggregate'].sum()) == 0)
+    # crs_sc and ta_in are the deep cells: both carry tiny-aya-base and the non-Aya
+    # Qwen3-4B control on top of the four grid-wide variants.
+    check('crs_sc and ta_in carry all 6 models',
+          all(t1[t1['dataset'] == l]['model_id'].nunique() == 6
+              for l in ('crs_sc', 'ta_in')))
+    check('every other language carries exactly the 4 core variants',
+          all(t1[t1['dataset'] == l]['model_id'].nunique() == 4
+              for l in set(t1['dataset']) - {'crs_sc', 'ta_in'}))
 
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)

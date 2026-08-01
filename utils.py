@@ -11,6 +11,8 @@ switch. None of that applies to a decoder-SFT comparison.
 >>> any plot. In particular METHODS_DIC, SERIAL_DIC and DATASETS_DIC currently describe the
 >>> intended TinyAya matrix, not observed data. See HANDOVER.md.
 """
+import os
+
 import numpy as np
 import pandas as pd
 
@@ -96,22 +98,22 @@ MODEL_FAMILY = {
 # identical eval set. Its curve (225 -> 60 -> 33 -> 25 -> 21 -> 20) is a converged-but-bad
 # optimisation, not a late spike, so it is a failed run rather than a decoder effect.
 EXCLUDED_MODELS_AGGREGATE = [
-    {
-        'model_id': 'q2a_openai/whisper-medium_CohereLabs/tiny-aya-water',
-        'dataset': 'en_us',
-        'reason': 'optimisation failure: converges to ~20 CER vs 4.5-5.4 for the other '
-                  'three variants on the identical eval set',
-    },
+    # EMPTY, deliberately.
+    #
+    # The en_us / tiny-aya-water run used to be listed here as an "optimisation failure":
+    # it converged to ~20 CER while earth/fire/global reached 4.4-5.0 on the identical eval
+    # set. That reading did not survive a replication. The cell was re-run on 2026-07-31
+    # with identical config and reached best 12.05 CER -- still 7+ CER worse than every other
+    # variant. Two independent runs both far worse is not a failed run; it REPLICATES.
+    #
+    # That matters for the hypothesis rather than against the data: water is the MATCHED
+    # variant for English, so this is the grid's strongest against-hypothesis point, and
+    # excluding it would have quietly removed exactly that. The superseded first run lives on
+    # under serial 1 (see rename_wandb_serial.py); serial 0 carries the re-run.
+    #
+    # The two runs do differ by ~5 CER from each other, far above the ~1 CER noise floor
+    # elsewhere, so water-on-English is both bad AND unstable. Worth reporting as such.
 ]
-
-
-# NOTE -- ta_in is deliberately NOT excluded, and must not be.
-# A filter bug cost it 72.4% of its intended training data (see MAX_INPUT_LENGTH_S), and an
-# earlier draft proposed dropping the language for that reason. That was wrong. The region-match
-# contrast is computed WITHIN a language: all four decoder variants consumed the identical
-# 8,846-clip stream, so the loss reduced every arm equally and cannot bias the comparison. It
-# only relocates Tamil on the data-volume axis, where it is the grid's only genuinely
-# low-resource point -- and the most informative one. See analyze_volume_interaction.py.
 
 
 def is_excluded_from_aggregate(model_id, dataset):
@@ -120,8 +122,15 @@ def is_excluded_from_aggregate(model_id, dataset):
 
 
 # --- Languages ----------------------------------------------------------------------
-# TinyAya regional groupings. Earth = African, Fire = South Asian, Water = APAC / West
-# Asia / Europe.
+# TinyAya regional groupings, per the Tiny Aya report (arXiv:2603.11510, Sec 2.3.3 and the
+# variant descriptions):
+#   Earth  = Africa + WEST ASIA        (mix column 'Europe+WA+Af')
+#   Fire   = South Asia                (mix column 'South Asia')
+#   Water  = Asia-Pacific + EUROPE     (mix column 'Europe+WA+AP')
+# An earlier version of this file put West Asia under Water. That was wrong. It happens not
+# to change any assignment below, because none of the executed languages is West Asian --
+# but it would have mis-assigned e.g. Arabic, Persian or Turkish, so the definition is
+# recorded correctly here.
 #
 # crs_sc (Seychellois Creole) is deliberately None, NOT 'earth'. It is an African language,
 # but it is officially supported by neither Whisper nor TinyAya, so it is the one cell where
@@ -131,6 +140,8 @@ def is_excluded_from_aggregate(model_id, dataset):
 LANGUAGE_REGION = {
     'ha_ng': 'earth',
     'sw_ke': 'earth',
+    'am_et': 'earth',      # Amharic -- African, confirmed in the report's Africa table
+    'ur_pk': 'fire',       # Urdu -- see URDU_REGION_NOTE below
     'hi_in': 'fire',
     'mr_in': 'fire',
     'ta_in': 'fire',
@@ -145,8 +156,18 @@ LANGUAGE_STATUS = {
     'crs_sc': 'ood_encoder_and_decoder',
 }
 
+# Urdu is the one genuinely ambiguous assignment. The report's Table 1 lists Urdu under
+# South Asia, but its Appendix A puts Urdu's row in the WEST ASIA table (Table 10). The
+# composition numbers settle it functionally: Urdu's share is 3.4% in the fire (South Asia)
+# mix versus 1.3% earth and 1.2% water, so the fire variant saw by far the most Urdu. Hence
+# 'fire'. Recorded because a reader checking Table 10 would otherwise expect 'earth'.
+URDU_REGION_NOTE = ('report Table 1 says South Asia, Appendix Table 10 lists it under West '
+                    'Asia; assigned fire because the fire mix has 3.4% Urdu vs 1.3% earth')
+
 LANGUAGE_DIC = {
     'crs_sc': 'Seychellois Creole',
+    'am_et': 'Amharic',
+    'ur_pk': 'Urdu',
     'en_us': 'English',
     'es_419': 'Spanish (LatAm)',
     'fr_fr': 'French',
@@ -171,8 +192,10 @@ LANGUAGE_DIC = {
 # both the map-style and streaming paths). The uniform probabilities affect only ARRIVAL
 # ORDER, not how many times an example is seen. Do not re-add this as a confound.
 TRAIN_EVAL_MATCH = {
-    'fr_fr': 'dialect_mismatch',      # trains fr_ca, evaluates fr_fr
-    'es_419': 'dialect_mismatch',     # trains es_es (wandb says es_mx), evaluates es_419
+    'fr_fr': 'dialect_mismatch',      # trains fr_ca (Canadian), evaluates fr_fr (European)
+    # es_419 was listed here while it trained on es_es (Spain). Those runs were deleted on
+    # 2026-08-01 and re-run from es_mx, which is inside the Latin American variety group
+    # FLEURS es_419 evaluates -- so it is no longer a mismatch and must not be flagged as one.
 }
 
 # Languages whose training stream is built from more than one WorldSpeech config. Recorded
@@ -180,6 +203,7 @@ TRAIN_EVAL_MATCH = {
 # on the combined stream), not because the interleaving distorts sampling.
 MULTI_CONFIG_TRAIN = {
     'ta_in': ('ta_in', 'ta_lk'),
+    'ur_pk': ('ur_pk', 'ur_in'),
     'ha_ng': ('ha_ng', 'ha_td'),
     'sw_ke': ('sw_ke', 'sw_tz'),
 }
@@ -190,7 +214,12 @@ MULTI_CONFIG_TRAIN = {
 TRAIN_CONFIGS = {
     'en_us':  ('disco-eth/WorldSpeech', ('en_us',),          'train'),
     'fr_fr':  ('disco-eth/WorldSpeech', ('fr_ca',),          'train'),
-    'es_419': ('disco-eth/WorldSpeech', ('es_es',),          'train'),
+    # es_419 trains on es_mx, NOT es_es. The Spain-Spanish runs were deleted 2026-08-01 and
+    # re-run from Mexican Spanish, which also removes the dialect mismatch this cell used to
+    # carry (Mexican Spanish is within the Latin American variety FLEURS es_419 evaluates).
+    'es_419': ('disco-eth/WorldSpeech', ('es_mx',),          'train'),
+    'am_et':  ('disco-eth/WorldSpeech', ('am_et',),          'train'),
+    'ur_pk':  ('disco-eth/WorldSpeech', ('ur_pk', 'ur_in'),  'train'),
     'hi_in':  ('disco-eth/WorldSpeech', ('hi_in',),          'train'),
     'id_id':  ('disco-eth/WorldSpeech', ('id_id',),          'train'),
     'mr_in':  ('disco-eth/WorldSpeech', ('mr_in',),          'train'),
@@ -227,6 +256,9 @@ WORLDSPEECH_TRAIN_EXAMPLES = {
     'ta_lk':  23261,
     'mr_in':  58201,
     'id_id':  101112,
+    'am_et':  8873,
+    'ur_pk':  28142,
+    'ur_in':  2937,
 }
 
 
@@ -298,6 +330,110 @@ def expected_stream_examples(language, post_filter=False):
     # and it is what makes ta_in reconcile (32,107 -> 8,846) instead of looking anomalous.
     return sum(c * (1.0 - CONFIG_DURATION_AT_CAP.get(cfg, 0.0))
                for cfg, c in zip(configs, counts))
+
+
+# --- Resource tiers: the study's independent variable ------------------------------
+# Hours of training audio available per language, POST-filter. Two sources, kept separate
+# because they do not fully agree and the disagreement should be visible, not averaged away.
+#
+#   LANGUAGE_HOURS_COMPUTED -- n_clips (dataset builder metadata) x mean clip duration
+#     (100-row sample of the `duration` column via the datasets-server), minus the at-cap
+#     share. None where the duration endpoint was uncached and no mean could be sampled.
+#   RESOURCE_TIER -- the project's own accounting, as stated 2026-08-01.
+#
+# These agree for am_et (~38 computed vs ~40 stated), ta_in (~35 vs ~40), ur_pk (~65-72 vs
+# ~80) and ha_ng (~120 stated, consistent with 27,255 clips at ~16 s). They DISAGREE for
+# mr_in: 58,201 clips at the 13.45 s mean the training logs imply is ~217 h, against a stated
+# ~110-120 h. Flagged rather than resolved -- see MR_IN_HOURS_DISCREPANCY.
+LANGUAGE_HOURS_COMPUTED = {
+    'en_us': 3510.2,
+    'hi_in': 2480.4,
+    'fr_fr': 983.6,
+    'es_419': 855.3,     # es_mx: 205,972 clips x 14.95 s
+    'sw_ke': 826.0,
+    'ur_pk': 65.4,       # ur_pk only; ur_in's duration endpoint was uncached
+    'am_et': 37.9,
+    # id_id, mr_in, ta_in, ha_ng, crs_sc: duration endpoint uncached for at least one config
+}
+
+MR_IN_HOURS_DISCREPANCY = (
+    'mr_in: 58,201 clips x 13.45 s (the mean the training logs imply) is ~217 h, against a '
+    'stated ~110-120 h. Unresolved; the tier below uses the stated figure.')
+
+# Tier labels from the project's accounting. The whole point of adding am_et and ur_pk was to
+# populate the middle and low tiers, so this is the study's independent variable.
+RESOURCE_TIER = {
+    'en_us': 'high', 'fr_fr': 'high', 'es_419': 'high', 'hi_in': 'high',
+    'id_id': 'high', 'sw_ke': 'high', 'crs_sc': 'high',      # all >200 h
+    'ha_ng': 'mid', 'mr_in': 'mid',                          # ~110-120 h
+    'ur_pk': 'low',                                          # ~80 h
+    'am_et': 'very_low', 'ta_in': 'very_low',                # ~40 h
+}
+
+TIER_ORDER = ('very_low', 'low', 'mid', 'high')
+
+# --- The two evaluation axes the eval sets differ on ------------------------------------
+# Both matter for reading eval/loss against train/loss: a large train-eval loss gap can mean
+# overfitting, OR simply that the eval set is a different domain or accent from training.
+#
+# EVAL_DOMAIN: training is always WorldSpeech (parliamentary / broadcast / audiobook). An
+# eval on WorldSpeech's own test split is IN-domain; an eval on FLEURS (read speech) is
+# CROSS-domain, and that is 10 of 12 languages.
+EVAL_DOMAIN = {
+    'ha_ng': 'in_domain',        # disco-eth/WorldSpeech test
+    'crs_sc': 'in_domain',       # ERISLab/WorldSpeech val_clean
+}   # every other language: cross_domain (google/fleurs validation)
+
+# ACCENT_MATCH: whether the training config's variety matches the evaluated variety.
+ACCENT_MATCH = {
+    'fr_fr': 'different',        # trains fr_ca (Canadian), evaluates fr_fr (European)
+    'es_419': 'related',         # trains es_mx, evaluates es_419 -- both Latin American
+    'ta_in': 'partial',          # trains ta_in + ta_lk, evaluates ta_in
+    'ur_pk': 'partial',          # trains ur_pk + ur_in, evaluates ur_pk
+    'sw_ke': 'partial',          # trains sw_ke + sw_tz, evaluates sw_ke
+    'ha_ng': 'partial',          # trains ha_ng + ha_td, evaluates ha_ng
+}   # every other language: 'same'
+
+
+def get_eval_domain(language):
+    return EVAL_DOMAIN.get(language, 'cross_domain')
+
+
+def get_accent_match(language):
+    return ACCENT_MATCH.get(language, 'same')
+
+
+# --- Tiny Aya post-training composition -------------------------------------------------
+# Share of each variant's post-training mix that was in a given language, from the report's
+# Appendix A (arXiv:2603.11510). Generated by fetch_tinyaya_composition.py; this turns
+# "specialisation" from a categorical label into a continuous exposure variable.
+TINYAYA_COMPOSITION_CSV = os.path.join('data', 'tinyaya_report',
+                                       'tinyaya_language_composition_wide.csv')
+
+# The report names languages in English; our cells are FLEURS locale codes.
+LANGUAGE_TO_REPORT_NAME = {
+    'en_us': 'English', 'fr_fr': 'French', 'es_419': 'Spanish', 'id_id': 'Indonesian',
+    'hi_in': 'Hindi', 'mr_in': 'Marathi', 'ta_in': 'Tamil', 'ur_pk': 'Urdu',
+    'am_et': 'Amharic', 'ha_ng': 'Hausa', 'sw_ke': 'Swahili',
+    # crs_sc (Seychellois Creole) is absent from the report by construction: it is not one of
+    # Tiny Aya's 70 languages, which is exactly what makes it the OOD probe.
+}
+
+
+def load_tinyaya_composition(path=None):
+    """Wide per-language variant exposure, keyed by our language codes.
+
+    Returns None when the CSV has not been generated yet, so callers can degrade rather than
+    crash on a bare checkout.
+    """
+    path = path or TINYAYA_COMPOSITION_CSV
+    if not os.path.exists(path):
+        return None
+    comp = pd.read_csv(path)
+    name_to_lang = {v: k for k, v in LANGUAGE_TO_REPORT_NAME.items()}
+    comp = comp[comp['language'].isin(name_to_lang)].copy()
+    comp['dataset'] = comp['language'].map(name_to_lang)
+    return comp.rename(columns={'language': 'report_language'})
 
 
 # --- Datasets and metrics -----------------------------------------------------------
