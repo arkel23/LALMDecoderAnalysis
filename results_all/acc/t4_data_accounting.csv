@@ -4,9 +4,14 @@ p7yi3bau,am_et,Amharic,fire,finished,1000,8,64,512,512000,2215.516723,58.014000,
 u1t6bx57,am_et,Amharic,global,finished,1000,8,64,512,512000,2215.516723,58.014000,15.577852,am_et,1,True,estimate,8825.455924,38.189346,8873.000000,8873.000000,0.000000,0.994642,0.994642,,reconciles,True
 8fupnxu6,am_et,Amharic,water,finished,1000,8,64,512,512000,2215.516723,58.014000,15.577852,am_et,1,True,estimate,8825.455924,38.189346,8873.000000,8873.000000,0.000000,0.994642,0.994642,,reconciles,True
 12sof3iv,crs_sc,Seychellois Creole,base,finished,1000,8,64,512,512000,2114.383794,1.286000,14.866761,crs_sc,1,True,estimate,398133.748056,1644.155361,,,,,,,expected_size_unknown,True
+rek70py1,crs_sc,Seychellois Creole,base,running,30,8,64,512,15360,63.438137,0.030000,14.868313,crs_sc,1,False,lower_bound,512000.000000,2114.604562,,,,,,,expected_size_unknown,True
+ctld0b2o,crs_sc,Seychellois Creole,earth,running,30,8,64,512,15360,63.438137,0.030000,14.868313,crs_sc,1,False,lower_bound,512000.000000,2114.604562,,,,,,,expected_size_unknown,True
 g8f56u6p,crs_sc,Seychellois Creole,earth,finished,1000,8,64,512,512000,2114.383794,1.286000,14.866761,crs_sc,1,True,estimate,398133.748056,1644.155361,,,,,,,expected_size_unknown,True
+779a37zi,crs_sc,Seychellois Creole,fire,running,30,8,64,512,15360,63.438137,0.030000,14.868313,crs_sc,1,False,lower_bound,512000.000000,2114.604562,,,,,,,expected_size_unknown,True
 wvi4k6py,crs_sc,Seychellois Creole,fire,finished,1000,8,64,512,512000,2114.383794,1.286000,14.866761,crs_sc,1,True,estimate,398133.748056,1644.155361,,,,,,,expected_size_unknown,True
+0ehkl7zh,crs_sc,Seychellois Creole,global,running,30,8,64,512,15360,63.438137,0.030000,14.868313,crs_sc,1,False,lower_bound,512000.000000,2114.604562,,,,,,,expected_size_unknown,True
 ea7a4ud8,crs_sc,Seychellois Creole,global,finished,1000,8,64,512,512000,2114.383794,1.286000,14.866761,crs_sc,1,True,estimate,398133.748056,1644.155361,,,,,,,expected_size_unknown,True
+6piccuku,crs_sc,Seychellois Creole,water,running,30,8,64,512,15360,63.438137,0.030000,14.868313,crs_sc,1,False,lower_bound,512000.000000,2114.604562,,,,,,,expected_size_unknown,True
 95kqse0h,crs_sc,Seychellois Creole,water,finished,1000,8,64,512,512000,2114.383794,1.286000,14.866761,crs_sc,1,True,estimate,398133.748056,1644.155361,,,,,,,expected_size_unknown,True
 dv5swzra,crs_sc,Seychellois Creole,qwen3-4b,finished,1000,8,64,512,512000,2114.383794,1.286000,14.866761,crs_sc,1,True,estimate,398133.748056,1644.155361,,,,,,,expected_size_unknown,True
 2oxfzx48,en_us,English,earth,finished,1000,8,64,512,512000,2707.768965,1.000000,19.039001,en_us,1,False,lower_bound,512000.000000,2707.768965,666718.000000,666718.000000,0.000000,0.767941,0.767941,,stream_never_exhausted_lower_bound_only,True

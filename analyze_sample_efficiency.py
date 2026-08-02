@@ -102,6 +102,10 @@ def build_table(df):
             'dataset_path': first.get('dataset_path'),
             'split': first.get('split'),
             'state': first.get('state'),
+            'seed': first.get('seed'),
+            # Earliest logged wall-clock for the run. Only used to break ties when one cell
+            # holds two runs, so the choice is deterministic rather than groupby order.
+            'run_start': g['_timestamp'].min(),
             'effective_batch': first.get('effective_batch'),
             # Carried, flagged, and never used as a divisor -- see the module docstring.
             'epochs_logged_unreliable': ev['train/epoch'].max(),
@@ -115,10 +119,52 @@ def build_table(df):
         is_excluded_from_aggregate(m, d) for m, d in zip(out['model_id'], out['dataset'])
     ]
 
-    # One row per (model, language) is the contract every downstream merge relies on.
-    assert_unique_keys(out, ['model_id', 'dataset'], label='t1_sample_efficiency')
+    out = mark_canonical(out)
 
-    return out.sort_values(['dataset', 'model_short'])
+    # One row per (model, language) is the contract every downstream merge relies on. It is
+    # asserted on the canonical subset, because during a re-run window a cell legitimately
+    # holds two runs in the same serial.
+    assert_unique_keys(out[out['is_canonical']], ['model_id', 'dataset'],
+                       label='t1_sample_efficiency (canonical rows)')
+
+    return out.sort_values(['dataset', 'model_short', 'run_start'])
+
+
+def mark_canonical(out):
+    """Pick one run per (model_id, dataset), and say so loudly when there was a choice.
+
+    A cell holds two runs in the same serial only transiently: a re-run has started but the
+    original has not yet been migrated to serial 1. The pipeline must not fall over during that
+    window, and it must not silently pick a different run than the one every existing number
+    came from.
+
+    So the rule is stability-first: prefer a `finished` run over an unfinished one, and among
+    equals prefer the EARLIEST. A half-trained re-run can never displace the completed run it
+    is meant to replace, and once it finishes the swap is a deliberate act -- migrating the
+    original to serial 1 -- rather than something that happens on the next `bash plotter.sh`.
+
+    Every duplicate is printed. A silent de-duplication here would be worse than the crash it
+    replaces, because the dropped run leaves no trace in the output.
+    """
+    out = out.copy()
+    order = out.assign(_unfinished=(out['state'] != 'finished').astype(int))
+    order = order.sort_values(['_unfinished', 'run_start'], kind='mergesort')
+    keep = order.groupby(['model_id', 'dataset'], sort=False).head(1)['run_id']
+
+    out['is_canonical'] = out['run_id'].isin(set(keep))
+    out['n_runs_in_cell'] = out.groupby(['model_id', 'dataset'])['run_id'].transform('size')
+
+    dupes = out[out['n_runs_in_cell'] > 1]
+    if not dupes.empty:
+        cells = dupes[['model_id', 'dataset']].drop_duplicates()
+        print(f'\n[DUPLICATE RUNS] {len(cells)} cell(s) hold more than one run in this serial. '
+              f'A serial migration is pending -- move the superseded run to serial 1 with '
+              f'rename_wandb_serial.py once its replacement has finished.')
+        cols = ['dataset', 'model_short', 'run_id', 'state', 'seed', 'best_cer', 'is_canonical']
+        shown = dupes.sort_values(['dataset', 'model_short', 'run_start'])
+        print(shown[[c for c in cols if c in shown.columns]].to_string(index=False))
+        print()
+    return out
 
 
 def parse_args():

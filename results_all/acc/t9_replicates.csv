@@ -1,0 +1,2 @@
+dataset,language_name,model_short,resource_tier,best_cer_first,best_cer_rerun,delta_best_cer,final_cer_first,final_cer_rerun,delta_final_cer,late_sd_first,late_sd_rerun,seed_first,seed_rerun,seed_status
+en_us,English,water,high,17.060000,12.050000,-5.010000,20.120000,13.120000,-7.000000,0.409503,0.451833,42,42,same_seed

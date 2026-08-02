@@ -1,0 +1,34 @@
+config_file,dataset_path,dataset,split,study_cell,status,force_asr_language,note
+worldspeech_en_us_test.yaml,disco-eth/WorldSpeech,en_us,test,en_us,in_training,en,trained variety
+worldspeech_en_au_test.yaml,disco-eth/WorldSpeech,en_au,test,en_us,held_out,en,Australian
+worldspeech_en_jm_test.yaml,disco-eth/WorldSpeech,en_jm,test,en_us,held_out,en,Jamaican
+worldspeech_en_ke_test.yaml,disco-eth/WorldSpeech,en_ke,test,en_us,held_out,en,Kenyan
+worldspeech_en_nz_test.yaml,disco-eth/WorldSpeech,en_nz,test,en_us,held_out,en,New Zealand
+worldspeech_en_pk_test.yaml,disco-eth/WorldSpeech,en_pk,test,en_us,held_out,en,Pakistani
+worldspeech_en_sl_test.yaml,disco-eth/WorldSpeech,en_sl,test,en_us,held_out,en,Sierra Leonean
+worldspeech_en_zm_test.yaml,disco-eth/WorldSpeech,en_zm,test,en_us,held_out,en,Zambian
+worldspeech_es_mx_test.yaml,disco-eth/WorldSpeech,es_mx,test,es_419,in_training,es,trained variety
+worldspeech_es_es_test.yaml,disco-eth/WorldSpeech,es_es,test,es_419,held_out,es,Spain -- the superseded training variety
+worldspeech_es_ar_test.yaml,disco-eth/WorldSpeech,es_ar,test,es_419,held_out,es,Argentine
+worldspeech_es_cl_test.yaml,disco-eth/WorldSpeech,es_cl,test,es_419,held_out,es,Chilean
+worldspeech_es_co_test.yaml,disco-eth/WorldSpeech,es_co,test,es_419,held_out,es,Colombian
+worldspeech_es_pe_test.yaml,disco-eth/WorldSpeech,es_pe,test,es_419,held_out,es,Peruvian
+worldspeech_es_pr_test.yaml,disco-eth/WorldSpeech,es_pr,test,es_419,held_out,es,Puerto Rican
+worldspeech_es_py_test.yaml,disco-eth/WorldSpeech,es_py,test,es_419,held_out,es,Paraguayan
+worldspeech_es_uy_test.yaml,disco-eth/WorldSpeech,es_uy,test,es_419,held_out,es,Uruguayan
+worldspeech_fr_ca_test.yaml,disco-eth/WorldSpeech,fr_ca,test,fr_fr,in_training,fr,trained variety
+worldspeech_fr_cd_test.yaml,disco-eth/WorldSpeech,fr_cd,test,fr_fr,held_out,fr,DR Congo
+worldspeech_fr_ci_test.yaml,disco-eth/WorldSpeech,fr_ci,test,fr_fr,held_out,fr,Cote d'Ivoire
+worldspeech_ha_ng_test.yaml,disco-eth/WorldSpeech,ha_ng,test,ha_ng,in_training,ha,Nigeria
+worldspeech_ha_td_test.yaml,disco-eth/WorldSpeech,ha_td,test,ha_ng,in_training,ha,Chad
+worldspeech_sw_ke_test.yaml,disco-eth/WorldSpeech,sw_ke,test,sw_ke,in_training,sw,Kenya
+worldspeech_sw_tz_test.yaml,disco-eth/WorldSpeech,sw_tz,test,sw_ke,in_training,sw,Tanzania
+worldspeech_ur_pk_test.yaml,disco-eth/WorldSpeech,ur_pk,test,ur_pk,in_training,ur,Pakistan
+worldspeech_ur_in_test.yaml,disco-eth/WorldSpeech,ur_in,test,ur_pk,in_training,ur,India
+worldspeech_ta_in_test.yaml,disco-eth/WorldSpeech,ta_in,test,ta_in,in_training,ta,India
+worldspeech_ta_lk_test.yaml,disco-eth/WorldSpeech,ta_lk,test,ta_in,dropped_by_cap,ta,"Sri Lanka -- listed in the training config but every clip is exactly 30.00 s, so the strict `< 30` filter removed all 23,261. Evaluating here is held-out dialect transfer."
+worldspeech_hi_in_test.yaml,disco-eth/WorldSpeech,hi_in,test,hi_in,in_training,hi,only Hindi variety
+worldspeech_id_id_test.yaml,disco-eth/WorldSpeech,id_id,test,id_id,in_training,id,only Indonesian variety
+worldspeech_mr_in_test.yaml,disco-eth/WorldSpeech,mr_in,test,mr_in,in_training,mr,only Marathi variety
+worldspeech_am_et_test.yaml,disco-eth/WorldSpeech,am_et,test,am_et,in_training,am,only Amharic variety
+worldspeech_crs_sc_test.yaml,ERISLab/WorldSpeech,crs_sc,test_clean,crs_sc,in_training,crs,only Seychellois Creole variety

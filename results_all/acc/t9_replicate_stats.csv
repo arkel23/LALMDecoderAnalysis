@@ -1,0 +1,3 @@
+subset,n_pairs,mean_abs_delta_best,max_abs_delta_best,sd_of_paired_difference,between_run_sd,median_within_run_late_sd
+all_pairs,1,5.010000,5.010000,,,0.430668
+same_seed,1,5.010000,5.010000,,,0.430668

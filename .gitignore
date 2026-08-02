@@ -196,3 +196,10 @@ paper/*.toc
 # 07/28: Claude Code harness settings, local to whoever is running an agent here. Committing
 # it would impose one machine's agent configuration on everyone who clones the repo.
 .claude/
+
+# 08/03: create_yamls_worldspeech_lalm.py writes its YAMLs to a path relative to the cwd,
+# because in QuantizedASR it runs from the repo root where `configs/datasets/short_ml` is
+# correct. Running it here to regenerate the manifest and the pairings drops that tree next
+# to the generator instead. Regenerable output, not a deliverable -- the reviewable artifacts
+# are the generator, the manifest and the pairings file, all tracked.
+for_quantizedasr/tools/preprocess/configs/

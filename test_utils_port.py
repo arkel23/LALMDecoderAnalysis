@@ -335,8 +335,20 @@ if not os.path.exists(T1_CSV):
     print(f'[SKIP] {T1_CSV} not present -- run plotter.sh first')
 else:
     t1 = pd.read_csv(T1_CSV)
-    check('t1 has one row per (model_id, dataset)',
-          not t1.duplicated(subset=['model_id', 'dataset']).any())
+    # t1 is a per-RUN table, so run_id is the true key. (model_id, dataset) is unique only
+    # among canonical rows -- during a re-run window a cell legitimately holds two runs in the
+    # same serial, and every downstream merge filters to the canonical one.
+    check('t1 has one row per run_id', not t1.duplicated(subset=['run_id']).any())
+    check('t1 has one canonical row per (model_id, dataset)',
+          not t1[t1['is_canonical']].duplicated(subset=['model_id', 'dataset']).any())
+    check('every (model_id, dataset) cell has exactly one canonical run',
+          bool((t1.groupby(['model_id', 'dataset'])['is_canonical'].sum() == 1).all()))
+    # Stability rule: an unfinished re-run must never displace the completed run it replaces,
+    # or a `bash plotter.sh` mid-re-run would silently rewrite every number from a 7-step curve.
+    check('no canonical run is unfinished while a finished run exists in the same cell',
+          not any((g['is_canonical'] & (g['state'] != 'finished')).any()
+                  and (g['state'] == 'finished').any()
+                  for _, g in t1.groupby(['model_id', 'dataset'])))
     check('best_cer <= final_cer for every run (best is a minimum over the curve)',
           bool((t1['best_cer'] <= t1['final_cer'] + 1e-9).all()))
     check('final_minus_best is never negative',
@@ -358,6 +370,31 @@ else:
     check('every other language carries exactly the 4 core variants',
           all(t1[t1['dataset'] == l]['model_id'].nunique() == 4
               for l in set(t1['dataset']) - {'crs_sc', 'ta_in'}))
+
+# --- replicate seed classification -------------------------------------------------------
+# A pair must land in exactly one of three buckets. The trap this pins: an unrecorded seed
+# left as NaN compares unequal to itself, so a naive `!=` calls it "seed varies" and pools a
+# nondeterminism pair into the seed-sensitivity estimate, inflating it. The sentinel must not
+# be guessed into `same_seed` either -- an unlogged run is not evidence that it used 42.
+from analyze_replicates import build_pairs as _build_pairs
+from download_wandb_history import UNRECORDED_SEED as _UNRECORDED
+
+def _seed_case(seed_first, seed_rerun):
+    def cell(seed, best, label):
+        return dict(serial_label=label, run_id=f'r{label}', model_id='m', dataset='en_us',
+                    state='finished', seed=seed, best_cer=best, final_cer=best, late_sd=0.4)
+    pair = _build_pairs(pd.DataFrame([cell(seed_rerun, 12.0, 'serial_0')]),
+                        pd.DataFrame([cell(seed_first, 17.0, 'serial_1')]))
+    return pair['seed_status'].iloc[0]
+
+check('two runs at the same seed are same_seed', _seed_case(42, 42) == 'same_seed')
+check('42 against 420 is seed_varies', _seed_case(42, 420) == 'seed_varies')
+check('the unrecorded sentinel is never read as a real seed',
+      _seed_case(_UNRECORDED, 42) == 'unrecorded')
+check('a NaN seed is unrecorded, not seed_varies (NaN != NaN trap)',
+      _seed_case(np.nan, 42) == 'unrecorded')
+check('the sentinel cannot collide with a seed any run actually used',
+      _UNRECORDED not in (42, 420))
 
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)

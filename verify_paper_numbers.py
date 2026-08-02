@@ -28,7 +28,16 @@ from decimal import Decimal, ROUND_HALF_UP
 import pandas as pd
 
 ACC = os.path.join('results_all', 'acc')
-DOC = os.path.join('docs', 'PLAN_ASSESSMENT.md')
+# Every document that prints numbers derived from this repo's CSVs. Scanning only one of them
+# is how the median within-run late_sd sat at a stale 0.97 in PAPER_ASSESSMENT.md while the CSV
+# said 1.06 -- the number was in the spec, but the file that printed it was never read.
+#
+# KNOWN LIMIT, stated rather than papered over: this check asserts the CORRECT value appears
+# somewhere in the scanned text. It does not assert that a WRONG value is absent, so a stale
+# figure sitting beside a correct one still passes. Catching that needs per-claim anchoring,
+# which these specs do not yet carry.
+DOCS = [os.path.join('docs', 'PLAN_ASSESSMENT.md'),
+        os.path.join('docs', 'PAPER_ASSESSMENT.md')]
 
 T1 = os.path.join(ACC, 't1_sample_efficiency.csv')
 T2S = os.path.join(ACC, 't2_region_match_stats.csv')
@@ -36,6 +45,7 @@ T3 = os.path.join(ACC, 't3_crs_ood.csv')
 T4L = os.path.join(ACC, 't4_data_accounting_by_language.csv')
 T5 = os.path.join(ACC, 't5_volume_interaction.csv')
 T5S = os.path.join(ACC, 't5_volume_stats.csv')
+T9 = os.path.join(ACC, 't9_replicates.csv')
 T6A = os.path.join(ACC, 't6_loss_by_axis.csv')
 RAW = os.path.join('data', 'raw_serials', 'raw_serial_0.csv')
 
@@ -155,6 +165,19 @@ DERIVED = [
     ('ta_in best_cer', lambda: (
         load(T1).query("dataset == 'ta_in' and state == 'finished'")['best_cer'].min()), 2),
 ]
+
+# The between-run spread. Conditional because t9 only exists once serial 1 holds a pair; on a
+# bare clone the claim is not in the documents either, so skipping is correct rather than lenient.
+if os.path.exists(T9):
+    DERIVED.append((
+        'largest observed between-run |delta| on best CER',
+        lambda: load(T9)['delta_best_cer'].abs().max(), 2))
+    DERIVED.append((
+        'replicate pair best_cer, first run',
+        lambda: load(T9)['best_cer_first'].max(), 2))
+    DERIVED.append((
+        'replicate pair best_cer, re-run',
+        lambda: load(T9)['best_cer_rerun'].max(), 2))
 
 
 def _acc(lang, col):
@@ -348,14 +371,15 @@ def specificity(printed, hits):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--verbose', action='store_true')
-    ap.add_argument('--doc', type=str, default=DOC)
+    ap.add_argument('--doc', type=str, nargs='+', default=DOCS)
     args = ap.parse_args()
 
-    if not os.path.exists(args.doc):
-        print(f'Document not found: {args.doc}')
+    missing = [d for d in args.doc if not os.path.exists(d)]
+    if missing:
+        print(f'Document(s) not found: {", ".join(missing)}')
         return 1
-    with open(args.doc) as fh:
-        text = normalise(fh.read())
+    text = normalise('\n'.join(open(d).read() for d in args.doc))
+    print(f'Scanning {len(args.doc)} document(s): {", ".join(args.doc)}')
 
     failures, weak, passed = [], [], 0
 
@@ -380,7 +404,7 @@ def main():
         hits = max(occurrences(text, v) for v in variants)
         if hits == 0:
             failures.append(f'{label}: CSV gives {raw_value!r} -> "{printed}", '
-                            f'not found in {args.doc}')
+                            f'not found in any of {", ".join(args.doc)}')
             continue
         passed += 1
         note = specificity(printed, hits)

@@ -13,7 +13,7 @@
 # once during development -- test_utils_port.py exited 1 and plotter.sh still reported success.
 set -eu
 
-SERIALS=(0)
+SERIALS=(0 1)         # 0 = canonical training runs, 1 = earlier run of a twice-run cell
 EVAL_SERIALS=(10 11)  # 10 = off-the-shelf baselines, 11 = trained TinyAya LALMs
 PROJECT='LisTAya/LALMDecoder'
 HIST=data/raw_serials/history_serial_0.csv
@@ -159,6 +159,12 @@ python -u analyze_baselines.py \
 # t2 (per-language contrasts) and t4 (reconstructed stream sizes), so it runs after both.
 # Loss diagnostics: separates overfitting (eval loss rising after its own minimum) from
 # domain/accent shift (a large train-eval gap with no rise). Both curves are already logged.
+# Between-run variance from replicate pairs. This is the honest noise floor; late_sd measures
+# wobble along one trajectory and understates it. Skips cleanly until serial 1 has pairs.
+python -u analyze_replicates.py \
+  --serial0_file "$HIST" --serial1_file data/raw_serials/history_serial_1.csv \
+  --output_file "$ACC/t9_replicates.csv" --stats_file "$ACC/t9_replicate_stats.csv" || true
+
 python -u analyze_loss_metrics.py \
   --input_file "$HIST" --output_file "$ACC/t6_loss_metrics.csv" \
   --summary_file "$ACC/t6_loss_by_axis.csv"
@@ -251,4 +257,7 @@ python -u test_utils_port.py
 # so "uniform probabilities oversample the smaller config" stays refuted rather than becoming
 # folklore again.
 python -u verify_interleave_semantics.py
+# Each trained checkpoint is language-specific, so a model must only meet its own language's
+# datasets. Static check over the generated sweep -- no QuantizedASR checkout needed.
+python -u verify_eval_pairing.py
 python -u verify_paper_numbers.py

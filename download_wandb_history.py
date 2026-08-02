@@ -32,7 +32,7 @@ import pandas as pd
 # into an impossible number, so the factors travel with the data.
 CONFIG_COLS = [
     'serial', 'dataset_path', 'dataset', 'split', 'model_id', 'force_asr_language',
-    'batch_size', 'gradient_accumulation_steps', 'max_steps', 'lr',
+    'batch_size', 'gradient_accumulation_steps', 'max_steps', 'lr', 'seed',
     'freeze_encoder', 'freeze_decoder', 'peft',
     'dataset_path_train', 'dataset_train', 'split_train',
     'model/num_parameters', 'max_input_length', 'streaming',
@@ -49,6 +49,18 @@ HISTORY_KEYS = [
     'eval/loss', 'eval/cer', 'eval/runtime',
     'eval/samples_per_second', 'eval/steps_per_second',
 ]
+
+# A run whose config carries no `seed` predates seed logging. Left as NaN it is poison for
+# replicate analysis, because NaN != NaN in pandas: a naive comparison reports "the seed
+# varies" for every such pair and silently inflates the between-run variance estimate. It is
+# also wrong to guess the value -- the runs that logged one used 42, but an unlogged run is
+# not evidence of 42.
+#
+# So unrecorded becomes an explicit sentinel that cannot collide with a real seed (no run
+# here uses 0), paired with `seed_recorded` so the fill is never invisible. A new run always
+# logs its seed, so sentinel-vs-real reads as "these differ", which is the truthful reading:
+# they are not known to match.
+UNRECORDED_SEED = 0
 
 SORT_COLS = ['serial', 'dataset', 'model_id', '_step']
 
@@ -99,6 +111,12 @@ def make_history_df(runs, config_cols, history_keys):
         df['host'] = host
         for col in config_cols:
             df[col] = _scalarize(run.config.get(col, None))
+
+        if 'seed' in config_cols:
+            raw_seed = run.config.get('seed', None)
+            df['seed_recorded'] = raw_seed is not None
+            if raw_seed is None:
+                df['seed'] = UNRECORDED_SEED
 
         frames.append(df)
 

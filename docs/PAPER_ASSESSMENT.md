@@ -25,6 +25,21 @@ Region-matched decoders do not beat mismatched ones: n = 11 languages, mean **-0
 Wilcoxon **p = 1.000**, 95 % CI [-3.95, 2.53]. A p of exactly 1.000 is about as flat as a null
 gets. The design's minimum detectable effect is **4.89 CER**.
 
+**The null is about magnitude, not about specialisation being inert.** `arXiv:2508.05149` uses
+almost this architecture and finds decoder choice matters enormously at low resource -- EuroLLM
+14.0 vs Salamandra 33.6 WER at 10 h. Those are different model *families*; our variants differ by
+a median of 1.30 percentage points of post-training data (§3). A null at 1.3 pp is entirely
+consistent with a 19.6 pp effect between families, so the claim is "specialisation at this
+magnitude does not measurably change ASR, and here is the magnitude" -- considerably stronger
+than "specialisation does not help". See `docs/RELATED_WORK.md`.
+
+**Caution on the noise floor.** Earlier drafts cited the median within-run late-training standard
+deviation (1.06 CER) as the noise floor. That is the wrong quantity: it measures wobble along one
+trajectory, not how far two independent runs of the same cell land apart. The single replicate
+pair we have (`en_us`/water, same seed) differs by **5.01 CER** on best -- five times that figure.
+`analyze_replicates.py` replaces the proxy with a measured between-run standard deviation as the
+`am_et` and `crs_sc` re-runs land. Until then, every uncertainty statement here is optimistic.
+
 ### 2. A secondary hypothesis formed and then died on replication — worth reporting as such
 
 With 7 languages, the matched-decoder benefit decayed monotonically with training-data volume
@@ -115,6 +130,25 @@ is in the repo and runs offline.
 6. **Single recipe, single encoder, single decoder scale.** No claim generalises beyond
    whisper-medium + Tiny Aya 3.35B + connector-only.
 7. **`am_et` and `crs_sc` have no uploaded checkpoints**, so they cannot enter the eval sweep.
+
+## Where this sits in the literature
+
+`arXiv:2508.05149` ("Speech LLMs in Low-Resource Scenarios") is a near-twin -- frozen
+Whisper-large-v3-turbo, frozen LLM, trained linear projector -- and supplies two anchors that were
+not available when this assessment was first written:
+
+- **The 100-200 h threshold.** SLAM-ASR only matches a Whisper-only baseline at 100-200 h of
+  training data (10 h -> 14.0 WER, 100 h -> 7.6, 200 h -> 6.4, against Whisper 7.1). **Five of our
+  twelve cells sit below it.** This explains our low-resource cells better than anything we derived
+  ourselves, and it belongs ahead of any claim about decoder variants at low resource.
+- **Independent corroboration of the domain problem.** At 200 h their in-domain WER is 6.4 but
+  FLEURS is 13.2, against Whisper's 5.8. We see the same from the other side: WorldSpeech test is
+  2.40x (en_us) and 1.89x (fr_fr) harder than FLEURS test for whisper-medium.
+
+They also use **no augmentation at all** despite naming data scarcity as the bottleneck, which is
+what makes `docs/FUTURE_WORK_AUGMENTATION.md` a real gap rather than a nice-to-have. And their
+cross-lingual projector pretraining result (14.0 -> 8.6 WER in-domain at 10 h) is the strongest
+known next lever for our low tiers.
 
 ## Proposed 4-page structure
 

@@ -131,7 +131,13 @@ def main():
                    help='Optional; adds the per-language data-accounting flag to the output.')
     args = p.parse_args()
 
+    # `state == 'finished'` is not enough on its own. During a re-run window a cell holds two
+    # runs in the same serial, and once the re-run finishes BOTH are finished -- so filtering on
+    # state alone would resurrect the duplicate and hand the paired subtraction below two rows
+    # per cell. t1 names the canonical run explicitly; use it.
     df = pd.read_csv(args.input_file)
+    if 'is_canonical' in df.columns:
+        df = df[df['is_canonical']]
     df = df[df['state'] == 'finished']
     df = df[df['model_short'].isin(CORE_VARIANTS)]
     assert_unique_keys(df, ['model_short', 'dataset'], label='t1 input to region match')

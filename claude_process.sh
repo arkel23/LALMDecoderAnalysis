@@ -166,3 +166,37 @@ set -u
 #   python tools/preprocess/create_yamls_models_lalm_txf.py   # 82 model configs
 #   python tools/preprocess/create_yamls_worldspeech_lalm.py  # 11 dataset configs
 #   bash scripts/eval_lalm_decoder_txf.sh                     # serial 11, 156 evals
+
+# --- 2026-08-03: regenerate the eval configs, the manifest AND the pairings. SPENT ----------
+# (run locally, inside this repo, only to refresh the tracked manifest + pairings file).
+# The generator now also emits worldspeech_lalm_pairings.sh, which eval_lalm_decoder_txf.sh
+# sources instead of carrying an inline PAIRINGS array -- so a language is added in one place
+# and a cross-language pairing is impossible by construction.
+#
+# It writes its YAMLs to a cwd-relative path (correct in QuantizedASR, where it runs from the
+# repo root), so running it here also drops a configs/ tree next to the generator. That tree is
+# gitignored; the tracked, reviewable artifacts are the generator, the manifest and the pairings.
+#
+# (cd for_quantizedasr/tools/preprocess && python create_yamls_worldspeech_lalm.py)
+
+# --- 2026-08-03: SUPERSEDES the 2026-08-02 block above -- 12 pairings, not 11, and the -------
+# eval count depends on --eval_set. NOT YET RUN in QuantizedASR. From its root:
+#
+#   python tools/preprocess/create_yamls_models_lalm_txf.py    # 82 model configs
+#   python tools/preprocess/create_yamls_worldspeech_lalm.py   # 33 dataset configs + pairings
+#   bash scripts/eval_lalm_decoder_txf.sh --eval_set primary   # serial 11, 188 evals
+#   bash scripts/eval_lalm_decoder_txf.sh --eval_set all       # serial 11, 334 evals
+
+# --- 2026-08-03: PENDING, do NOT run until the crs_sc/am_et re-runs FINISH. -----------------
+# The 5 crs_sc re-runs (seed 420) are currently in serial 0 alongside the finished originals
+# (seed 42). analyze_sample_efficiency.py keeps the pipeline correct meanwhile by marking the
+# finished original canonical, and prints a [DUPLICATE RUNS] warning on every run.
+#
+# Once they finish, migrate the ORIGINALS to serial 1 so replicate pairing is a clean join on
+# (model_id, dataset). Dry-run first; the script defaults to dry-run.
+#
+#   python rename_wandb_serial.py --run_ids 12sof3iv g8f56u6p wvi4k6py ea7a4ud8 95kqse0h \
+#       --from_serial 0 --to_serial 1              # dry run: prints what would change
+#   python rename_wandb_serial.py --run_ids 12sof3iv g8f56u6p wvi4k6py ea7a4ud8 95kqse0h \
+#       --from_serial 0 --to_serial 1 --execute    # then: rm data/raw_serials/history_serial_*.csv
+#                                                  #       bash plotter.sh

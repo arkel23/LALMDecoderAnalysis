@@ -1,5 +1,77 @@
 # Change log
 
+## 2026-08-03 — literature positioning, generated eval pairing, and surviving a re-run window
+
+### The re-run window broke the uniqueness contract, correctly
+
+The five `crs_sc` re-runs (seed 420) started while the originals (seed 42) were still on serial
+0, so every `crs_sc` cell held two runs and `assert_unique_keys` stopped the pipeline. That is
+the guard doing its job -- the alternative is a paired subtraction silently seeing two rows per
+cell, which is the cross-join defect the sibling repos shipped.
+
+`analyze_sample_efficiency.py` now names a canonical run per `(model_id, dataset)`:
+
+- prefer `finished` over unfinished; among equals prefer the **earliest**;
+- every duplicate is **printed**, never silently dropped;
+- `is_canonical` and `n_runs_in_cell` are columns, and `analyze_region_match.py` /
+  `analyze_ood_crs.py` filter on them.
+
+The rule is stability-first on purpose. A half-trained re-run (7 steps, CER > 100) must never
+displace the 202-step run every existing number came from, and once it finishes the swap should
+be a deliberate serial migration rather than something that happens on the next `bash
+plotter.sh`. `state == 'finished'` alone was not enough: once both runs finish, both pass it.
+
+### Median within-run `late_sd` was stale: 0.97 -> 1.06
+
+The CSV has said 1.0649 since `ur_pk` landed. Three documents still printed 0.97, including the
+noise-floor argument in `PAPER_ASSESSMENT.md`. Root cause: `verify_paper_numbers.py` scanned
+only `PLAN_ASSESSMENT.md`, so the number was *in the spec* but the file printing it was never
+read. It now scans `PAPER_ASSESSMENT.md` too (97 numbers, up from 94).
+
+**Stated limit:** the check asserts the correct value *appears* somewhere. It does not assert a
+wrong value is *absent*, so a stale figure beside a correct one still passes. Catching that
+needs per-claim anchoring the specs do not carry.
+
+### Unrecorded seeds get a sentinel, not NaN
+
+Every run currently logs a seed (42 on the grid, 420 on the `crs_sc` re-runs), so this is
+defensive. An unrecorded seed becomes `UNRECORDED_SEED = 0` plus a `seed_recorded` flag rather
+than NaN, because `NaN != NaN` in pandas: a naive comparison calls every unrecorded pair "seed
+varies" and pools a nondeterminism pair into the seed-sensitivity estimate, inflating it. The
+sentinel is not guessed into `same_seed` either -- an unlogged run is not evidence it used 42.
+`seed_status` is three-valued (`same_seed` / `seed_varies` / `unrecorded`), pinned by 5 unit
+tests.
+
+### The eval pairing is generated, not hand-written
+
+`create_yamls_worldspeech_lalm.py` now emits `worldspeech_lalm_pairings.sh` from the same table
+that writes the dataset YAMLs, and `eval_lalm_decoder_txf.sh` sources it. Verified identical to
+the hand-written block it replaces (12 cells, 44 pairings, order aside) before swapping.
+
+`verify_eval_pairing.py` checks the generated file and additionally fails if an inline
+`PAIRINGS=(` reappears in the sweep. Negative-tested both ways: a `ur_pk` x `ha_td` injection
+gives `[FAIL] no pairing crosses a language boundary -- model ur_pk (ur_pk) x data ha_td
+(ha_ng)`, and a reintroduced inline block fails the source check. Both exit 1; restored, exit 0.
+
+### Literature positioning
+
+`docs/RELATED_WORK.md` records `arXiv:2508.05149`, a near-twin (frozen Whisper-large-v3-turbo +
+frozen LLM + trained linear projector). Two anchors change how the results should be written:
+
+- **SLAM-ASR needs 100-200 h** to match a Whisper-only baseline (10 h -> 14.0 WER, 100 h -> 7.6,
+  200 h -> 6.4, vs Whisper 7.1). **Five of our twelve cells sit below it.**
+- **Decoder choice matters enormously at low resource** -- EuroLLM 14.0 vs Salamandra 33.6 at
+  10 h. Those are different model *families*; our variants differ by a median of 1.30 pp of
+  post-training data. So our null is **consistent with** their positive result, and the claim
+  becomes "specialisation at this magnitude does not measurably change ASR, and here is the
+  magnitude".
+
+They also use **no augmentation at all**, which is what makes
+`docs/FUTURE_WORK_AUGMENTATION.md` a real gap. That document records the three arms (audio /
+target / both), the correction that target-side augmentation with audio present *is*
+backpropagable through a frozen decoder, the insertion point, and the blockers -- explicitly as
+future work, not current work.
+
 ## 2026-08-02 (night) — evaluate every WorldSpeech variant, not just the trained one
 
 The first version of `create_yamls_worldspeech_lalm.py` emitted one eval config per study cell
@@ -61,7 +133,7 @@ non-associativity -- not seed sensitivity. Against the study's other quantities:
 
 | quantity | CER |
 |---|---|
-| within-run late-training sd (the noise floor used throughout) | 0.97 |
+| within-run late-training sd (the noise floor used throughout) | 1.06 |
 | region-match effect being measured | -0.61 |
 | design minimum detectable effect | 4.89 |
 | **observed run-to-run spread (n = 1 pair)** | **5.01** |

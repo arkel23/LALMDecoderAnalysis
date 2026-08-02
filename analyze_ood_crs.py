@@ -53,6 +53,10 @@ def main():
     args = p.parse_args()
 
     df = pd.read_csv(args.input_file)
+    # See analyze_region_match.py: crs_sc is precisely the cell being re-run, so without this
+    # the OOD table would carry both the completed run and its half-trained replacement.
+    if 'is_canonical' in df.columns:
+        df = df[df['is_canonical']]
     out = df[df['dataset'] == args.language].copy()
     if out.empty:
         raise SystemExit(f'No rows for {args.language} in {args.input_file}')
