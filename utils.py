@@ -395,6 +395,25 @@ ACCENT_MATCH = {
 }   # every other language: 'same'
 
 
+# WorldSpeech eval configs are named after the TRAINING variety (fr_ca, es_mx), while the study
+# cell is named after the FLEURS variety (fr_fr, es_419). Without this map those rows get no
+# resource tier and no region, and silently drop out of any grouped table.
+TRAIN_CONFIG_TO_CELL = {
+    'fr_ca': 'fr_fr',
+    'es_mx': 'es_419',
+    'es_es': 'es_419',
+    'ta_lk': 'ta_in',
+    'ur_in': 'ur_pk',
+    'sw_tz': 'sw_ke',
+    'ha_td': 'ha_ng',
+}
+
+
+def to_study_cell(code):
+    """Normalise a dataset config name to the study's language cell."""
+    return TRAIN_CONFIG_TO_CELL.get(code, code)
+
+
 def get_eval_domain(language):
     return EVAL_DOMAIN.get(language, 'cross_domain')
 

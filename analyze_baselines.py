@@ -38,7 +38,8 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from utils import LANGUAGE_DIC, RESOURCE_TIER, get_eval_domain, assert_unique_keys
+from utils import (LANGUAGE_DIC, RESOURCE_TIER, get_eval_domain, to_study_cell,
+                   assert_unique_keys)
 
 FLOAT_FORMAT = '%.6f'
 
@@ -68,10 +69,19 @@ def build_table(df):
     keep += [c for c in WER_FAMILY + COST_COLS if c in df.columns]
     out = df[[c for c in keep if c in df.columns]].copy()
 
-    out['language_name'] = out['dataset'].map(LANGUAGE_DIC)
-    out['resource_tier'] = out['dataset'].map(RESOURCE_TIER)
-    out['eval_domain_of_training_cell'] = out['dataset'].map(get_eval_domain)
+    # The eval config is named after the training variety on the WorldSpeech side (fr_ca,
+    # es_mx) and after the FLEURS variety on the other (fr_fr, es_419). Normalise to the study
+    # cell so both domains of the same language group together.
+    out['study_cell'] = out['dataset'].map(to_study_cell)
+    out['language_name'] = out['study_cell'].map(LANGUAGE_DIC)
+    out['resource_tier'] = out['study_cell'].map(RESOURCE_TIER)
     out['model_short'] = out['model_id'].astype(str).str.split('/').str[-1]
+
+    # Training is always WorldSpeech, so a WorldSpeech eval is in-domain and FLEURS is the
+    # held-out domain. This is a property of the EVAL SET, not of the language.
+    out['eval_domain'] = np.where(
+        out['dataset_path'].astype(str).str.contains('WorldSpeech'),
+        'in_domain', 'cross_domain')
 
     # A baseline is one row per (model, language, eval set). Anything else means a duplicate
     # eval, which would silently average two runs of the same cell.
@@ -84,10 +94,13 @@ def coverage(out):
     """What has finished, and what is still missing. Serial 10 fills in incrementally."""
     fin = out[out['state'] == 'finished']
     models = sorted(out['model_short'].dropna().unique())
-    langs = sorted(out['dataset'].dropna().unique())
-    grid = pd.crosstab(fin['dataset'], fin['model_short'])
-    missing = [(l, m) for l in langs for m in models
-               if not ((fin['dataset'] == l) & (fin['model_short'] == m)).any()]
+    langs = sorted(out['study_cell'].dropna().unique())
+    # Coverage is per (language, DOMAIN, model): the same language is evaluated twice, once
+    # per domain, and collapsing them hides which half is missing.
+    grid = pd.crosstab([fin['study_cell'], fin['eval_domain']], fin['model_short'])
+    missing = [(l, d, m) for l in langs for d in ('cross_domain', 'in_domain') for m in models
+               if not ((fin['study_cell'] == l) & (fin['eval_domain'] == d)
+                       & (fin['model_short'] == m)).any()]
     return models, langs, grid, missing
 
 
@@ -157,17 +170,31 @@ def main():
     print('\nfinished runs per (language, model):')
     print(grid.to_string() if len(grid) else '  (none finished yet)')
     if missing:
-        print(f'\n{len(missing)} cell(s) not finished: '
-              f'{", ".join(f"{l}/{m}" for l, m in missing[:12])}'
-              f'{" ..." if len(missing) > 12 else ""}')
+        print(f'\n{len(missing)} (language, domain, model) cell(s) not finished. '
+              f'Aggregates below cover ONLY what has finished:')
+        for dom in ('cross_domain', 'in_domain'):
+            miss = [f'{l}/{m}' for l, d, m in missing if d == dom]
+            if miss:
+                print(f'  {dom}: {len(miss)} missing -- '
+                      f'{", ".join(miss[:10])}{" ..." if len(miss) > 10 else ""}')
 
     fin = out[out['state'] == 'finished']
     if len(fin):
-        show = ['dataset', 'model_short', 'resource_tier'] + \
+        show = ['study_cell', 'eval_domain', 'model_short', 'resource_tier'] + \
                [c for c in WER_FAMILY if c in fin.columns] + \
                [c for c in ('rtfx', 'no_params', 'num_samples') if c in fin.columns]
         print('\nfinished baseline results:')
-        print(fin[show].round(3).to_string(index=False))
+        print(fin.sort_values(['eval_domain', 'wer'])[show].round(3).to_string(index=False))
+
+        # Same model, same language, two domains: the cleanest read on how much harder the
+        # in-domain corpus is than the read-speech benchmark.
+        both = (fin.pivot_table(index=['study_cell', 'model_short'], columns='eval_domain',
+                                values='wer')
+                .dropna())
+        if len(both):
+            both['in_over_cross'] = both['in_domain'] / both['cross_domain']
+            print('\nlanguages evaluated on BOTH domains (WER):')
+            print(both.round(2).to_string())
 
     trained_raw = load_serial(args.trained_file, 'serial 11 (trained)')
     contrast = compare_with_trained(out, trained_raw, args.metric)

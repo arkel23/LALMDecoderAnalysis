@@ -1,5 +1,56 @@
 # Change log
 
+## 2026-08-02 (evening) — first baseline numbers, and they are lopsided
+
+Serial 10 is 14 rows in, and the sweep turned out to cover **both** evaluation domains, not just
+FLEURS: 11 languages on `google/fleurs` test (cross-domain) and 3 on `disco-eth/WorldSpeech`
+test (in-domain, the training domain). The first version of `analyze_baselines.py` collapsed
+those, reporting two `en_us` rows as a duplicate cell; it now keys coverage on
+(language, domain, model) and normalises WorldSpeech's training-variety names (`fr_ca`, `es_mx`)
+onto the study cell (`fr_fr`, `es_419`) via a new `utils.to_study_cell`, without which those
+rows lost their resource tier and dropped out of every grouped table.
+
+**Only whisper-medium has run.** Voxtral-Mini and Qwen2-Audio have not started, so nothing here
+is a statement about LALM baselines in general -- it is a statement about one ASR model.
+
+### whisper-medium falls off a cliff on the low-resource languages
+
+| language | tier | WER (FLEURS test) |
+|---|---|---|
+| es_419 | high | 3.55 |
+| en_us | high | 5.29 |
+| fr_fr | high | 7.91 |
+| id_id | high | 10.77 |
+| ur_pk | low | 29.74 |
+| hi_in | high | 30.19 |
+| ta_in | very_low | 31.08 |
+| mr_in | mid | 76.48 |
+| sw_ke | high | 93.85 |
+| ha_ng | mid | 121.97 |
+| am_et | very_low | **365.02** |
+
+Amharic at `wip` 0.00 and `mer` 99.99 is not a bad transcript, it is no transcript -- the model
+emits text unrelated to the audio. Hausa and Swahili above 90 WER are equally unusable.
+
+That is the strongest argument the project has produced for connector training so far: there is
+enormous headroom on exactly the languages the study exists to serve. It is **not yet a result**
+-- serial 11 has not run, so the like-for-like contrast does not exist.
+
+### The in-domain corpus is the harder one
+
+For the two languages evaluated on both domains, WorldSpeech test is **2.40x** (en_us) and
+**1.89x** (fr_fr) worse than FLEURS test. So the in-domain evaluation is not the easy one, and
+adding it will move every number in the unfavourable direction.
+
+### Still missing
+- **CER.** The FLEURS configs carry `eval_metrics: ['wer_all']`, so the baselines log WER only
+  while the training runs report CER. Adding `'cer'` to that list costs nothing at inference.
+- Voxtral-Mini and Qwen2-Audio.
+- 9 of 11 in-domain cells.
+- Serial 11 entirely.
+
+---
+
 ## 2026-08-02 (later) — serial 10 baselines wired in
 
 Eval-only baseline runs started on **serial 10**: whisper-medium, Voxtral-Mini and Qwen2-Audio
