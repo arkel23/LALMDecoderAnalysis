@@ -1,0 +1,189 @@
+"""
+Serial 10: off-the-shelf LALM baselines, and what they say about training a connector at all.
+
+Serial 0 answers "does the decoder's regional specialisation matter?" -- a comparison *within*
+SLAM-style connector-only training. It cannot answer the prior question: is that training worth
+doing at all, against a model you can download today? Serial 10 is that baseline set --
+whisper-medium, Voxtral-Mini, Qwen2-Audio evaluated directly, with no connector trained.
+
+WHAT IS AND IS NOT COMPARABLE, because three serials use three different measurements:
+
+  serial 0    training runs. eval/cer, on FLEURS *validation* (plus WorldSpeech for two
+              languages). This is the model-SELECTION curve -- best-checkpoint CER was chosen
+              over it -- so it is not a clean held-out number and it is a different metric.
+  serial 10   baselines. wer / mer / wil / wip on FLEURS *test*, from `eval_metrics: [wer_all]`.
+  serial 421  the trained checkpoints, swept by eval_lalm_decoder_txf.sh over the SAME FLEURS
+              test configs. Same metric, same split, so serial 421 minus serial 10 is the
+              like-for-like "what did training buy" contrast.
+
+So the intended comparison is 421 vs 10, and this script is built to compute it the moment 421
+exists. Comparing serial 0's CER against serial 10's WER would be comparing two different
+metrics on two different splits, and is deliberately not done here.
+
+NOTE ON CER. The FLEURS configs carry `eval_metrics: ['wer_all']`, so no CER is logged for the
+baselines. Adding 'cer' to that list would make both metrics available on both sides at no extra
+inference cost -- worth doing before the sweep is complete, since the training runs report CER
+and a reader will expect the two to meet.
+
+Handles partial data: serial 10 is populated incrementally, so every cell is reported as
+present/absent rather than assumed.
+
+Usage:
+    python analyze_baselines.py --input_file data/raw_serials/raw_serial_10.csv \\
+        --output_file results_all/acc/t7_baselines.csv
+"""
+import os
+import argparse
+
+import numpy as np
+import pandas as pd
+
+from utils import LANGUAGE_DIC, RESOURCE_TIER, get_eval_domain, assert_unique_keys
+
+FLOAT_FORMAT = '%.6f'
+
+# The metric family `wer_all` emits. wer is primary; the others are kept because they
+# disambiguate failure modes -- a high wer with a low mer means insertions/deletions rather
+# than substitutions, which is what a model that ignores the prompt tends to produce.
+WER_FAMILY = ('wer', 'mer', 'wil', 'wip')
+
+# Efficiency and size columns, logged for every eval run. Relevant because the study's claim is
+# partly about small models: a baseline that wins on WER while being 7x larger is not the same
+# result as one that wins at parity.
+COST_COLS = ('rtfx', 'no_params', 'n_params', 'total_MB', 'bpw', 'max_memory')
+
+
+def load_serial(path, label):
+    if not os.path.exists(path):
+        print(f'[SKIP] {label}: {path} not present')
+        return None
+    df = pd.read_csv(path)
+    print(f'{label}: {len(df)} rows from {path}')
+    return df
+
+
+def build_table(df):
+    keep = ['serial', 'model_id', 'dataset', 'dataset_path', 'split', 'state',
+            'force_asr_language', 'num_samples', 'audio_length_s_mean']
+    keep += [c for c in WER_FAMILY + COST_COLS if c in df.columns]
+    out = df[[c for c in keep if c in df.columns]].copy()
+
+    out['language_name'] = out['dataset'].map(LANGUAGE_DIC)
+    out['resource_tier'] = out['dataset'].map(RESOURCE_TIER)
+    out['eval_domain_of_training_cell'] = out['dataset'].map(get_eval_domain)
+    out['model_short'] = out['model_id'].astype(str).str.split('/').str[-1]
+
+    # A baseline is one row per (model, language, eval set). Anything else means a duplicate
+    # eval, which would silently average two runs of the same cell.
+    assert_unique_keys(out, ['model_id', 'dataset', 'dataset_path', 'split'],
+                       label='t7_baselines')
+    return out.sort_values(['dataset', 'model_short'])
+
+
+def coverage(out):
+    """What has finished, and what is still missing. Serial 10 fills in incrementally."""
+    fin = out[out['state'] == 'finished']
+    models = sorted(out['model_short'].dropna().unique())
+    langs = sorted(out['dataset'].dropna().unique())
+    grid = pd.crosstab(fin['dataset'], fin['model_short'])
+    missing = [(l, m) for l in langs for m in models
+               if not ((fin['dataset'] == l) & (fin['model_short'] == m)).any()]
+    return models, langs, grid, missing
+
+
+def compare_with_trained(base, trained, metric='wer'):
+    """serial 421 minus serial 10, per (language, eval set). Same metric, same split.
+
+    Returns None until the trained sweep exists. The merge asserts key uniqueness on both
+    sides first: a duplicated key here would produce a cross product that reads as a larger,
+    more reassuring sample.
+    """
+    if trained is None or base is None or metric not in trained.columns:
+        return None
+
+    key = ['dataset', 'dataset_path', 'split']
+    b = base[base['state'] == 'finished'].copy()
+    t = trained[trained['state'] == 'finished'].copy()
+
+    # Best baseline per eval cell -- the honest comparator is the strongest downloadable model,
+    # not the mean of them.
+    b_best = (b.sort_values(metric).groupby(key, as_index=False)
+              .first()[key + [metric, 'model_short']]
+              .rename(columns={metric: f'baseline_{metric}',
+                               'model_short': 'baseline_model'}))
+    # Best trained model per eval cell.
+    t_best = (t.sort_values(metric).groupby(key, as_index=False)
+              .first()[key + [metric, 'model_short']]
+              .rename(columns={metric: f'trained_{metric}',
+                               'model_short': 'trained_model'}))
+
+    assert_unique_keys(b_best, key, label='baseline best-per-cell')
+    assert_unique_keys(t_best, key, label='trained best-per-cell')
+
+    merged = b_best.merge(t_best, on=key, how='inner', validate='one_to_one')
+    merged[f'delta_{metric}'] = merged[f'trained_{metric}'] - merged[f'baseline_{metric}']
+    merged['training_helps'] = merged[f'delta_{metric}'] < 0
+    return merged
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--input_file', type=str,
+                   default=os.path.join('data', 'raw_serials', 'raw_serial_10.csv'))
+    p.add_argument('--trained_file', type=str,
+                   default=os.path.join('data', 'raw_serials', 'raw_serial_421.csv'),
+                   help='Serial 421: the trained checkpoints swept over the same FLEURS test '
+                        'configs. Optional; the contrast is skipped until it exists.')
+    p.add_argument('--output_file', type=str,
+                   default=os.path.join('results_all', 'acc', 't7_baselines.csv'))
+    p.add_argument('--contrast_file', type=str,
+                   default=os.path.join('results_all', 'acc', 't7_training_vs_baseline.csv'))
+    p.add_argument('--metric', type=str, default='wer')
+    args = p.parse_args()
+
+    base_raw = load_serial(args.input_file, 'serial 10 (baselines)')
+    if base_raw is None:
+        print('Nothing to do until serial 10 has been downloaded.')
+        return 0
+
+    out = build_table(base_raw)
+    os.makedirs(os.path.dirname(args.output_file) or '.', exist_ok=True)
+    out.to_csv(args.output_file, index=False, float_format=FLOAT_FORMAT)
+    print(f'Wrote {len(out)} rows to {args.output_file}\n')
+
+    models, langs, grid, missing = coverage(out)
+    print(f'models: {", ".join(models)}')
+    print(f'languages: {", ".join(langs)}')
+    print('\nfinished runs per (language, model):')
+    print(grid.to_string() if len(grid) else '  (none finished yet)')
+    if missing:
+        print(f'\n{len(missing)} cell(s) not finished: '
+              f'{", ".join(f"{l}/{m}" for l, m in missing[:12])}'
+              f'{" ..." if len(missing) > 12 else ""}')
+
+    fin = out[out['state'] == 'finished']
+    if len(fin):
+        show = ['dataset', 'model_short', 'resource_tier'] + \
+               [c for c in WER_FAMILY if c in fin.columns] + \
+               [c for c in ('rtfx', 'no_params', 'num_samples') if c in fin.columns]
+        print('\nfinished baseline results:')
+        print(fin[show].round(3).to_string(index=False))
+
+    trained_raw = load_serial(args.trained_file, 'serial 421 (trained)')
+    contrast = compare_with_trained(out, trained_raw, args.metric)
+    if contrast is None:
+        print(f'\n[PENDING] the training-vs-baseline contrast needs serial 421 '
+              f'({args.trained_file}). Run eval_lalm_decoder_txf.sh, download it, and re-run.')
+    else:
+        contrast.to_csv(args.contrast_file, index=False, float_format=FLOAT_FORMAT)
+        print(f'\nWrote {len(contrast)} rows to {args.contrast_file}')
+        print(contrast.round(3).to_string(index=False))
+        n_help = int(contrast['training_helps'].sum())
+        print(f'\nTraining beats the best downloadable baseline in '
+              f'{n_help}/{len(contrast)} evaluated cells.')
+
+    return 0
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,3 @@
+serial,model_id,dataset,dataset_path,split,state,force_asr_language,num_samples,audio_length_s_mean,wer,mer,wil,wip,rtfx,no_params,n_params,total_MB,bpw,max_memory,language_name,resource_tier,eval_domain_of_training_cell,model_short
+10,openai/whisper-medium,en_us,google/fleurs,test,finished,en,647.000000,9.873107,5.290000,5.250000,8.690000,91.310000,622.890000,763.857900,816967680.000000,1558.242188,16.000000,115750.000000,English,high,cross_domain,whisper-medium
+10,openai/whisper-medium,fr_fr,google/fleurs,test,running,fr,,,,,,,,,,,,,French,high,cross_domain,whisper-medium

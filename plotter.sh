@@ -14,6 +14,7 @@
 set -eu
 
 SERIALS=(0)
+EVAL_SERIALS=(10)     # eval-only baseline sweeps
 PROJECT='LisTAya/LALMDecoder'
 HIST=data/raw_serials/history_serial_0.csv
 PLOTS=results_all/plots/s0
@@ -59,6 +60,27 @@ for serial in "${SERIALS[@]}"; do
   else
     echo "Skipping history download for serial ${serial} (exists)"
   fi
+done
+
+# Serial 10: eval-only baselines (whisper-medium / Voxtral-Mini / Qwen2-Audio evaluated
+# directly, no connector trained). These runs have _step=0, so there is no history worth
+# pulling -- only the summary. This is exactly the run shape the wer / mer / wil / wip / rtfx /
+# no_params column list was kept for; serial 0's training runs leave all of them empty.
+#
+# NOT guarded on file existence: serial 10 is being filled in incrementally, so a cached copy
+# goes stale as runs land. It is one cheap API call.
+for serial in "${EVAL_SERIALS[@]}"; do
+  echo "Downloading eval-only summary for serial ${serial}..."
+  python -u download_save_wandb_data.py \
+    --project_name "$PROJECT" --serials "${serial}" \
+    --results_dir data --output_file "raw_serials/raw_serial_${serial}.csv" \
+    --config_cols serial dataset_path dataset split model_id force_asr_language task \
+                  batch_size max_eval_samples norm_english long_form \
+                  'model/num_parameters' \
+    --summary_cols wer mer wil wip cer rtfx no_params n_params num_samples \
+                   audio_length_s_mean audio_length_s_std audio_length_s_min \
+                   audio_length_s_max max_memory bpw total_MB \
+    || echo "  (serial ${serial} not available yet -- skipping)"
 done
 
 # --- 1b. Dataset example counts ----------------------------------------------------
@@ -123,6 +145,14 @@ python -u analyze_region_match.py \
 python -u analyze_ood_crs.py \
   --input_file "$ACC/t1_sample_efficiency.csv" \
   --output_file "$ACC/t3_crs_ood.csv"
+
+# Baselines: off-the-shelf LALMs evaluated directly, answering the prior question serial 0
+# cannot -- whether connector training is worth doing at all. The training-vs-baseline contrast
+# waits for serial 421 (the trained checkpoints over the same FLEURS test configs).
+python -u analyze_baselines.py \
+  --input_file data/raw_serials/raw_serial_10.csv \
+  --output_file "$ACC/t7_baselines.csv" \
+  --contrast_file "$ACC/t7_training_vs_baseline.csv" || true
 
 # The headline analysis: does the region-match benefit depend on training-data volume? Consumes
 # t2 (per-language contrasts) and t4 (reconstructed stream sizes), so it runs after both.

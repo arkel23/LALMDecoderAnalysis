@@ -1,5 +1,48 @@
 # Change log
 
+## 2026-08-02 (later) — serial 10 baselines wired in
+
+Eval-only baseline runs started on **serial 10**: whisper-medium, Voxtral-Mini and Qwen2-Audio
+evaluated directly on `google/fleurs` **test**, with no connector trained. These answer the
+prior question serial 0 structurally cannot -- whether SLAM-style connector training is worth
+doing at all, against a model you can download today.
+
+This is exactly the run shape the `wer` / `cer` / `rtfx` / `no_params` column list was kept
+for. Serial 0's training runs leave all of them empty; serial 10 fills them and leaves the
+HF-style `eval/cer` keys empty instead.
+
+### What the finished run's schema showed
+`wer_all` emits `wer`, `mer`, `wil`, `wip` (5.29 / 5.25 / 8.69 / 91.31 for whisper-medium on
+`en_us`), alongside `rtfx`, `no_params`, `num_samples`, the `audio_length_s_*` statistics and
+the size fields (`bpw`, `total_MB`, `max_memory`). `_step` is 0, so there is no history worth
+pulling -- summary only.
+
+### Three serials, three measurements -- and only one valid contrast
+- **serial 0** eval/cer on FLEURS *validation*. This is the model-SELECTION curve (best
+  checkpoint was chosen over it), so it is neither held-out nor the same metric.
+- **serial 10** wer on FLEURS *test*.
+- **serial 421** the trained checkpoints over the **same FLEURS test configs**
+  (`eval_lalm_decoder_txf.sh`).
+
+So **421 minus 10** is the like-for-like "what did training buy" contrast, and
+`analyze_baselines.py` computes it the moment 421 exists. Comparing serial 10's WER against
+serial 0's CER would mix two metrics on two splits and is deliberately refused.
+
+### Added
+- **`analyze_baselines.py`** (t7). Handles partial data by construction -- serial 10 fills in
+  incrementally, so every cell is reported present/absent rather than assumed, and the contrast
+  defers cleanly until serial 421 lands. Compares the *best* baseline per cell rather than the
+  mean, since the honest comparator is the strongest downloadable model.
+- `plotter.sh` downloads serial 10 **unguarded** (a cached copy goes stale while the sweep is
+  still filling in) and tolerates its absence.
+
+### Flagged
+The FLEURS configs carry `eval_metrics: ['wer_all']`, so **no CER is logged for the baselines**.
+Adding `'cer'` to that list would let the baselines meet the training runs' metric at no extra
+inference cost. Worth doing before the sweep completes.
+
+---
+
 ## 2026-08-02 — Urdu lands, and the volume hypothesis dies
 
 All 52 runs are finished; the four `ur_pk` runs reached step 1000 with the full 101 evals.
