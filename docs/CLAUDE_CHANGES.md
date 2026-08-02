@@ -1,5 +1,51 @@
 # Change log
 
+## 2026-08-02 — Urdu lands, and the volume hypothesis dies
+
+All 52 runs are finished; the four `ur_pk` runs reached step 1000 with the full 101 evals.
+
+### The headline: the volume interaction did not survive replication
+
+| languages | Spearman rho | p |
+|---|---|---|
+| 7 | 0.964 | 0.0005 |
+| 10 | 0.721 | 0.0186 |
+| **11 (+ ur_pk)** | **0.555** | **0.0767** |
+
+Every addition shrank it; it is now not significant even with every language, and falls to
+rho 0.406 (p 0.244) without the extreme point. The reason is visible per language: the three
+lowest-resource cells are `ta_in` (-14.70), `am_et` (+0.64) and `ur_pk` (+1.44), so **two of
+three favour the MISMATCHED decoder**. `am_et` at 8,873 clips against `ta_in`'s 8,846 is
+effectively a controlled comparison with the opposite sign. Tamil is an outlier; the trend was
+one language plus a seven-point sample.
+
+Region matching itself is a flat null: mean -0.61 CER, Wilcoxon p = **1.000**, MDE 4.89.
+
+### The contrast that is the real result
+
+Data volume **does** predict overfitting, and Urdu strengthened that. With the low tier filled,
+median eval-loss rise is monotone across all four tiers -- very_low 0.195, low 0.188, mid 0.028,
+high 0.003 -- as is time-to-best-eval-loss (0.275, 0.289, 0.629, 0.815). Meanwhile it does not
+predict whether a region-matched decoder helps. Volume governs how badly a cell overfits, not
+which decoder to pair with it.
+
+### Added
+
+- **`for_quantizedasr/tools/preprocess/create_yamls_models_lalm_txf.py`** -- crawls the ERISLab
+  HF org and generates `configs/models/*_txf_*.yaml` for the trained connector checkpoints,
+  following the existing `txf` convention (commented original `model_id`, then `model_id` +
+  `local_model` pointing at the Hub repo, `max_new_tokens`/`max_input_length`, `model_dtype`).
+  86 checkpoints found: 5 variants x 11 training languages x best-step and step-1000. 82 configs
+  written; the 4 `es_es` ones are skipped as superseded (and have no step-1000). Reports that
+  `am_et` and `crs_sc` have finished runs but **no uploaded checkpoints**.
+- **`for_quantizedasr/scripts/eval_lalm_decoder_txf.sh`** -- serial 421, 156 evaluations. Pairs
+  each checkpoint with its OWN training language's FLEURS test and WorldSpeech test rather than
+  a full cross product, which would be ~1800 mostly meaningless runs. The pairing is written
+  explicitly because `fr_ca -> fleurs_fr_fr` and `es_mx -> fleurs_es_419` are not derivable from
+  the config name.
+
+---
+
 ## 2026-08-01 — two new languages, a re-serial, and the volume hypothesis weakens
 
 ### wandb hygiene

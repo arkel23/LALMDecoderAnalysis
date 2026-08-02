@@ -156,3 +156,13 @@ set -u
 #
 #   python tools/preprocess/create_yamls_worldspeech_lalm.py   # writes 11 configs
 #   bash scripts/eval_lalm_decoder.sh                          # serial 420, both domains
+
+# --- 2026-08-02: generate model configs for the trained checkpoints. NOT YET RUN in ---------
+# QuantizedASR. Crawls the ERISLab HF org (86 checkpoints: 5 variants x 11 training languages
+# x best-step + step-1000) and writes configs/models/*_txf_*.yaml. Skips es_es (superseded by
+# es_mx; no step-1000 exists). Reports that am_et and crs_sc have no uploaded checkpoints yet.
+# Copy for_quantizedasr/ into the QuantizedASR checkout, then from its root:
+#
+#   python tools/preprocess/create_yamls_models_lalm_txf.py   # 82 model configs
+#   python tools/preprocess/create_yamls_worldspeech_lalm.py  # 11 dataset configs
+#   bash scripts/eval_lalm_decoder_txf.sh                     # serial 421, 156 evals

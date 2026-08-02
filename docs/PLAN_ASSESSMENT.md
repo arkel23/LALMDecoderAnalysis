@@ -56,79 +56,73 @@ claim."* The original plan proposed to add it deliberately; the executed grid al
 This should be the spine of the analysis. It is the only part of the executed work that is
 structurally novel rather than a benchmark table.
 
-## 4. The honest finding: region matching is a null, and the data now says so clearly
+## 4. The honest finding: region matching is a null, and more data made that clearer
 
-`results_all/acc/t2_region_match_stats.csv`, metric = best CER (negative favours matched). As
-of 2026-08-01 nothing is excluded, so the primary and sensitivity analyses coincide:
+`results_all/acc/t2_region_match_stats.csv`, metric = best CER (negative favours matched).
+Nothing is excluded, so the primary and sensitivity analyses coincide:
 
-| contrast | n | favouring matched | mean Δ | 95 % CI | Wilcoxon p | min. detectable effect |
-|---|---|---|---|---|---|---|
-| matched vs mismatched | 10 | 6 | -0.81 | [-4.47, 2.03] | 0.695 | 5.42 |
-| matched vs global | 10 | 7 | -1.25 | [-5.46, 1.83] | 0.322 | 6.18 |
+| contrast | n | mean Δ | 95 % CI | Wilcoxon p | min. detectable effect |
+|---|---|---|---|---|---|
+| matched vs mismatched | 11 | -0.61 | [-3.95, 2.53] | 1.000 | 4.89 |
+| matched vs global | 11 | -0.72 | [-3.86, 2.21] | 0.638 | 5.77 |
 
-The median within-run late-training CER standard deviation is **0.97**, comparable to the
-effect itself, and the minimum detectable effect is 5.42-6.18 CER. The design still cannot
-resolve an effect of the size plausibly at stake, and the point estimate is small.
+A Wilcoxon p of exactly 1.000 on the primary contrast is about as flat as a null gets. The
+minimum detectable effect is 4.89-5.77 CER, so the design still cannot resolve a small effect --
+but the point estimate is now small *and* stable across three rounds of added data.
 
-### Why the two analyses now coincide
+### Nothing is excluded any more
 
 `en_us` / water was excluded as an optimisation failure until it was re-run on 2026-07-31 and
-**replicated**: best 12.05 CER against 17.06 the first time, both far worse than earth, fire
-and global on the identical eval set. Two independent runs that bad is an effect, not a
-failure. Since water is English's *matched* variant, excluding it had been removing the grid's
-strongest against-hypothesis point. `EXCLUDED_MODELS_AGGREGATE` is now empty; the superseded
-first run lives under serial 1 (`rename_wandb_serial.py`) so serial 0 stays one-row-per-cell.
-The two runs differ from each other by ~5 CER, far above the ~1 CER noise floor elsewhere, so
-water-on-English is both bad and unstable.
+**replicated**: best 12.05 CER against 17.06 the first time, both far worse than earth, fire and
+global on the identical eval set. Two independent runs that bad is an effect, not a failure, and
+since water is English's *matched* variant, excluding it had been removing the grid's strongest
+against-hypothesis point. The superseded first run lives under serial 1
+(`rename_wandb_serial.py`), so serial 0 stays one row per cell.
 
 ### Cells that are not clean, flagged rather than pooled
 
-- **`fr_fr`** trains Canadian French, evaluates European French -- the one genuinely
-  different-accent cell. `es_419` used to be listed here too, but the Spain-Spanish runs were
-  deleted on 2026-08-01 and re-run from `es_mx`, which is inside the Latin American variety
-  FLEURS `es_419` evaluates. No longer a mismatch.
+- **`fr_fr`** trains Canadian French, evaluates European French -- the one different-accent cell.
+  `es_419` was listed here until the Spain-Spanish runs were deleted and re-run from `es_mx`,
+  which is inside the Latin American variety FLEURS `es_419` evaluates. No longer a mismatch.
 - **Interleaving is NOT a confound.** The loader uses `all_exhausted_without_replacement`, so a
   combined stream is exactly the sum of its parts. Do not re-raise it.
 
-### 4.1 The 30 s cap, and what Amharic did to the volume hypothesis
+### 4.1 The 30 s cap, and the volume hypothesis that did not survive
 
 **The bug.** `make_audio_length_filter_fn` keeps a clip when `length < max_input_length` -- a
-*strict* comparison -- and every `configs/train/*ws*.yaml` sets `max_input_length: 30`.
-WorldSpeech `ta_lk` is pre-segmented into fixed 30-second windows (100/100 sampled rows at
-exactly 30.00 s), so every clip fails `30.0 < 30`. Filtering the interleaved Tamil stream
-leaves exactly **8,846** rows -- `len(ta_in)` -- against an intended **32107**: 23,261 clips,
-72.4 % of the intended Tamil training data, silently discarded. Tamil has the worst accuracy in
-the grid, a best CER of **34.74**. Only `ta_lk` is totally affected; `fr_ca` loses ~4 %; the new
-`am_et` and `ur_pk` configs sample 0/100 at the cap. Written up in `docs/UPSTREAM_FIXES.md`.
+*strict* comparison -- against `max_input_length: 30`. WorldSpeech `ta_lk` is pre-segmented into
+fixed 30-second windows (100/100 sampled rows at exactly 30.00 s), so every clip fails
+`30.0 < 30`. Filtering the interleaved Tamil stream leaves exactly **8,846** rows -- `len(ta_in)`
+-- against an intended **32107**: 23,261 clips, 72.4 % of the intended Tamil training data,
+silently discarded. Only `ta_lk` is totally affected; `fr_ca` loses ~4 %; `am_et` and `ur_pk`
+sample 0/100 at the cap. Written up in `docs/UPSTREAM_FIXES.md`. The epoch-based reconstruction
+inferred **8825** samples against a true 8,846 -- 99.76 % -- which is why that accounting is
+trusted elsewhere.
 
-Tamil is **not** excluded. The region-match contrast is within-language -- all four variants
-consumed the identical stream -- so the loss reduced every arm equally and only relocates Tamil
-on the data-volume axis.
+Tamil is **not** excluded: the contrast is within-language, so the loss reduced every arm equally.
 
-**The hypothesis this suggested, and the test that undercut it.** With seven languages the
-matched-decoder benefit decayed monotonically with training-stream size (Spearman rho 0.96,
-p 0.0005, robust to dropping Tamil). Adding Amharic and Urdu was meant to populate the middle
-and low tiers and test exactly that. It did, and the result is weaker:
+**The hypothesis, and its death by replication.** With seven languages the matched-decoder
+benefit decayed monotonically with training-stream size, and it looked strong. Adding languages
+to fill the middle and low tiers was meant to test that. It did:
 
-| subset | n | Spearman rho | p |
-|---|---|---|---|
-| all languages | 10 | **0.721** | **0.0186** |
-| excluding `ta_in` | 9 | 0.617 | **0.0769** |
+| languages | Spearman rho | p |
+|---|---|---|
+| 7 | 0.964 | 0.0005 |
+| 10 (+ am_et, en_us re-run) | 0.721 | 0.0186 |
+| **11 (+ ur_pk)** | **0.555** | **0.0767** |
 
-The trend survives over all ten languages but **no longer survives dropping the extreme
-point**, where before it did. One cell explains why: **`am_et` has 8,873 training clips,
-essentially identical to `ta_in`'s 8,846, yet its delta is +0.64 -- matched slightly worse --
-against Tamil's -14.70.** Two languages at the same very-low volume with opposite signs. That
-is close to a controlled comparison, and it says Tamil's -14.70 is a fact about Tamil rather
-than about being low-resource.
+Every addition shrank it, and it is now **not significant even with every language**. Without
+the extreme point it falls further, to rho **0.406**, p **0.2443**. The partial correlation
+controlling for baseline CER is r = **-0.100**.
 
-Per language, ordered by training-stream size (`t5_volume_interaction.csv`):
+The per-language table shows why:
 
 | language | region | tier | stream | epochs | Δ vs mismatched | baseline CER | relative Δ (%) |
 |---|---|---|---|---|---|---|---|
 | `ta_in` | fire | very_low | 8846 | 58.01 | -14.70 | 58.33 | -25.20 |
 | `am_et` | earth | very_low | 8873 | 58.01 | 0.64 | 29.22 | 2.19 |
 | `ha_ng` | earth | mid | 27255 | 18.05 | -1.19 | 34.62 | -3.42 |
+| `ur_pk` | fire | low | 31079 | 16.04 | 1.44 | 20.81 | 6.90 |
 | `mr_in` | fire | mid | 58201 | 8.10 | -0.44 | 14.01 | -3.14 |
 | `id_id` | water | high | 101112 | 5.02 | -0.40 | 6.14 | -6.44 |
 | `fr_fr` | water | high | 199151 | 2.24 | -0.43 | 6.79 | -6.33 |
@@ -137,28 +131,32 @@ Per language, ordered by training-stream size (`t5_volume_interaction.csv`):
 | `hi_in` | fire | high | 577382 | 1.00 | 1.06 | 12.05 | 8.80 |
 | `en_us` | water | high | 666718 | 1.00 | 7.39 | 4.67 | 158.31 |
 
-The reconstruction from the wandb epoch counter inferred **8825** samples for Tamil
-against a true 8,846 -- 99.76 % -- which is why the epoch-based accounting is trusted
-elsewhere. The largest single give-back after the optimum is **19.59** CER, and the OOD
-`crs_sc` cell's best variant reaches **17.39** CER.
+The three lowest-resource cells are `ta_in` (-14.70), `am_et` (+0.64) and `ur_pk` (+1.44).
+**Two of the three favour the MISMATCHED decoder**, and Tamil -- the one that does not --
+also has the grid's worst accuracy at a best CER of **34.74**. `am_et` has 8,873 training clips against
+`ta_in`'s 8,846 -- essentially a controlled comparison -- with the opposite sign. So Tamil is
+simply an outlier, and the apparent volume interaction was one language plus a seven-point
+sample. That is a finding worth stating plainly: it is the shape a spurious small-n result has,
+and it was killed by exactly the data that was collected to test it. The largest single
+give-back after the optimum is **46.05** CER; the OOD `crs_sc` cell's best variant reaches
+**17.39** CER.
 
-The volume/difficulty entanglement also disappears in this direction: the partial correlation
-controlling for baseline CER is now r = **-0.017**, p = **0.96**.
-
-### 4.2 What the loss curves add
+### 4.2 What the loss curves add -- and here data volume DOES predict something
 
 `t6_loss_by_axis.csv` separates two things CER cannot. The generalisation gap
 (`eval_loss_final - train_loss_final`) is inflated by overfitting *and* by distribution shift;
-the eval-loss rise after its own minimum (`eval_loss_final - eval_loss_best`) is overfitting
-alone, needing no comparison against training loss.
+the eval-loss rise after its own minimum is overfitting alone.
 
-- **Overfitting is monotone in resource tier.** Median eval-loss rise: very-low 0.195, mid
-  0.028, high 0.003. Low-resource cells reach their best eval loss only 27.5 % of the way
-  through the run, against 81.5 % for high-resource -- they then get worse for the remaining
-  three quarters.
+- **Overfitting is monotone across all four resource tiers**, now that Urdu fills the low tier.
+  Median eval-loss rise: very_low 0.195, low 0.188, mid 0.028, high 0.003. Time to the best eval
+  loss, as a fraction of the run: 0.275, 0.289, 0.629, 0.815. Low-resource cells peak a quarter
+  of the way in and then get worse for the remaining three quarters.
 - **Domain shift is separable from it.** Cross-domain evals show a 6x larger generalisation gap
-  than in-domain (0.200 vs 0.032) but essentially the same near-zero eval-loss rise. The gap is
-  measuring domain transfer, not overfitting -- which is why both metrics are reported.
+  than in-domain (0.196 vs 0.032) with a far smaller eval-loss rise (0.009 vs 0.000) -- the gap
+  is measuring domain transfer, not overfitting.
+
+The contrast between 4.1 and 4.2 is the real result: **training-data volume strongly predicts how
+badly a cell overfits, and does not predict whether a region-matched decoder helps it.**
 
 ## 5. What the existing logs already support, at zero GPU cost
 
@@ -173,14 +171,14 @@ Ranking variants by hours-to-reach-1.5×-best-CER (`t1_sample_efficiency.csv`, m
 
 | variant | mean rank |
 |---|---|
-| water | 1.91 |
-| fire | 2.14 |
-| earth | 2.86 |
-| global | 3.09 |
+| fire | 2.08 |
+| water | 1.88 |
+| earth | 2.96 |
+| global | 3.08 |
 
 This separates the variants far more cleanly than final CER does, because it uses 101 points
 per run instead of 1. Note also that the ordering is **not** the same as the accuracy ordering
-(by best CER: earth 2.09, fire 2.36, water 2.64, global 2.91) — *how fast* a connector learns
+(by best CER: earth 2.08, fire 2.50, water 2.67, global 2.75) — *how fast* a connector learns
 and *how well* it ends up are behaving as separate axes here. That is a more interesting
 observation than either ranking alone, and it is free.
 

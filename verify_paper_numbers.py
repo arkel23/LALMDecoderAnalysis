@@ -282,14 +282,21 @@ ORDERINGS = [
 
     # --- the volume interaction, as it now stands ------------------------------------
     # These are the claims that changed most, and the honest versions are weaker.
-    ('the volume correlation is still significant over all languages',
-     lambda: (_t5s('all_languages', 'log10_stream', 'delta_vs_mismatched',
-                   'spearman_rho') > 0.5
-              and _t5s('all_languages', 'log10_stream', 'delta_vs_mismatched',
-                       'spearman_p') < 0.05)),
-    ('but it NO LONGER survives dropping the extreme point -- it did with 7 languages',
-     lambda: _t5s('excluding_ta_in', 'log10_stream', 'delta_vs_mismatched',
+    # The volume interaction did not survive more data, and this records that rather than
+    # the version of it that held at 7 languages. rho fell 0.96 -> 0.72 -> 0.55 and p rose
+    # 0.0005 -> 0.019 -> 0.077 as languages were added, which is the signature of a small-n
+    # finding driven by one outlier, not of a real effect being measured more precisely.
+    ('the volume correlation is NO LONGER significant, even with every language',
+     lambda: _t5s('all_languages', 'log10_stream', 'delta_vs_mismatched',
                   'spearman_p') > 0.05),
+    ('and it is weaker still without the extreme point',
+     lambda: _t5s('excluding_ta_in', 'log10_stream', 'delta_vs_mismatched', 'spearman_rho')
+     < _t5s('all_languages', 'log10_stream', 'delta_vs_mismatched', 'spearman_rho')),
+    ('ta_in is the ONLY low-resource language favouring the matched decoder',
+     lambda: (lambda d: (d.loc['ta_in', 'delta_vs_mismatched'] < 0
+                         and d.loc['am_et', 'delta_vs_mismatched'] > 0
+                         and d.loc['ur_pk', 'delta_vs_mismatched'] > 0))(
+         load(T5).set_index('dataset'))),
     ('am_et and ta_in sit at the same volume with OPPOSITE signs -- the key new evidence',
      lambda: (lambda d: (abs(d.loc['am_et', 'stream_post_filter']
                              - d.loc['ta_in', 'stream_post_filter']) < 500

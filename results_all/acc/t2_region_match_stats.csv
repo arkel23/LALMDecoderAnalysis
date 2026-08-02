@@ -1,5 +1,5 @@
 contrast,n_languages,mean_delta,median_delta,n_favouring_matched,ci95_low,ci95_high,sd_delta,wilcoxon_W,wilcoxon_p,min_detectable_effect,analysis,metric
-matched_vs_mismatched,10,-0.814000,-0.270000,6,-4.473075,2.026500,5.450306,23.000000,0.695312,5.421494,primary_excluding_failed_runs,best_cer
-matched_vs_global,10,-1.251000,-0.205000,7,-5.460000,1.830025,6.214799,17.000000,0.322266,6.181945,primary_excluding_failed_runs,best_cer
-matched_vs_mismatched,10,-0.814000,-0.270000,6,-4.473075,2.026500,5.450306,23.000000,0.695312,5.421494,sensitivity_including_all_runs,best_cer
-matched_vs_global,10,-1.251000,-0.205000,7,-5.460000,1.830025,6.214799,17.000000,0.322266,6.181945,sensitivity_including_all_runs,best_cer
+matched_vs_mismatched,11,-0.609545,-0.145000,6,-3.951420,1.939114,5.214889,33.000000,1.000000,4.885595,primary_excluding_failed_runs,best_cer
+matched_vs_global,11,-0.719091,-0.160000,7,-4.674636,2.208227,6.154149,27.000000,0.637695,5.765546,primary_excluding_failed_runs,best_cer
+matched_vs_mismatched,11,-0.609545,-0.145000,6,-3.951420,1.939114,5.214889,33.000000,1.000000,4.885595,sensitivity_including_all_runs,best_cer
+matched_vs_global,11,-0.719091,-0.160000,7,-4.674636,2.208227,6.154149,27.000000,0.637695,5.765546,sensitivity_including_all_runs,best_cer
