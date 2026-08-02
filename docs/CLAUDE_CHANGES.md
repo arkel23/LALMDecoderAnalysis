@@ -1,5 +1,60 @@
 # Change log
 
+## 2026-08-02 (evening, 2) — run-to-run variance is ~5x the noise floor I have been quoting
+
+The `am_et` and `crs_sc` CHECKPOINTS were deleted from the training server. The wandb runs are
+untouched -- all 4 `am_et` and 6 `crs_sc` runs are still `finished` with complete curves, so
+every serial-0 analysis remains valid. What is lost is the ability to evaluate those cells in
+serial 11, which forces a re-run.
+
+That re-run is an opportunity, because of something the existing data already shows.
+
+### Every run used seed 42, and a same-seed re-run still moved 5 CER
+
+| en_us / water | best CER | final CER |
+|---|---|---|
+| serial 1 (first run, n4cot5v7) | 17.06 | 20.12 |
+| serial 0 (re-run, pwnz2zno) | 12.05 | 13.12 |
+
+Both `seed = 42`. The 5.01 CER gap is pure nondeterminism -- streaming order, GPU
+non-associativity -- not seed sensitivity. Against the study's other quantities:
+
+| quantity | CER |
+|---|---|
+| within-run late-training sd (the noise floor used throughout) | 0.97 |
+| region-match effect being measured | -0.61 |
+| design minimum detectable effect | 4.89 |
+| **observed run-to-run spread (n = 1 pair)** | **5.01** |
+
+**`late_sd` measures optimisation noise along one trajectory and systematically understates
+between-run variance.** Every claim in this repo that leans on it -- including the statement
+that MDE has "converged on the noise floor" -- is optimistic by roughly a factor of five. This
+is now the study's most important open uncertainty, and it rests on a single pair.
+
+### Plan
+
+Re-running `am_et` (4) and `crs_sc` (6) yields **11 replicate pairs** with the existing
+`en_us`/water one, which is enough to estimate between-run variance directly rather than by
+proxy. Two decisions recorded:
+
+- **Vary the seed.** A same-seed re-run measures only nondeterminism; a different seed captures
+  nondeterminism plus seed sensitivity, which is the larger and more defensible number.
+- **Re-serial only when the replacements land.** Moving `am_et`/`crs_sc` to serial 1 before the
+  re-runs finish leaves serial 0 with holes and breaks the current analysis.
+  `rename_wandb_serial.py` does this by run id with a dry run.
+
+Serial 1 then means "the earlier run of a cell that has been run more than once", which
+`en_us`/water already satisfies, so replicate pairing is a join on (model_id, dataset).
+
+### Caution
+
+`am_et`'s **+0.64** delta is load-bearing: it is the near-controlled comparison against Tamil
+(8,873 vs 8,846 clips, opposite sign) that killed the volume hypothesis. With a plausible
+5 CER of run-to-run spread, the replicate may well move it. That is what replication is for,
+but the conclusion should be held loosely until it lands.
+
+---
+
 ## 2026-08-02 (evening) — first baseline numbers, and they are lopsided
 
 Serial 10 is 14 rows in, and the sweep turned out to cover **both** evaluation domains, not just
