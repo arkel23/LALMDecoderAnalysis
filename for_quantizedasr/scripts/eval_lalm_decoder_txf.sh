@@ -39,23 +39,43 @@
 # es_es was superseded by es_mx (its checkpoints have no step-1000). Add them here once
 # create_yamls_models_lalm_txf.py reports them.
 
-# (model config stem, FLEURS eval config, WorldSpeech eval config)
-# The model stem omits the `_{step}` suffix; the loop below appends both steps.
+# (training config stem | FLEURS eval | in-training WorldSpeech evals | held-out WorldSpeech evals)
+#
+# WorldSpeech ships several country variants per language, and the study only trained on some of
+# them. Evaluating the rest is pure inference cost and turns one in-domain number into a
+# dialect/accent generalisation axis:
+#
+#   in-training   the variety (or varieties) this cell trained on. In-distribution.
+#   held-out      never in the training mix -- zero-shot accent transfer. English has 7 of
+#                 these, Spanish 8, French 2. This is the accent-robustness axis
+#                 docs/EVAL_DATASET_PLAN.md wanted EdAcc for, available here in-domain.
+#
+# `ta_lk` is in the HELD-OUT column despite being named in Tamil's training config: the strict
+# `< 30 s` cap removed all 23,261 of its clips, so the model never saw it. That makes it the
+# most informative single eval here -- held-out dialect transfer for a variety the config
+# claims to have trained on.
+#
+# --eval_set controls the cost:
+#   primary   FLEURS + in-training WorldSpeech only          (the default; ~1 eval set/language)
+#   all       adds every held-out variant                    (the accent axis; ~3x the runs)
+
 PAIRINGS=(
-    "en_us|short_ml/fleurs_en_us_test.yaml|short_ml/worldspeech_en_us_test.yaml"
-    "fr_ca|short_ml/fleurs_fr_fr_test.yaml|short_ml/worldspeech_fr_ca_test.yaml"
-    "es_mx|short_ml/fleurs_es_419_test.yaml|short_ml/worldspeech_es_mx_test.yaml"
-    "hi_in|short_ml/fleurs_hi_in_test.yaml|short_ml/worldspeech_hi_in_test.yaml"
-    "id_id|short_ml/fleurs_id_id_test.yaml|short_ml/worldspeech_id_id_test.yaml"
-    "mr_in|short_ml/fleurs_mr_in_test.yaml|short_ml/worldspeech_mr_in_test.yaml"
-    "sw_ke|short_ml/fleurs_sw_ke_test.yaml|short_ml/worldspeech_sw_ke_test.yaml"
-    "ta_in|short_ml/fleurs_ta_in_test.yaml|short_ml/worldspeech_ta_in_test.yaml"
-    "ur_pk|short_ml/fleurs_ur_pk_test.yaml|short_ml/worldspeech_ur_pk_test.yaml"
-    "ha_ng|short_ml/fleurs_ha_ng_test.yaml|"
+    "en_us|short_ml/fleurs_en_us_test.yaml|short_ml/worldspeech_en_us_test.yaml|short_ml/worldspeech_en_au_test.yaml short_ml/worldspeech_en_jm_test.yaml short_ml/worldspeech_en_ke_test.yaml short_ml/worldspeech_en_nz_test.yaml short_ml/worldspeech_en_pk_test.yaml short_ml/worldspeech_en_sl_test.yaml short_ml/worldspeech_en_zm_test.yaml"
+    "fr_ca|short_ml/fleurs_fr_fr_test.yaml|short_ml/worldspeech_fr_ca_test.yaml|short_ml/worldspeech_fr_cd_test.yaml short_ml/worldspeech_fr_ci_test.yaml"
+    "es_mx|short_ml/fleurs_es_419_test.yaml|short_ml/worldspeech_es_mx_test.yaml|short_ml/worldspeech_es_es_test.yaml short_ml/worldspeech_es_ar_test.yaml short_ml/worldspeech_es_cl_test.yaml short_ml/worldspeech_es_co_test.yaml short_ml/worldspeech_es_pe_test.yaml short_ml/worldspeech_es_pr_test.yaml short_ml/worldspeech_es_py_test.yaml short_ml/worldspeech_es_uy_test.yaml"
+    "hi_in|short_ml/fleurs_hi_in_test.yaml|short_ml/worldspeech_hi_in_test.yaml|"
+    "id_id|short_ml/fleurs_id_id_test.yaml|short_ml/worldspeech_id_id_test.yaml|"
+    "mr_in|short_ml/fleurs_mr_in_test.yaml|short_ml/worldspeech_mr_in_test.yaml|"
+    "sw_ke|short_ml/fleurs_sw_ke_test.yaml|short_ml/worldspeech_sw_ke_test.yaml short_ml/worldspeech_sw_tz_test.yaml|"
+    "ta_in|short_ml/fleurs_ta_in_test.yaml|short_ml/worldspeech_ta_in_test.yaml|short_ml/worldspeech_ta_lk_test.yaml"
+    "ur_pk|short_ml/fleurs_ur_pk_test.yaml|short_ml/worldspeech_ur_pk_test.yaml short_ml/worldspeech_ur_in_test.yaml|"
+    "am_et|short_ml/fleurs_am_et_test.yaml|short_ml/worldspeech_am_et_test.yaml|"
+    "ha_ng|short_ml/fleurs_ha_ng_test.yaml|short_ml/worldspeech_ha_ng_test.yaml short_ml/worldspeech_ha_td_test.yaml|"
 )
 
-# ha_ng has no WorldSpeech entry: the training runs ALREADY evaluate it on
-# disco-eth/WorldSpeech test, so an in-domain config here would duplicate an existing cell.
+# ha_ng's in-training column now includes both varieties. The training runs already evaluate
+# ha_ng on disco-eth/WorldSpeech test, so that one cell is a duplicate -- kept for symmetry
+# because the sweep is per-checkpoint and the training-time eval was per-training-run.
 
 VARIANTS=(
     "earth"
@@ -67,8 +87,9 @@ VARIANTS=(
 )
 
 models=''
+eval_set='primary'
 
-VALID_ARGS=$(getopt -o '' --long models: -- "$@")
+VALID_ARGS=$(getopt -o '' --long models:,eval_set: -- "$@")
 if [[ $? -ne 0 ]]; then
     exit 1;
 fi
@@ -78,6 +99,10 @@ while [ : ]; do
   case "$1" in
     --models)
         models=${2}
+        shift 2
+        ;;
+    --eval_set)
+        eval_set=${2}
         shift 2
         ;;
     --) shift;
@@ -93,7 +118,13 @@ fi
 base_cmd="python -m tools.evaluate --serial 11 --batch_size 128"
 
 for pairing in "${PAIRINGS[@]}"; do
-    IFS='|' read -r lang fleurs_cfg ws_cfg <<< "$pairing"
+    IFS='|' read -r lang fleurs_cfg ws_in ws_held <<< "$pairing"
+
+    # Build this language's eval list according to --eval_set.
+    eval_cfgs="$fleurs_cfg $ws_in"
+    if [ "$eval_set" = "all" ]; then
+        eval_cfgs="$eval_cfgs $ws_held"
+    fi
 
     for variant in "${VARIANTS[@]}"; do
         # Both checkpoints per cell: the best step (whatever it was) and step 1000. The best
@@ -102,7 +133,7 @@ for pairing in "${PAIRINGS[@]}"; do
             [ -e "$model_cfg_path" ] || continue
             model_cfg=$(basename "$model_cfg_path")
 
-            for dataset_cfg in "$fleurs_cfg" "$ws_cfg"; do
+            for dataset_cfg in $eval_cfgs; do
                 [ -n "$dataset_cfg" ] || continue
                 cmd="$base_cmd --config configs/models/$model_cfg configs/datasets/$dataset_cfg"
                 echo "$cmd"

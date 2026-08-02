@@ -41,28 +41,81 @@ import os
 
 import yaml
 
-# (WorldSpeech config, force_asr_language, note)
+# ALL WorldSpeech variants of every study language, not just the one each cell was trained on.
 #
-# One entry per language cell in the study. Where a cell trains on two configs, the eval
-# entry is the config the study actually evaluates on, so the in-domain eval matches the
-# reported cell rather than the union.
+# An earlier version emitted one config per cell -- ta_in but not ta_lk, ur_pk but not ur_in --
+# on the reasoning that the eval should match the reported cell. That under-used the corpus for
+# no saving: these are evaluation-only configs, and WorldSpeech ships several country variants
+# per language. Covering them all turns a single in-domain number into a dialect/accent
+# generalisation axis at pure inference cost.
+#
+# Three statuses, carried in the manifest CSV rather than in the YAML (which stays byte-identical
+# in shape to QuantizedASR's own generators):
+#
+#   in_training     the cell trained on this config. In-distribution.
+#   dropped_by_cap  the training config LISTED it, but `max_input_length: 30` with a strict `<`
+#                   removed every clip, so the model never saw it. This is `ta_lk`, and it is
+#                   the most interesting entry here: evaluating on it is genuine HELD-OUT
+#                   dialect transfer for a model whose config claims to have trained on it.
+#   held_out        never in the training mix. Zero-shot accent/dialect transfer.
+#
+# The held_out English (7), Spanish (8) and French (2) variants are the accent-robustness axis
+# that docs/EVAL_DATASET_PLAN.md flagged as missing and proposed adding EdAcc for -- available
+# here in-domain, on the training corpus, for free.
+#
+# The variant list below was enumerated live from the Hub and then cross-checked against
+# QuantizedASR's own `configs/train/worldspeech_llama_questions.yaml`, whose 120-entry
+# `dataset_train` list is the frozen all-variants roster. The two agree exactly for every study
+# language, so the list here is not a guess about what WorldSpeech ships.
+
+# (WorldSpeech config, force_asr_language, study cell, status, note)
 WORLDSPEECH_ENTRIES = [
-    ('en_us',  'en', 'English - study cell en_us'),
-    ('fr_ca',  'fr', 'French - the study TRAINS on fr_ca and evaluates FLEURS fr_fr, so the '
-                     'in-domain point must be fr_ca to match the training variety'),
-    ('es_mx',  'es', 'Spanish - study trains es_mx (the es_es runs were deleted 2026-08-01)'),
-    ('hi_in',  'hi', 'Hindi - study cell hi_in'),
-    ('id_id',  'id', 'Indonesian - study cell id_id'),
-    ('mr_in',  'mr', 'Marathi - study cell mr_in'),
-    ('sw_ke',  'sw', 'Swahili - study cell sw_ke (trained sw_ke + sw_tz)'),
-    ('ta_in',  'ta', 'Tamil - study cell ta_in (trained ta_in + ta_lk; ta_lk is removed by '
-                     'the 30 s training cap, see the module docstring)'),
-    ('ur_pk',  'ur', 'Urdu - study cell ur_pk (trained ur_pk + ur_in)'),
-    ('am_et',  'am', 'Amharic - study cell am_et'),
-    ('crs_sc', 'crs', 'Seychellois Creole - unseen by both Whisper and TinyAya, the OOD probe'),
-    # NOTE: crs_sc is the one entry that does NOT come from disco-eth. See DATASET_PATH_OVERRIDE.
-    # ha_ng is deliberately absent: the study ALREADY evaluates it on
-    # disco-eth/WorldSpeech test, so its in-domain config would duplicate an existing cell.
+    # --- English: trained on en_us, 7 further accents held out ----------------------
+    ('en_us',  'en',  'en_us',  'in_training',   'trained variety'),
+    ('en_au',  'en',  'en_us',  'held_out',      'Australian'),
+    ('en_jm',  'en',  'en_us',  'held_out',      'Jamaican'),
+    ('en_ke',  'en',  'en_us',  'held_out',      'Kenyan'),
+    ('en_nz',  'en',  'en_us',  'held_out',      'New Zealand'),
+    ('en_pk',  'en',  'en_us',  'held_out',      'Pakistani'),
+    ('en_sl',  'en',  'en_us',  'held_out',      'Sierra Leonean'),
+    ('en_zm',  'en',  'en_us',  'held_out',      'Zambian'),
+
+    # --- Spanish: trained on es_mx. es_es is the superseded training variety --------
+    ('es_mx',  'es',  'es_419', 'in_training',   'trained variety'),
+    ('es_es',  'es',  'es_419', 'held_out',      'Spain -- the superseded training variety'),
+    ('es_ar',  'es',  'es_419', 'held_out',      'Argentine'),
+    ('es_cl',  'es',  'es_419', 'held_out',      'Chilean'),
+    ('es_co',  'es',  'es_419', 'held_out',      'Colombian'),
+    ('es_pe',  'es',  'es_419', 'held_out',      'Peruvian'),
+    ('es_pr',  'es',  'es_419', 'held_out',      'Puerto Rican'),
+    ('es_py',  'es',  'es_419', 'held_out',      'Paraguayan'),
+    ('es_uy',  'es',  'es_419', 'held_out',      'Uruguayan'),
+
+    # --- French: trained on fr_ca; two African varieties held out -------------------
+    ('fr_ca',  'fr',  'fr_fr',  'in_training',   'trained variety'),
+    ('fr_cd',  'fr',  'fr_fr',  'held_out',      'DR Congo'),
+    ('fr_ci',  'fr',  'fr_fr',  'held_out',      "Cote d'Ivoire"),
+
+    # --- Multi-config cells: BOTH varieties were trained on ------------------------
+    ('ha_ng',  'ha',  'ha_ng',  'in_training',   'Nigeria'),
+    ('ha_td',  'ha',  'ha_ng',  'in_training',   'Chad'),
+    ('sw_ke',  'sw',  'sw_ke',  'in_training',   'Kenya'),
+    ('sw_tz',  'sw',  'sw_ke',  'in_training',   'Tanzania'),
+    ('ur_pk',  'ur',  'ur_pk',  'in_training',   'Pakistan'),
+    ('ur_in',  'ur',  'ur_pk',  'in_training',   'India'),
+
+    # --- Tamil: the config lists ta_lk, but the 30 s cap removed all of it ---------
+    ('ta_in',  'ta',  'ta_in',  'in_training',   'India'),
+    ('ta_lk',  'ta',  'ta_in',  'dropped_by_cap',
+     'Sri Lanka -- listed in the training config but every clip is exactly 30.00 s, so the '
+     'strict `< 30` filter removed all 23,261. Evaluating here is held-out dialect transfer.'),
+
+    # --- Single-variety cells ------------------------------------------------------
+    ('hi_in',  'hi',  'hi_in',  'in_training',   'only Hindi variety'),
+    ('id_id',  'id',  'id_id',  'in_training',   'only Indonesian variety'),
+    ('mr_in',  'mr',  'mr_in',  'in_training',   'only Marathi variety'),
+    ('am_et',  'am',  'am_et',  'in_training',   'only Amharic variety'),
+    ('crs_sc', 'crs', 'crs_sc', 'in_training',   'only Seychellois Creole variety'),
 ]
 
 # Non-space-delimited scripts need CER rather than WER, matching create_yamls_fleurs_full.py's
@@ -91,8 +144,9 @@ yaml.add_representer(QuotedStr, quoted_scalar)
 output_dir = 'configs/datasets/short_ml'
 os.makedirs(output_dir, exist_ok=True)
 
+manifest = []
 n_written = 0
-for ws_config, lang_code, note in WORLDSPEECH_ENTRIES:
+for ws_config, lang_code, study_cell, status, note in WORLDSPEECH_ENTRIES:
     filename = f'worldspeech_{ws_config}_test.yaml'
     filepath = os.path.join(output_dir, filename)
     ds_path, split = DATASET_PATH_OVERRIDE.get(ws_config,
@@ -109,7 +163,24 @@ for ws_config, lang_code, note in WORLDSPEECH_ENTRIES:
 
     with open(filepath, 'w') as f:
         yaml.dump(yaml_data, f, default_flow_style=False, sort_keys=False)
+    manifest.append({'config_file': filename, 'dataset_path': ds_path,
+                     'dataset': ws_config, 'split': split, 'study_cell': study_cell,
+                     'status': status, 'force_asr_language': lang_code, 'note': note})
     n_written += 1
-    print(f'Created: {filename}  # {note}')
+    print(f'Created: {filename}  # [{status}] {note}')
 
-print(f'Successfully generated {n_written} config files.')
+# The manifest is how the analysis knows which evals are in-distribution, which are zero-shot
+# accent transfer, and which is the cap-dropped Tamil variety. Keeping it out of the YAML means
+# the configs stay exactly the shape QuantizedASR's other generators produce.
+import csv
+manifest_path = os.path.join(output_dir, 'worldspeech_lalm_manifest.csv')
+with open(manifest_path, 'w', newline='') as fh:
+    w = csv.DictWriter(fh, fieldnames=list(manifest[0].keys()))
+    w.writeheader()
+    w.writerows(manifest)
+
+print(f'\nSuccessfully generated {n_written} config files.')
+print(f'Wrote manifest to {manifest_path}')
+from collections import Counter
+for status, n in sorted(Counter(m['status'] for m in manifest).items()):
+    print(f'  {status:15s} {n}')

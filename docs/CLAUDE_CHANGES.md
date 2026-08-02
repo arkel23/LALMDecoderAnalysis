@@ -1,5 +1,45 @@
 # Change log
 
+## 2026-08-02 (night) — evaluate every WorldSpeech variant, not just the trained one
+
+The first version of `create_yamls_worldspeech_lalm.py` emitted one eval config per study cell
+-- `ta_in` but not `ta_lk`, `ur_pk` but not `ur_in` -- reasoning that the eval should match the
+reported cell. That was a poor trade: these are evaluation-only configs and WorldSpeech ships
+several country variants per language, so covering them all costs inference time and nothing
+else.
+
+Now **33 configs**, tagged in a manifest CSV (kept out of the YAML so the configs stay exactly
+the shape QuantizedASR's own generators produce):
+
+| status | n | meaning |
+|---|---|---|
+| `in_training` | 15 | the variety the cell trained on |
+| `held_out` | 17 | never in the training mix -- zero-shot accent/dialect transfer |
+| `dropped_by_cap` | 1 | `ta_lk` |
+
+`ta_lk` is the single most informative entry. Tamil's training config *names* it, but the strict
+`< 30 s` cap removed all 23,261 of its clips, so the model never saw it. Evaluating there is
+genuine held-out dialect transfer for a variety the config claims to have trained on.
+
+The held-out English (7), Spanish (8) and French (2) variants are the **accent-robustness axis**
+`EVAL_DATASET_PLAN.md` flagged as missing and proposed adding EdAcc for -- available in-domain,
+on the training corpus, at no extra data cost.
+
+The variant list was enumerated live from the Hub and then cross-checked against QuantizedASR's
+`configs/train/worldspeech_llama_questions.yaml`, whose 120-entry `dataset_train` roster is the
+frozen all-variants list. **They agree exactly for every study language.**
+
+### Cost, made explicit
+
+`eval_lalm_decoder_txf.sh` gains `--eval_set`:
+
+| mode | evaluations | contents |
+|---|---|---|
+| `primary` (default) | **188** | FLEURS + in-training WorldSpeech |
+| `all` | **334** | adds the 146 held-out-variant runs, including 10 on `ta_lk` |
+
+---
+
 ## 2026-08-02 (evening, 2) — run-to-run variance is ~5x the noise floor I have been quoting
 
 The `am_et` and `crs_sc` CHECKPOINTS were deleted from the training server. The wandb runs are
