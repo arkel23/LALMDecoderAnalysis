@@ -165,4 +165,4 @@ set -u
 #
 #   python tools/preprocess/create_yamls_models_lalm_txf.py   # 82 model configs
 #   python tools/preprocess/create_yamls_worldspeech_lalm.py  # 11 dataset configs
-#   bash scripts/eval_lalm_decoder_txf.sh                     # serial 421, 156 evals
+#   bash scripts/eval_lalm_decoder_txf.sh                     # serial 11, 156 evals

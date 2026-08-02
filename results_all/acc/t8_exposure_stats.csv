@@ -1,0 +1,5 @@
+x,y,n,spearman_rho,spearman_p,pearson_r,pearson_p
+excess_pp,delta_vs_mismatched,11,-0.238542,0.479951,-0.534529,0.090263
+excess_pp,delta_vs_global,11,-0.412861,0.206951,-0.466486,0.148074
+ratio_matched_over_global,delta_vs_mismatched,11,-0.050578,0.882594,-0.392632,0.232302
+ratio_matched_over_global,delta_vs_global,11,-0.197714,0.560066,-0.350416,0.290736

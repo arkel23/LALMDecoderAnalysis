@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# SUPERSEDED for the main study -- read this before running it.
+#
+# This sweeps the UNTRAINED model configs: a stock Whisper encoder plus a stock Tiny Aya decoder
+# with a randomly-initialised connector. That composition has never been trained to map audio
+# into the decoder's space, so its transcripts are not a meaningful baseline; it measures the
+# initialisation, not a model anyone would deploy.
+#
+# The baselines that matter are serial 10 -- whisper-medium, Voxtral-Mini and Qwen2-Audio
+# evaluated directly -- and the trained checkpoints are serial 11
+# (eval_lalm_decoder_txf.sh). Those two share FLEURS test configs, so 11 minus 10 is the
+# like-for-like contrast.
+#
+# Kept rather than deleted because the dataset pairing below is still the reference for which
+# eval set goes with which language, and because an untrained-connector row is occasionally
+# worth having as a floor. Its serial (420) is outside the study's 10/11 range on purpose, so
+# it cannot be confused with either.
+#
+# Original description follows.
+#
 # Evaluation sweep for the LALM decoder-SFT study: the five Tiny Aya decoder variants plus a
 # non-Aya control, over the 12 study languages, on BOTH evaluation domains.
 #

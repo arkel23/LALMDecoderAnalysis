@@ -23,6 +23,9 @@ pulling -- summary only.
 - **serial 10** wer on FLEURS *test*.
 - **serial 421** the trained checkpoints over the **same FLEURS test configs**
   (`eval_lalm_decoder_txf.sh`).
+  *(CORRECTED same day: the trained sweep uses **serial 11**, not 421 -- 421 was my choice from
+  QuantizedASR's 3xx/4xx block, but these are project serials for the LALM study and 11 pairs
+  with the 10 baselines. Everything below reads 421; substitute 11.)*
 
 So **421 minus 10** is the like-for-like "what did training buy" contrast, and
 `analyze_baselines.py` computes it the moment 421 exists. Comparing serial 10's WER against

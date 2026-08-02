@@ -12,11 +12,11 @@ WHAT IS AND IS NOT COMPARABLE, because three serials use three different measure
               languages). This is the model-SELECTION curve -- best-checkpoint CER was chosen
               over it -- so it is not a clean held-out number and it is a different metric.
   serial 10   baselines. wer / mer / wil / wip on FLEURS *test*, from `eval_metrics: [wer_all]`.
-  serial 421  the trained checkpoints, swept by eval_lalm_decoder_txf.sh over the SAME FLEURS
-              test configs. Same metric, same split, so serial 421 minus serial 10 is the
+  serial 11  the trained checkpoints, swept by eval_lalm_decoder_txf.sh over the SAME FLEURS
+              test configs. Same metric, same split, so serial 11 minus serial 10 is the
               like-for-like "what did training buy" contrast.
 
-So the intended comparison is 421 vs 10, and this script is built to compute it the moment 421
+So the intended comparison is 11 vs 10, and this script is built to compute it the moment 11
 exists. Comparing serial 0's CER against serial 10's WER would be comparing two different
 metrics on two different splits, and is deliberately not done here.
 
@@ -92,7 +92,7 @@ def coverage(out):
 
 
 def compare_with_trained(base, trained, metric='wer'):
-    """serial 421 minus serial 10, per (language, eval set). Same metric, same split.
+    """serial 11 minus serial 10, per (language, eval set). Same metric, same split.
 
     Returns None until the trained sweep exists. The merge asserts key uniqueness on both
     sides first: a duplicated key here would produce a cross product that reads as a larger,
@@ -131,8 +131,8 @@ def main():
     p.add_argument('--input_file', type=str,
                    default=os.path.join('data', 'raw_serials', 'raw_serial_10.csv'))
     p.add_argument('--trained_file', type=str,
-                   default=os.path.join('data', 'raw_serials', 'raw_serial_421.csv'),
-                   help='Serial 421: the trained checkpoints swept over the same FLEURS test '
+                   default=os.path.join('data', 'raw_serials', 'raw_serial_11.csv'),
+                   help='Serial 11: the trained checkpoints swept over the same FLEURS test '
                         'configs. Optional; the contrast is skipped until it exists.')
     p.add_argument('--output_file', type=str,
                    default=os.path.join('results_all', 'acc', 't7_baselines.csv'))
@@ -169,10 +169,10 @@ def main():
         print('\nfinished baseline results:')
         print(fin[show].round(3).to_string(index=False))
 
-    trained_raw = load_serial(args.trained_file, 'serial 421 (trained)')
+    trained_raw = load_serial(args.trained_file, 'serial 11 (trained)')
     contrast = compare_with_trained(out, trained_raw, args.metric)
     if contrast is None:
-        print(f'\n[PENDING] the training-vs-baseline contrast needs serial 421 '
+        print(f'\n[PENDING] the training-vs-baseline contrast needs serial 11 '
               f'({args.trained_file}). Run eval_lalm_decoder_txf.sh, download it, and re-run.')
     else:
         contrast.to_csv(args.contrast_file, index=False, float_format=FLOAT_FORMAT)

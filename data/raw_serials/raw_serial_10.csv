@@ -1,3 +1,4 @@
 host,state,serial,dataset_path,dataset,split,model_id,force_asr_language,task,batch_size,max_eval_samples,norm_english,long_form,model/num_parameters,wer,mer,wil,wip,cer,rtfx,no_params,n_params,num_samples,audio_length_s_mean,audio_length_s_std,audio_length_s_min,audio_length_s_max,max_memory,bpw,total_MB
 DGX-H200-CN05,finished,10,google/fleurs,en_us,test,openai/whisper-medium,en,,128,,False,False,,5.29,5.25,8.69,91.31,,622.89,763.8579,816967680.0,647.0,9.873106646058732,3.554705784318474,3.6,29.3,115750.0,16.0,1558.2421875
-DGX-H200-CN05,running,10,google/fleurs,fr_fr,test,openai/whisper-medium,fr,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,running,10,google/fleurs,es_419,test,openai/whisper-medium,es,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,finished,10,google/fleurs,fr_fr,test,openai/whisper-medium,fr,,128,,False,False,,7.91,7.84,13.41,86.59,,526.6,763.8579,816967680.0,676.0,10.390650887573964,3.7276342440211607,3.54,33.54,22484.0,16.0,1558.2421875

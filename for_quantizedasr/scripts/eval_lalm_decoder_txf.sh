@@ -29,8 +29,11 @@
 # gap between them is itself the overfitting metric. Evaluating only one answers a different
 # question.
 #
-# Serial 421 pairs with eval_lalm_decoder.sh's 420, matching this repo's convention of giving
-# a sweep and its variant adjacent serials.
+# Serial 11 pairs with serial 10, which carries the eval-only baselines (whisper-medium,
+# Voxtral-Mini, Qwen2-Audio evaluated directly, no connector trained). 10 and 11 use the SAME
+# FLEURS test configs, so `serial 11 minus serial 10` is the like-for-like measure of what
+# connector training actually bought. That pairing is the point of the serial choice -- these
+# are project serials for the LALM study, not QuantizedASR's short-ml 3xx/4xx blocks.
 #
 # NOT COVERED: am_et and crs_sc have finished W&B runs but no uploaded checkpoints yet, and
 # es_es was superseded by es_mx (its checkpoints have no step-1000). Add them here once
@@ -87,7 +90,7 @@ if [ -n "$models" ]; then
     read -ra VARIANTS <<< "$models"
 fi
 
-base_cmd="python -m tools.evaluate --serial 421 --batch_size 128"
+base_cmd="python -m tools.evaluate --serial 11 --batch_size 128"
 
 for pairing in "${PAIRINGS[@]}"; do
     IFS='|' read -r lang fleurs_cfg ws_cfg <<< "$pairing"

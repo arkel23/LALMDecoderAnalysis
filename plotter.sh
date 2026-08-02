@@ -14,7 +14,7 @@
 set -eu
 
 SERIALS=(0)
-EVAL_SERIALS=(10)     # eval-only baseline sweeps
+EVAL_SERIALS=(10 11)  # 10 = off-the-shelf baselines, 11 = trained TinyAya LALMs
 PROJECT='LisTAya/LALMDecoder'
 HIST=data/raw_serials/history_serial_0.csv
 PLOTS=results_all/plots/s0
@@ -148,9 +148,10 @@ python -u analyze_ood_crs.py \
 
 # Baselines: off-the-shelf LALMs evaluated directly, answering the prior question serial 0
 # cannot -- whether connector training is worth doing at all. The training-vs-baseline contrast
-# waits for serial 421 (the trained checkpoints over the same FLEURS test configs).
+# waits for serial 11 (the trained checkpoints over the same FLEURS test configs).
 python -u analyze_baselines.py \
   --input_file data/raw_serials/raw_serial_10.csv \
+  --trained_file data/raw_serials/raw_serial_11.csv \
   --output_file "$ACC/t7_baselines.csv" \
   --contrast_file "$ACC/t7_training_vs_baseline.csv" || true
 
@@ -167,6 +168,14 @@ python -u analyze_volume_interaction.py \
   --accounting_file "$ACC/t4_data_accounting_by_language.csv" \
   --output_file "$ACC/t5_volume_interaction.csv" \
   --stats_file "$ACC/t5_volume_stats.csv"
+
+# How large is the "specialisation" treatment, in percentage points of post-training data?
+# Without this the region-match null cannot be distinguished from a null caused by a treatment
+# too small to measure.
+python -u analyze_exposure.py \
+  --volume_file "$ACC/t5_volume_interaction.csv" \
+  --output_file "$ACC/t8_exposure.csv" --stats_file "$ACC/t8_exposure_stats.csv"
+
 
 # --- 4. Figures --------------------------------------------------------------------
 # mkdir -p on the plot subdir happened above: plot.py only creates --results_dir, so a
