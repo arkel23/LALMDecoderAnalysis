@@ -7,6 +7,10 @@
 #
 # fr_ca -> fleurs_fr_fr and es_mx -> fleurs_es_419: trained variety != FLEURS variety.
 # ta_lk is held-out; the strict 30 s cap dropped all of it. crs_sc has no FLEURS entry.
+#
+# ha_ng's checkpoint was SELECTED on worldspeech_ha_ng_test during training, so that
+# number is not held out. Use ha_td as Hausa's in-domain point -- same training mix,
+# never used for selection.
 PAIRINGS=(
     "en_us|short_ml/fleurs_en_us_test.yaml|short_ml/worldspeech_en_us_test.yaml|short_ml/worldspeech_en_au_test.yaml short_ml/worldspeech_en_jm_test.yaml short_ml/worldspeech_en_ke_test.yaml short_ml/worldspeech_en_nz_test.yaml short_ml/worldspeech_en_pk_test.yaml short_ml/worldspeech_en_sl_test.yaml short_ml/worldspeech_en_zm_test.yaml"
     "es_mx|short_ml/fleurs_es_419_test.yaml|short_ml/worldspeech_es_mx_test.yaml|short_ml/worldspeech_es_ar_test.yaml short_ml/worldspeech_es_cl_test.yaml short_ml/worldspeech_es_co_test.yaml short_ml/worldspeech_es_es_test.yaml short_ml/worldspeech_es_pe_test.yaml short_ml/worldspeech_es_pr_test.yaml short_ml/worldspeech_es_py_test.yaml short_ml/worldspeech_es_uy_test.yaml"

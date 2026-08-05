@@ -396,5 +396,38 @@ check('a NaN seed is unrecorded, not seed_varies (NaN != NaN trap)',
 check('the sentinel cannot collide with a seed any run actually used',
       _UNRECORDED not in (42, 420))
 
+# --- selection-split reuse ---------------------------------------------------------------
+# ha_ng selected its best checkpoint on `disco-eth/WorldSpeech ha_ng test`, the same config the
+# eval sweeps use as its in-domain point -- so that number is not held out. Derived from the
+# training runs rather than trusting the hand-written dict.
+from utils import SELECTION_SPLIT, REUSES_SELECTION_SPLIT, is_selection_split
+
+_hist = os.path.join('data', 'raw_serials', 'history_serial_0.csv')
+if not os.path.exists(_hist):
+    print(f'[SKIP] {_hist} not present')
+else:
+    _h = pd.read_csv(_hist).drop_duplicates('dataset')
+    _obs = {r.dataset: (r.dataset_path, r.dataset, r.split) for r in _h.itertuples()}
+    check('SELECTION_SPLIT matches what the training runs actually evaluated on',
+          all(SELECTION_SPLIT.get(k) == v for k, v in _obs.items()))
+    check('every study cell has a recorded selection split',
+          set(_obs) <= set(SELECTION_SPLIT))
+    # Exactly one cell's in-domain eval config collides with its own selection split. If a
+    # second ever appears, the substitute table must grow with it.
+    _collide = {lang for lang, (dp, ds, sp) in SELECTION_SPLIT.items()
+                if dp != 'google/fleurs' and sp in ('test', 'test_clean')}
+    check('exactly the cells in REUSES_SELECTION_SPLIT collide with their own eval split',
+          _collide == set(REUSES_SELECTION_SPLIT))
+    check('ha_ng in-domain eval is flagged as a selection split',
+          is_selection_split('ha_ng', 'disco-eth/WorldSpeech', 'ha_ng', 'test'))
+    check('crs_sc test_clean is NOT a selection split (it selected on val_clean)',
+          not is_selection_split('crs_sc', 'ERISLab/WorldSpeech', 'crs_sc', 'test_clean'))
+    check('FLEURS test is NOT a selection split (they selected on validation)',
+          not any(is_selection_split(l, 'google/fleurs', l, 'test')
+                  for l in ('en_us', 'ta_in', 'ur_pk')))
+    check('ha_td is in the Hausa training mix, so the substitute is genuinely in-domain',
+          'ha_td' in MULTI_CONFIG_TRAIN['ha_ng'])
+
+
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)

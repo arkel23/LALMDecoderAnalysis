@@ -394,6 +394,40 @@ ACCENT_MATCH = {
     'ha_ng': 'partial',          # trains ha_ng + ha_td, evaluates ha_ng
 }   # every other language: 'same'
 
+# The split each cell's best checkpoint was SELECTED on during training. An eval on that same
+# split is not held out, so its number is optimistically biased and cannot be compared against
+# a cell whose eval split is fresh.
+#
+# Only ha_ng is affected. Every other cell selected on a different split from the one the eval
+# sweeps use: FLEURS validation vs FLEURS test for the ten cross-domain cells, and ERISLab
+# val_clean vs test_clean for crs_sc. Hausa selected on `disco-eth/WorldSpeech ha_ng test`,
+# which is exactly the in-domain config the sweeps evaluate.
+#
+# ha_td is the clean substitute: it was in Hausa's training mix, so it is equally in-domain,
+# and it was never used for selection.
+SELECTION_SPLIT = {
+    'am_et': ('google/fleurs', 'am_et', 'validation'),
+    'crs_sc': ('ERISLab/WorldSpeech', 'crs_sc', 'val_clean'),
+    'en_us': ('google/fleurs', 'en_us', 'validation'),
+    'es_419': ('google/fleurs', 'es_419', 'validation'),
+    'fr_fr': ('google/fleurs', 'fr_fr', 'validation'),
+    'ha_ng': ('disco-eth/WorldSpeech', 'ha_ng', 'test'),
+    'hi_in': ('google/fleurs', 'hi_in', 'validation'),
+    'id_id': ('google/fleurs', 'id_id', 'validation'),
+    'mr_in': ('google/fleurs', 'mr_in', 'validation'),
+    'sw_ke': ('google/fleurs', 'sw_ke', 'validation'),
+    'ta_in': ('google/fleurs', 'ta_in', 'validation'),
+    'ur_pk': ('google/fleurs', 'ur_pk', 'validation'),
+}
+
+# In-domain eval configs that reuse their own cell's selection split. Prefer the substitute.
+REUSES_SELECTION_SPLIT = {'ha_ng': 'ha_td'}
+
+
+def is_selection_split(language, dataset_path, dataset, split):
+    """True when this eval is on the split the cell's checkpoint was chosen on."""
+    return SELECTION_SPLIT.get(language) == (dataset_path, dataset, split)
+
 
 # WorldSpeech eval configs are named after the TRAINING variety (fr_ca, es_mx), while the study
 # cell is named after the FLEURS variety (fr_fr, es_419). Without this map those rows get no
