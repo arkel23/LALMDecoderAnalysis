@@ -1,43 +1,22 @@
-"""
-Transcribes the Tiny Aya report's per-variant language-composition tables into a tidy CSV.
+"""Transcribes the Tiny Aya report's per-variant language-composition tables into a tidy CSV.
 
-Source: "Tiny Aya: Bridging Scale and Multilingual Depth", Salamanca et al., arXiv:2603.11510,
-Appendix A "Language Distribution Details by Training Region", Tables 8-14:
+Source: arXiv:2603.11510, Appendix A, Tables 8-14 (English, European, West Asia, South Asia,
+Asia Pacific, African, Code).
 
-    Table  8  English data proportion (%) across data mixes
-    Table  9  European languages data proportion (%) across data mixes
-    Table 10  West Asia languages data proportion (%) across data mixes
-    Table 11  South Asia languages data proportion (%) across data mixes
-    Table 12  Asia Pacific languages data proportion (%) across data mixes
-    Table 13  African languages data proportion (%) across data mixes
-    Table 14  Code data proportion (%) across data mixes
+This turns "specialisation" from a categorical earth/fire/water label into a continuous
+variable -- the share of each variant's post-training mix in a given language -- which is what
+lets the study ask whether performance tracks how much of a language the decoder actually saw.
 
-WHY THIS MATTERS FOR THIS STUDY. The whole project asks whether a decoder's regional
-specialisation changes what a LALM can hear. Until now "specialisation" has been a categorical
-label -- earth / fire / water -- so the only testable claim was "matched vs mismatched". These
-tables turn it into a CONTINUOUS variable: the share of each variant's post-training mix that
-was in a given language. That allows the sharper question the label cannot ask -- does
-downstream ASR performance track *how much* of that language the decoder actually saw? -- and
-it allows a real null: if performance is flat in that share, regional specialisation is not
-operating through language exposure at all.
+Parses the published HTML rather than restating numbers, so the CSV can be regenerated and
+diffed. Cached under data/ on first run. Standard library only: pandas.read_html needs lxml,
+and adding a dependency would break the bare-checkout bar.
 
-Reproducibility. This parses the published HTML rather than restating numbers from prose, so
-the CSV can be regenerated and diffed. The HTML is cached under data/ on first run; delete it
-to re-fetch. Parsing uses only the standard library (html.parser) -- pandas.read_html needs
-lxml, which is not installed, and adding a dependency would break this repo's "a bare checkout
-runs plotter.sh" bar.
-
-Mix-to-variant mapping. The tables' columns are data MIXES, not variant names. The mapping
-below is stated by the report (Section 2.3.3 and the variant descriptions: Earth = Africa and
-West Asia, Fire = South Asia, Water = Asia-Pacific and Europe), and it is independently
-CHECKED against the numbers themselves in verify_mix_mapping(): African languages must carry
-their largest share in the earth mix and ~0 in the water mix, South Asian languages theirs in
-fire, and so on. If the report is revised and the columns move, that check fails rather than
-silently relabelling every column.
+The tables' columns are data MIXES, not variant names. The mapping is stated by the report and
+independently CHECKED against the numbers in verify_mix_mapping(), so a revision that moves the
+columns fails rather than silently relabelling them.
 
 Usage:
-    python fetch_tinyaya_composition.py                      # fetch (or reuse cache) + write CSV
-    python fetch_tinyaya_composition.py --refresh            # force re-download
+    python fetch_tinyaya_composition.py [--refresh]
 """
 import os
 import re

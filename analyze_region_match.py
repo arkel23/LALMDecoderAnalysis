@@ -1,34 +1,12 @@
-"""
-The region-match contrast: does a decoder specialised for a language's region beat one
-specialised for a different region, and beat the non-regional 'global' decoder?
+"""Does a region-matched decoder beat a mismatched one, and beat the non-regional 'global'?
 
-This is the falsifiable form of the project's claim. "Specialised is better" is weak;
-"specialisation must MATCH the language" is testable, and the executed grid supports it for
-free because the 10 languages span all three TinyAya regions.
+The falsifiable form of the project's claim, available for free because the languages span all
+three TinyAya regions. Reports the null with a minimum detectable effect, runs a primary and a
+sensitivity analysis, and flags non-clean cells (cross-dialect fr_fr, es_419) rather than
+pooling them silently.
 
-Three things this script is deliberately careful about:
-
-1. It reports the null. The measured effect is currently far smaller than the measured
-   run-to-run noise, and a null stated with a minimum-detectable-effect is a result. The
-   same null presented as a win is not.
-2. It runs a PRIMARY and a SENSITIVITY analysis. The en_us/water run failed
-   (see EXCLUDED_MODELS_AGGREGATE), and water is exactly the matched variant for en_us --
-   so excluding it removes en_us's matched arm entirely. Dropping the language is the
-   defensible choice, but it also removes the single largest against-hypothesis point, so
-   the sensitivity analysis that keeps everything is reported alongside, not instead.
-3. It flags non-clean cells rather than silently pooling them. fr_fr and es_419 are
-   cross-dialect (trained on one dialect, evaluated on another), and any language whose
-   training stream does not reconcile with the published corpus size is carried through from
-   the data-accounting table -- currently ta_in, whose reconstruction matches one training
-   config rather than the sum of both. That is a bookkeeping observation, not a data problem:
-   the Tamil data is verified clean (verify_dataset_durations.py). Interleaving is NOT among
-   these flags either, because the upstream loader uses
-   'all_exhausted_without_replacement', so the combined stream is exactly the sum of its
-   parts (proved in verify_interleave_semantics.py).
-
-crs_sc is absent by construction: its region is None because neither Whisper nor TinyAya
-officially supports Seychellois Creole, making it an out-of-distribution probe rather than
-a region-matched cell. See analyze_ood_crs.py.
+crs_sc is absent by construction -- its region is None, so it is an OOD probe. See
+analyze_ood_crs.py.
 
 Usage:
     python analyze_region_match.py --input_file results_all/acc/t1_sample_efficiency.csv \

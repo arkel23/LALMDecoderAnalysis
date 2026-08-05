@@ -1,39 +1,17 @@
-"""
-Reconstructs how much data each training stream consumed, using only what wandb logged plus
-authoritative dataset example counts.
-
-Analysis-only by design: nothing here loads a dataset or touches the training framework.
-Per run it uses global_step, batch_size, gradient_accumulation_steps, train_audio_seconds and
-the epoch counter; the expected stream size comes from utils.WORLDSPEECH_TRAIN_EXAMPLES,
-read from the HuggingFace dataset builder metadata.
-
-How the reconstruction works. Under streaming=True the Trainer iterates an IterableDataset;
-when the stream is exhausted it restarts and train/epoch advances past 1. So:
+"""Reconstructs how much data each training stream consumed, from logged scalars plus dataset
+example counts. Analysis-only: nothing here loads a dataset.
 
     samples_processed      = global_step * batch_size * gradient_accumulation_steps
     implied_stream_samples = samples_processed / epoch
 
-meaningful only once the stream has actually wrapped. Two runs sit at epoch exactly 1.000
-(en_us, hi_in), meaning it never wrapped -- for those the figure is a LOWER BOUND, and the
-CSV says so via estimate_kind.
+meaningful only once the stream has wrapped. Two runs sit at epoch exactly 1.000 (en_us, hi_in),
+so their figure is a LOWER BOUND -- the CSV says so via estimate_kind.
 
-The expected stream is the SUM of a language's training configs, which is sound because
-interleaving is lossless: 'all_exhausted_without_replacement' never recycles an exhausted
-config. That is proved offline in verify_interleave_semantics.py and confirmed on the real
-Tamil configs with verify_dataset_durations.py --load.
+Summing a language's configs is valid because interleaving is lossless
+(verify_interleave_semantics.py).
 
-WHAT THIS TABLE IS NOT. It is not a data-integrity check, and a low ratio here is NOT
-evidence of corrupt or missing data. An earlier pass made exactly that mistake: it compared
-against hour figures recovered from a summarised reading of the WorldSpeech paper, found
-Tamil short, and wrote it up as a data problem. Direct testing refuted that -- the Tamil
-configs interleave losslessly and the duration-consistency filter removes zero samples.
-Dataset integrity is checked by verify_dataset_durations.py, and only there.
-
-RESOLVED 2026-07-30. ta_in was the one language that did not reconcile, and the cause is now
-known: the strict `< 30 s` cap drops 100% of ta_lk (every clip is exactly 30.00 s), so the Tamil
-stream is ta_in alone -- 8,846 of 32,107. Comparing against the POST-FILTER expectation, all nine
-languages reconcile. The epoch-counter reconstruction was accurate throughout: it inferred 8,825
-against a true 8,846, 99.76%.
+NOT a data-integrity check; a low ratio here is not evidence of missing data. Integrity is
+checked by verify_dataset_durations.py, and only there.
 
 Usage:
     python analyze_data_accounting.py --input_file data/raw_serials/history_serial_0.csv \

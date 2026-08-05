@@ -1,30 +1,14 @@
-"""
-Moves specific W&B runs to a different `serial`, in place, and keeps the run NAME in sync.
+"""Moves specific W&B runs to a different `serial` in place, keeping the run NAME in sync.
 
-Adapted from the sibling repos' `rename_wandb_serial.py`, which selects runs by a substring
-condition on a config column. That selector cannot be used here: the case this script exists
-for is a re-run, where the old and the new run share *every* config field -- same model_id,
-same dataset, same split, same lr. The only thing distinguishing them is the run id. So
-selection is by explicit `--run_ids`.
+Selection is by explicit --run_ids, not by a config condition: the case this exists for is a
+re-run, where old and new share every config field and only the run id differs.
 
-W&B run names bake in a literal trailing "_<serial>" suffix (e.g. "..._train_0"), and that
-does not update itself when config.serial changes. Whenever a selected run's name ends with
-"_<from_serial>", the suffix is rewritten too, so name and config stay consistent.
+Run names bake in a trailing "_<serial>" that does not follow config.serial, so it is rewritten
+too.
 
-Motivating case (2026-08-01): the en_us / tiny-aya-water cell was run twice --
-  n4cot5v7  created 2026-07-27, best eval/cer 17.06
-  pwnz2zno  created 2026-07-31, best eval/cer 12.05
-Both under serial 0, which breaks the one-row-per-(model, language) contract that every
-analysis table in this repo asserts. The ORIGINAL (n4cot5v7) moves to serial 1 so serial 0
-stays the canonical grid, and the superseded run stays retrievable rather than deleted.
+MUTATES a live W&B project, so it is a DRY RUN by default. Pass --execute to apply.
 
-This MUTATES a live W&B project, so it is a DRY RUN by default: it prints every change it
-would make and writes nothing. Pass --execute to apply.
-
-    # see what would change
     python rename_wandb_serial.py --run_ids n4cot5v7 --from_serial 0 --to_serial 1
-
-    # apply it
     python rename_wandb_serial.py --run_ids n4cot5v7 --from_serial 0 --to_serial 1 --execute
 """
 import argparse

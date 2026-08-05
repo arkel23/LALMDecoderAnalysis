@@ -1,36 +1,14 @@
-"""
-Empirical verification of what the training runs' dataset interleaving actually does.
+"""Proves what the training runs' dataset interleaving does, so it stays refuted rather than
+becoming folklore again.
 
-Why this exists. The multi-config languages in serial 0 -- ta_in+ta_lk, ha_ng+ha_td,
-sw_ke+sw_tz -- are loaded by interleaving two WorldSpeech configs. Reading the upstream
-loader, the interleave is called with UNIFORM probabilities (the size-proportional line is
-commented out), which looks like it would oversample the smaller config and distort every
-per-language number. That reading is wrong, and this script is the proof.
+The upstream call uses UNIFORM probabilities, which reads as though the smaller config would be
+oversampled. It is not: 'all_exhausted_without_replacement' does not recycle an exhausted
+dataset, so every example is yielded exactly once and the interleaved length is exactly the sum
+of the parts. The probabilities affect arrival ORDER only.
 
-The upstream call, verbatim from qasr/data/data_utils.py at commit ac7566e (the commit the
-live experiments run from):
-
-    dataset = interleave_datasets(
-        datasets, probabilities=[1/len(dataset_path) for _ in range(len(dataset_path))],
-        stopping_strategy='all_exhausted_without_replacement', seed=0
-    )
-
-The load-bearing part is 'all_exhausted_without_replacement'. It is a real, supported
-stopping strategy (datasets >= 5.0.0 lists it in the interleave_datasets signature), and
-"without replacement" means an exhausted dataset is NOT recycled: sampling continues from
-whichever datasets still have examples, until all are exhausted. So every example from every
-config is yielded exactly once and nothing is duplicated -- the uniform probabilities affect
-only the ORDER in which examples arrive, not how many times each is seen.
-
-That is the difference that matters. Under plain 'all_exhausted' the smaller dataset is
-restarted and oversampled, so the epoch bookkeeping is meaningless; under
-'all_exhausted_without_replacement' the interleaved length is exactly the sum of the parts.
-
-This test uses two small synthetic datasets rather than the real WorldSpeech configs: the
-semantics under test belong to interleave_datasets, not to any particular corpus, and
-synthetic data makes the expected counts exact and the test offline and instant. Both the
-map-style and the streaming/iterable paths are checked, because the training runs use
-streaming=True and the two implementations are separate code in datasets.
+Uses two small synthetic datasets -- the semantics belong to interleave_datasets, not to any
+corpus -- and checks both the map-style and streaming paths, since the runs use streaming=True
+and the two are separate implementations.
 
 Run:  python verify_interleave_semantics.py
 Exit code is non-zero if the semantics differ from what the analysis assumes.

@@ -1,31 +1,12 @@
-"""
-Per-run curve statistics: the table that makes the decoder comparison say something the
-final-CER number cannot.
+"""Per-run curve statistics from the 101 logged evaluations, rather than the single endpoint.
 
-Why this exists. Each run's endpoint is a single number, and the measured run-to-run noise
-is larger than the effect being looked for, so a table of final CERs mostly reports noise.
-Each run also logs 101 evaluations spanning ~21 to ~2700 hours of processed audio. Reducing
-that curve to a handful of statistics uses all 101 points instead of 1:
+Run-to-run noise exceeds the effect being looked for, so a table of final CERs mostly reports
+noise. best_cer is primary (the last checkpoint is not the best -- mean gap ~3.5 CER);
+final_minus_best measures overfitting; audio_h_to_*x_best is the sample-efficiency statistic;
+late_sd is the within-run noise floor.
 
-  best_cer            lowest CER reached at any evaluation. The primary metric -- the last
-                      checkpoint is not the best one (mean final-minus-best gap is ~3.5 CER).
-  final_cer           CER at the last evaluation. Secondary, and reported as such.
-  final_minus_best    how much was given back after the optimum. This IS the overfitting
-                      measure, and it should be largest where a language cannot fill one
-                      clean epoch.
-  audio_h_to_best     processed audio at the optimum.
-  audio_h_to_*x_best  processed audio needed to first come within a factor of the optimum.
-                      The sample-efficiency statistic: it separates variants far better than
-                      final CER because it is not a single noisy endpoint.
-  late_sd             sd of CER over the last 30% of the curve. This is the within-run noise
-                      floor, and it is the only error bar available without extra seeds. Any
-                      claimed difference smaller than it is not a difference.
-
-Note on the x-axis: audio_hours is audio PROCESSED (cumulative, counting repeats), not
-unique audio. train/train_audio_seconds is a real measurement -- it sums decoded array
-length / sampling rate per batch -- but the wandb train/epoch counter is unreliable under
-streaming, so unique-hours and epoch counts are NOT derived here. epochs_logged is carried
-through only so it can be flagged, never used as a divisor.
+audio_hours is audio PROCESSED, counting repeats. The wandb train/epoch counter is unreliable
+under streaming, so epochs_logged is carried only to be flagged, never used as a divisor.
 
 Usage:
     python analyze_sample_efficiency.py --input_file data/raw_serials/history_serial_0.csv \
@@ -40,9 +21,8 @@ from utils import (add_language_columns, assert_unique_keys, is_excluded_from_ag
                    MODEL_SHORT)
 
 
-# Fractions of the best CER used as sample-efficiency thresholds. 1.5x and 2.0x are far
-# enough above the optimum to be reached well before the curve flattens, so they measure
-# how fast a run got good rather than where it happened to stop.
+# Far enough above the optimum to be reached before the curve flattens, so they measure how
+# fast a run got good rather than where it stopped.
 THRESHOLD_FACTORS = (1.25, 1.5, 2.0)
 
 # Fraction of the curve (by processed audio) treated as "late training" for the noise floor.
@@ -121,9 +101,8 @@ def build_table(df):
 
     out = mark_canonical(out)
 
-    # One row per (model, language) is the contract every downstream merge relies on. It is
-    # asserted on the canonical subset, because during a re-run window a cell legitimately
-    # holds two runs in the same serial.
+    # Asserted on the canonical subset: during a re-run window a cell legitimately holds two
+    # runs in the same serial.
     assert_unique_keys(out[out['is_canonical']], ['model_id', 'dataset'],
                        label='t1_sample_efficiency (canonical rows)')
 

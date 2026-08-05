@@ -1,27 +1,12 @@
-"""
-The crs_sc (Seychellois Creole) cell: the out-of-distribution probe.
+"""The crs_sc (Seychellois Creole) cell: the out-of-distribution probe.
 
-Why this language is treated separately rather than folded into the region contrast.
-Seychellois Creole is an African language, but it is officially supported by NEITHER the
-Whisper encoder NOR any TinyAya decoder variant. Every other language in the grid is seen
-by at least one component. So crs_sc is the only cell where both halves of the model are
-operating outside their training coverage -- the "neither" quadrant of the coverage matrix
-the project's own plan asked for, already run.
+Supported by neither the Whisper encoder nor any TinyAya decoder, so it is the only cell where
+both halves operate outside their coverage. Also the only language with all six models,
+including the non-Aya Qwen3-4B control -- the one place the question "TinyAya property or
+connector-recipe property?" can be asked.
 
-It is also the only language with all six models: the four regional/global variants plus
-tiny-aya-base and a non-Aya Qwen3-4B control. That control matters, because it is the only
-place in the entire grid where the question "is this a TinyAya property or a
-connector-recipe property?" can be asked at all.
-
-Data availability is not the limitation here: the WorldSpeech report (arXiv 2605.09167)
-gives crs_sc 1,602 hours, and the runs process ~2,100. What is missing is coverage, not data.
-
-On the eval split: the crs_sc runs train on ERISLab/WorldSpeech 'train_val_exc_clean' and
-evaluate on 'val_clean'. Both carry the same duration-consistency cleaning as 'test_clean' --
-samples whose decoded audio length disagrees with the corpus 'duration' column by 1 s or more
-are removed. The committed example script only demonstrates the filter on the test split, so
-the train/val cleaning is not visible there, but it was applied when the splits were built.
-The '_clean' suffix therefore means what it says on all three splits.
+Coverage is the limitation, not data: the WorldSpeech report gives crs_sc 1,602 hours. Its
+train/val/test splits all carry the duration-consistency cleaning.
 
 Usage:
     python analyze_ood_crs.py --input_file results_all/acc/t1_sample_efficiency.csv \

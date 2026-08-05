@@ -1,5 +1,56 @@
 # Change log
 
+## 2026-08-05 — comment cleanup and a documentation index
+
+### Code: 24% prose -> 17%
+
+449 lines removed, 469 of them comment or docstring. `utils.py` alone went 698 -> 566. What went
+was narrative -- "an earlier version said X, that was wrong", "this replaced an earlier
+snapshot", "did not survive replication", incident retellings. What stayed is one- or two-line
+invariants. Every module docstring over 25 lines was rewritten to 5-15.
+
+**The cleanup is provably output-neutral.** It was done with two helpers that refuse to touch
+code: a comment-block replacer that asserts every deleted line starts with `#`, and a docstring
+replacer that asserts the AST below the docstring is unchanged. 22 of 23 generated files came
+back byte-identical; `t7_baselines.csv` differed only because serial 10 had grown from 16 to 84
+runs mid-session, and regenerating it from the committed raw data reproduced the committed CSV
+exactly.
+
+One mistake worth recording: an early attempt replaced comment blocks by line range between a
+header and the next code anchor, which swallowed `TINYAYA_COMPOSITION_CSV` and a dict definition.
+Caught by an import failure. `utils.py` was reverted to HEAD and redone with the assert-guarded
+helper, which cannot do that.
+
+### Two real defects the cleanup surfaced
+
+- **32 of 84 baseline rows had no `study_cell`.** `TRAIN_CONFIG_TO_CELL` covered only training
+  configs, so the 16 held-out variants (`en_au`, `es_ar`, `fr_cd`, ...) carried no
+  `language_name` and no `resource_tier` and dropped out of any grouped table -- which would
+  have made the accent-transfer axis unreadable per language. Now mapped, with a test asserting
+  every evaluated variant resolves to a cell and exactly one per cell is the in-domain primary.
+  Accent transfer now groups correctly: 7 English, 8 Spanish, 2 French.
+- **`NUMBER_PROVENANCE.md` and `REPRODUCE_FIGURES.md` were both stale.** The first quoted
+  `rho = 0.964` and collinearity `-0.679` from the dead 7-language era (current: 0.555 and
+  -0.818), missed t6-t9 entirely, and gave `final_minus_best` as 3.47 (now 5.30). The second
+  said the faceted figure shows 9 languages and that the Qwen3-4B control was still training;
+  it is 12 and it has finished. Neither was covered by `verify_paper_numbers.py`, which scans
+  only the findings document.
+
+### Docs: 9 files -> 8, with an index
+
+`docs/OUTPUTS.md` merges the two stale files into one current table of every generated file --
+what writes it, what it holds -- plus the definitions, the check-by-eye list, and the settled
+items. That is the "crawl the generated files and data" entry point.
+
+`HANDOVER.md` was rewritten as the index. It had opened with "**No data has been collected here
+yet**" since 2026-07-30, against 57 training runs and a full analysis. It now carries current
+state and a table pointing at each of the six docs.
+
+`CLAUDE.md` lost its "Not yet applicable" section (`plotter.sh`, the tests and
+`claude_process.sh` all exist now) and its claim that `SERIAL_DIC` is empty and the dicts are
+placeholders. Its traps section now names the live ones: frozen snapshots, `is_canonical` over
+`state == 'finished'`, and `ha_ng`'s selection-split collision.
+
 ## 2026-08-03 (later) — less is more: condense the code, consolidate the docs
 
 Review verdict: too much prose, too little signal. Comments mixed necessary documentation with

@@ -1,23 +1,16 @@
-"""
-Re-derives every number printed in the assessment document from the CSV that owns it.
+"""Re-derives every number printed in the findings document from the CSV that owns it.
 
-The SPEC / DERIVED / ORDERINGS lists below are the contract: each entry names a printed
-value, the CSV it comes from, how to select it, and the rounding used to print it. Expected
-values are always COMPUTED FROM THE CSV, never hardcoded -- a checker that hardcodes its
-expectations goes stale silently and then certifies its own staleness.
+The SPEC / DERIVED / ORDERINGS lists are the contract: each entry names a printed value, its
+CSV, how to select it, and the printed rounding. Expected values are always COMPUTED from the
+CSV, never hardcoded -- a checker that hardcodes its expectations certifies its own staleness.
+Adding a number to the document means adding it here.
 
-Adding a number to the document means adding it here. That is the whole point: a number that
-lives only in prose has nothing regenerating it, and it rots the moment upstream data changes.
-
-Three details that each correspond to a real defect elsewhere in this family of repos:
-  - Rounding is half-UP, not Python's banker's default. round(5.25, 1) is 5.2; the printed
-    value is 5.3.
-  - Occurrence matching is bounded so 8.3 does not match inside 18.31.
-  - A passing check on a short or very common value is reported as LOW-SPECIFICITY rather
-    than counted as a win, so the coverage number stays honest.
+Rounding is half-UP, not Python's banker's default. Occurrence matching is bounded so 8.3 does
+not match inside 18.31. A passing check on a short or common value is reported as
+LOW-SPECIFICITY rather than counted as a win.
 
 Usage:  python verify_paper_numbers.py [--verbose]
-Exit code is non-zero if any check fails, so plotter.sh fails loudly.
+Exit code is non-zero if any check fails.
 """
 import os
 import re

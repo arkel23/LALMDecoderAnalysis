@@ -1,38 +1,18 @@
-"""
-Between-run variance, measured from replicate pairs rather than inferred from a proxy.
+"""Between-run variance, measured from replicate pairs rather than inferred from `late_sd`.
 
-WHY THIS MATTERS MORE THAN IT LOOKS. Every uncertainty statement in this repo has used
-`late_sd` -- the standard deviation of eval CER over the last 30% of a single run's curve -- as
-its noise floor. That is the wrong quantity. `late_sd` measures wobble along ONE trajectory; what
-matters when comparing two runs is how far apart two INDEPENDENT runs of the same cell land.
+`late_sd` measures wobble along ONE trajectory; what matters when comparing two runs is how far
+apart two INDEPENDENT runs of the same cell land. The one pair that exists differs by 5.01 CER
+on best (en_us/water, both seed 42), against a grid-wide median late_sd of 1.06 and a
+region-match effect of -0.61 -- so the quoted noise floor is roughly 5x too small.
 
-The one replicate pair that already exists says those differ by a lot:
+Serial 1 holds the earlier run of a twice-run cell, so pairing is a join on (model_id, dataset).
 
-    en_us / tiny-aya-water, both seed 42
-      serial 1 (first run,  n4cot5v7)  best 17.06  final 20.12
-      serial 0 (re-run,     pwnz2zno)  best 12.05  final 13.12
-      -> 5.01 CER apart on best
-
-against a grid-wide median `late_sd` of 1.06 and a region-match effect of -0.61. So the noise floor this
-repo has been quoting is roughly 5x too small, and claims resting on it -- including that the
-minimum detectable effect had "converged on the noise floor" -- are correspondingly optimistic.
-
-Serial 1 means "the earlier run of a cell that has been run more than once", so pairing is a join
-on (model_id, dataset). Once the am_et and crs_sc re-runs land there will be ~11 pairs, which is
-enough to pool a real between-run standard deviation and recompute the minimum detectable effect
-against it.
-
-A caveat this script records rather than hides: a same-seed pair measures NONDETERMINISM
-(streaming order, GPU non-associativity), not seed sensitivity. Seed sensitivity is a superset,
-so a same-seed estimate is a LOWER BOUND on true run-to-run variance. `seed_status` splits the
-pairs three ways -- `same_seed`, `seed_varies`, `unrecorded` -- so the two quantities are never
-pooled silently, and a run that predates seed logging (sentinel 0) is never mistaken for either.
-
-The re-runs already in flight use seed 420 against the originals' 42, so the pairs they produce
-land in `seed_varies` and estimate the larger quantity.
+A same-seed pair measures NONDETERMINISM, not seed sensitivity, which is strictly larger --
+so it is a LOWER BOUND. `seed_status` splits pairs three ways (same_seed / seed_varies /
+unrecorded) so the two are never pooled and the sentinel is never mistaken for a real seed.
 
 Usage:
-    python analyze_replicates.py --serial0_file data/raw_serials/history_serial_0.csv \\
+    python analyze_replicates.py --serial0_file data/raw_serials/history_serial_0.csv \
         --serial1_file data/raw_serials/history_serial_1.csv
 """
 import os
@@ -92,14 +72,8 @@ def build_pairs(s0, s1):
     pairs['delta_best_cer'] = pairs['best_cer_rerun'] - pairs['best_cer_first']
     pairs['delta_final_cer'] = pairs['final_cer_rerun'] - pairs['final_cer_first']
     pairs['abs_delta_best'] = pairs['delta_best_cer'].abs()
-    # Same seed measures nondeterminism only; a differing seed also captures seed sensitivity,
-    # which is strictly larger. Never pool the two without saying so.
-    #
-    # Three states, not two. The downloader maps an unrecorded seed to UNRECORDED_SEED (0)
-    # rather than leaving NaN, because NaN != NaN in pandas: a naive comparison would report
-    # "seed varies" for every unrecorded pair and inflate the variance estimate. The sentinel
-    # is still not a real seed, so a pair touching it is its own category and is never pooled
-    # into the seed-sensitivity estimate.
+    # Three states, not two: a same-seed pair measures nondeterminism, a differing seed also
+    # captures seed sensitivity, and the sentinel is neither. Never pool them.
     unrecorded = ((pairs['seed_first'] == UNRECORDED_SEED)
                   | (pairs['seed_rerun'] == UNRECORDED_SEED)
                   | pairs['seed_first'].isna() | pairs['seed_rerun'].isna())
@@ -155,8 +129,7 @@ def main():
         if sub.empty:
             continue
         d = sub['delta_best_cer'].to_numpy(dtype=float)
-        # sd of a single run = sd of the paired difference / sqrt(2), since both members are
-        # independent draws from the same cell.
+        # Both members are independent draws from the same cell, hence the sqrt(2).
         between_run_sd = float(np.std(d, ddof=1) / np.sqrt(2)) if len(d) > 1 else np.nan
         rows.append({
             'subset': label,

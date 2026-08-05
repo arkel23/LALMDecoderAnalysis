@@ -1,37 +1,19 @@
-"""
-The headline analysis: does the benefit of a region-matched decoder depend on how much
-training data the connector had?
+"""Does the benefit of a region-matched decoder depend on how much training data it had?
 
-This is the study's central claim, and it emerged from a bug. A strict `< 30 s` duration cap
-silently discarded 100% of the ta_lk config (every clip is exactly 30.00 s), leaving Tamil with
-8,846 of 32,107 intended clips. An earlier draft proposed excluding Tamil for that reason. That
-was wrong, and the reason it was wrong is the point of this script.
+The contrast is computed WITHIN a language, so the ta_lk duration-cap loss cannot bias it -- it
+only relocates Tamil on the volume axis, where it becomes the grid's only genuinely low-resource
+cell. Excluding Tamil would discard the most informative point.
 
-The region-match contrast is computed WITHIN a language: all four decoder variants consumed the
-identical Tamil stream. The loss reduced every arm equally, so it cannot bias the comparison --
-it only relocates Tamil on the data-volume axis, where it becomes the grid's only genuinely
-low-resource cell. Excluding it would have thrown away the most informative point.
-
-Ordering languages by training-stream size, the matched-decoder benefit decays monotonically:
-about -15 CER at ~9k utterances, under 0.5 CER by ~60k, and reversing sign by ~580k. That is a
-scaling relationship for decoder specialisation, and it is the finding.
-
-THE CONFOUND, which this script measures rather than argues away. Data volume and baseline error
-rate are collinear across these languages: the low-data languages are also the hard ones. A
-constant RELATIVE benefit would therefore masquerade as a growing ABSOLUTE one. So every
-statistic is computed three ways -- absolute delta, relative delta (as a percentage of the
-mismatched baseline), and a partial correlation controlling for baseline CER -- and all three are
-written to the stats CSV. The cross-language comparison alone cannot separate "scarce data" from
-"hard language"; only a within-language volume manipulation can, which is why re-running Tamil at
-full volume while keeping the low-volume runs is the decisive next experiment.
-
-Robustness: every correlation is also reported with the extreme point (ta_in) dropped, because a
-rank correlation driven by one outlier is not a finding.
+THE CONFOUND, measured rather than argued away: volume and baseline error rate are collinear
+across these languages, so a constant RELATIVE benefit would masquerade as a growing ABSOLUTE
+one. Every statistic is computed three ways -- absolute delta, relative delta, and a partial
+correlation controlling for baseline CER -- and each is also reported with the extreme point
+dropped. Only a within-language volume manipulation can settle it.
 
 Usage:
-    python analyze_volume_interaction.py \\
-        --region_file results_all/acc/t2_region_match.csv \\
-        --accounting_file results_all/acc/t4_data_accounting_by_language.csv \\
+    python analyze_volume_interaction.py \
+        --region_file results_all/acc/t2_region_match.csv \
+        --accounting_file results_all/acc/t4_data_accounting_by_language.csv \
         --output_file results_all/acc/t5_volume_interaction.csv
 """
 import os

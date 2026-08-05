@@ -1,18 +1,14 @@
-"""
-Logic tests for utils.py and the analysis scripts.
+"""Logic tests for utils.py and the analysis scripts.
 
-Deliberately not pytest: it is not installed in this repo's conda env, and adding a
-dependency for one file would break the "a bare checkout runs `bash plotter.sh`" bar.
+Not pytest: it is not in this repo's conda env, and adding a dependency would break the
+bare-checkout bar.
 
-The division of labour with verify_paper_numbers.py matters. That script asks "does the
-document match the CSVs?". These ask "is the logic right?". A number-checker cannot catch a
-CSV that is CONSISTENTLY wrong -- a mis-regioned language would regenerate every table
-wrongly and still pass every numeric check -- so the cheap, data-free logic tests run first.
-
-Sections 1-5 are pure logic and need no data. Section 6 runs only if the downloaded CSVs
-exist, so this file is still useful on a fresh checkout before plotter.sh has run.
+Division of labour with verify_paper_numbers.py: that asks "does the document match the CSVs?",
+this asks "is the logic right?". A number-checker cannot catch a CSV that is CONSISTENTLY wrong,
+so these data-free tests run first. The final sections run only if the CSVs exist.
 """
 import os
+import pathlib
 import sys
 
 import numpy as np
@@ -457,6 +453,22 @@ check('the primary is labelled primary',
       and in_domain_role('en_us', 'en_us', 'in_domain') == 'primary')
 check('cross-domain rows get no in-domain role',
       in_domain_role('en_us', 'en_us', 'cross_domain') == '')
+
+# Every WorldSpeech variant the sweeps evaluate must map to a study cell, or it carries no
+# language_name and no resource_tier and drops out of any grouped table.
+import re as _re
+_gen = pathlib.Path('for_quantizedasr/tools/preprocess/create_yamls_worldspeech_lalm.py')
+if _gen.exists():
+    _all = _re.findall(r'"([^"]+)"',
+                       _re.search(r'^configs = \[(.*?)^\]', _gen.read_text(), _re.S | _re.M).group(1))
+    _study = {c for c in _all if c.split('_')[0] in
+              {'en', 'es', 'fr', 'ha', 'sw', 'ur', 'ta', 'hi', 'id', 'mr', 'am', 'crs'}}
+    check('every evaluated WorldSpeech variant maps to a study cell',
+          all(to_study_cell(c) in SELECTION_SPLIT for c in _study))
+    check('exactly one variant per cell is the in-domain primary, the rest accent transfer',
+          all(sum(1 for c in _study if to_study_cell(c) == cell
+                  and in_domain_role(cell, c, 'in_domain') == 'primary') == 1
+              for cell in SELECTION_SPLIT))
 
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)

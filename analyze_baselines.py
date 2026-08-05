@@ -1,35 +1,20 @@
-"""
-Serial 10: off-the-shelf LALM baselines, and what they say about training a connector at all.
+"""Serial 10: off-the-shelf LALM baselines -- is training a connector worth doing at all?
 
-Serial 0 answers "does the decoder's regional specialisation matter?" -- a comparison *within*
-SLAM-style connector-only training. It cannot answer the prior question: is that training worth
-doing at all, against a model you can download today? Serial 10 is that baseline set --
-whisper-medium, Voxtral-Mini, Qwen2-Audio evaluated directly, with no connector trained.
+Three serials, three measurements, and only one pair is comparable:
 
-WHAT IS AND IS NOT COMPARABLE, because three serials use three different measurements:
+  serial 0   training runs. eval/cer on the model-SELECTION curve, so not held out.
+  serial 10  baselines. wer / mer / wil / wip on FLEURS test.
+  serial 11  the trained checkpoints over the SAME configs as serial 10.
 
-  serial 0    training runs. eval/cer, on FLEURS *validation* (plus WorldSpeech for two
-              languages). This is the model-SELECTION curve -- best-checkpoint CER was chosen
-              over it -- so it is not a clean held-out number and it is a different metric.
-  serial 10   baselines. wer / mer / wil / wip on FLEURS *test*, from `eval_metrics: [wer_all]`.
-  serial 11  the trained checkpoints, swept by eval_lalm_decoder_txf.sh over the SAME FLEURS
-              test configs. Same metric, same split, so serial 11 minus serial 10 is the
-              like-for-like "what did training buy" contrast.
+So 11 minus 10 is the like-for-like "what did training buy" contrast, and this script computes
+it as soon as 11 exists. Serial 0's CER against serial 10's WER would be two metrics on two
+splits, and is deliberately not done.
 
-So the intended comparison is 11 vs 10, and this script is built to compute it the moment 11
-exists. Comparing serial 0's CER against serial 10's WER would be comparing two different
-metrics on two different splits, and is deliberately not done here.
-
-NOTE ON CER. The FLEURS configs carry `eval_metrics: ['wer_all']`, so no CER is logged for the
-baselines. Adding 'cer' to that list would make both metrics available on both sides at no extra
-inference cost -- worth doing before the sweep is complete, since the training runs report CER
-and a reader will expect the two to meet.
-
-Handles partial data: serial 10 is populated incrementally, so every cell is reported as
+Handles partial data: serial 10 fills in incrementally, so every cell is reported as
 present/absent rather than assumed.
 
 Usage:
-    python analyze_baselines.py --input_file data/raw_serials/raw_serial_10.csv \\
+    python analyze_baselines.py --input_file data/raw_serials/raw_serial_10.csv \
         --output_file results_all/acc/t7_baselines.csv
 """
 import os
@@ -44,14 +29,11 @@ from utils import (LANGUAGE_DIC, RESOURCE_TIER, get_eval_domain, to_study_cell,
 
 FLOAT_FORMAT = '%.6f'
 
-# The metric family `wer_all` emits. wer is primary; the others are kept because they
-# disambiguate failure modes -- a high wer with a low mer means insertions/deletions rather
-# than substitutions, which is what a model that ignores the prompt tends to produce.
+# wer is primary; the rest disambiguate failure modes -- high wer with low mer means
+# insertions/deletions rather than substitutions, which is what prompt-ignoring produces.
 WER_FAMILY = ('wer', 'mer', 'wil', 'wip')
 
-# Efficiency and size columns, logged for every eval run. Relevant because the study's claim is
-# partly about small models: a baseline that wins on WER while being 7x larger is not the same
-# result as one that wins at parity.
+# A baseline that wins on WER while being 7x larger is not the same result as one at parity.
 COST_COLS = ('rtfx', 'no_params', 'n_params', 'total_MB', 'bpw', 'max_memory')
 
 
@@ -70,29 +52,24 @@ def build_table(df):
     keep += [c for c in WER_FAMILY + COST_COLS if c in df.columns]
     out = df[[c for c in keep if c in df.columns]].copy()
 
-    # The eval config is named after the training variety on the WorldSpeech side (fr_ca,
-    # es_mx) and after the FLEURS variety on the other (fr_fr, es_419). Normalise to the study
-    # cell so both domains of the same language group together.
+    # WorldSpeech configs are named after the trained variety (fr_ca), FLEURS after the
+    # evaluated one (fr_fr). Normalise so both domains of a language group together.
     out['study_cell'] = out['dataset'].map(to_study_cell)
     out['language_name'] = out['study_cell'].map(LANGUAGE_DIC)
     out['resource_tier'] = out['study_cell'].map(RESOURCE_TIER)
     out['model_short'] = out['model_id'].astype(str).str.split('/').str[-1]
 
-    # Training is always WorldSpeech, so a WorldSpeech eval is in-domain and FLEURS is the
-    # held-out domain. This is a property of the EVAL SET, not of the language.
+    # A property of the EVAL SET, not of the language.
     out['eval_domain'] = np.where(
         out['dataset_path'].astype(str).str.contains('WorldSpeech'),
         'in_domain', 'cross_domain')
 
-    # The sweeps evaluate all 33 WorldSpeech variants of the study's languages and every one
-    # normalises to the same study cell, so a cell can hold 9 in-domain rows. Exactly one is
-    # the cell's in-domain point; the rest are zero-shot accent transfer. Averaging them would
-    # mix the two quantities and quietly change what "in-domain" means per language.
+    # All 33 variants normalise to the same study cell, so a cell can hold 9 in-domain rows.
+    # Exactly one is its in-domain point; averaging would mix it with accent transfer.
     out['in_domain_role'] = [in_domain_role(c, d, e) for c, d, e
                              in zip(out['study_cell'], out['dataset'], out['eval_domain'])]
 
-    # A baseline is one row per (model, language, eval set). Anything else means a duplicate
-    # eval, which would silently average two runs of the same cell.
+    # One row per (model, language, eval set); anything else is a duplicate eval.
     assert_unique_keys(out, ['model_id', 'dataset', 'dataset_path', 'split'],
                        label='t7_baselines')
     return out.sort_values(['dataset', 'model_short'])
@@ -103,8 +80,7 @@ def coverage(out):
     fin = out[out['state'] == 'finished']
     models = sorted(out['model_short'].dropna().unique())
     langs = sorted(out['study_cell'].dropna().unique())
-    # Coverage is per (language, DOMAIN, model): the same language is evaluated twice, once
-    # per domain, and collapsing them hides which half is missing.
+    # Per (language, domain, model): collapsing domains hides which half is missing.
     grid = pd.crosstab([fin['study_cell'], fin['eval_domain']], fin['model_short'])
     missing = [(l, d, m) for l in langs for d in ('cross_domain', 'in_domain') for m in models
                if not ((fin['study_cell'] == l) & (fin['eval_domain'] == d)
@@ -126,8 +102,7 @@ def compare_with_trained(base, trained, metric='wer'):
     b = base[base['state'] == 'finished'].copy()
     t = trained[trained['state'] == 'finished'].copy()
 
-    # Best baseline per eval cell -- the honest comparator is the strongest downloadable model,
-    # not the mean of them.
+    # The honest comparator is the strongest downloadable model, not the mean of them.
     b_best = (b.sort_values(metric).groupby(key, as_index=False)
               .first()[key + [metric, 'model_short']]
               .rename(columns={metric: f'baseline_{metric}',
@@ -145,8 +120,8 @@ def compare_with_trained(base, trained, metric='wer'):
     merged[f'delta_{metric}'] = merged[f'trained_{metric}'] - merged[f'baseline_{metric}']
     merged['training_helps'] = merged[f'delta_{metric}'] < 0
 
-    # Per eval config, so nothing is averaged -- but the reader still needs to know which row
-    # is the cell's in-domain point and which are accent transfer.
+    # Per eval config, so nothing is averaged -- but the reader needs to know which row is
+    # the cell's in-domain point.
     merged['study_cell'] = merged['dataset'].map(to_study_cell)
     merged['eval_domain'] = np.where(
         merged['dataset_path'].astype(str).str.contains('WorldSpeech'),

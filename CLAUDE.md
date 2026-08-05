@@ -217,7 +217,7 @@ Two related failures from the same session:
 - After changing `utils.py`/`plot.py`, regenerate affected figures and check legend, axes
   **and colors** — a duplicate-containing `hue_order` once shifted one category's color while
   positions and labels stayed pixel-identical.
-- Update `NUMBER_PROVENANCE.md`/`REPRODUCE_FIGURES.md` whenever a number or figure changes.
+- Update `docs/OUTPUTS.md` whenever a number, figure or generated file changes.
 - Log substantive changes, dated, in `docs/CLAUDE_CHANGES.md`.
 
 ## Session workflow
@@ -242,26 +242,15 @@ Two related failures from the same session:
   contradicting an instruction you gave. Read the deployed file; don't trust the summary.
 - Sequence agents that touch the same file; don't edit one `main.tex` from two directions.
 
-## Not yet applicable
-
-Several conventions in the parent file assume a repo with data and a paper. They apply as
-soon as those exist, and are listed here so they are not forgotten rather than rediscovered:
-
-- **`plotter.sh`** does not exist yet. Create it as soon as there is a first wandb serial to
-  download, and keep the "one command rebuilds everything" bar from day one — it is far
-  cheaper than retrofitting it, which is exactly what the sibling repos had to do.
-- **`verify_paper_numbers.py`** and unit tests: build them alongside the first table, not
-  after. In MultilingualQASR they were retrofitted and immediately found five wrong printed
-  numbers.
-- **`NUMBER_PROVENANCE.md` / `REPRODUCE_FIGURES.md`**: start them with the first number.
-- **`claude_process.sh`**: start it with the first one-off command.
-
 ## This repo's specific traps
 
-- **`utils.py`'s dicts are placeholders.** `SERIAL_DIC` is empty and `METHODS_DIC`,
-  `DATASETS_DIC` describe the *intended* TinyAya matrix, not observed runs. Fill them from
-  real wandb data before trusting any figure. `get_canonical_labels` returns an empty list
-  until `SERIAL_DIC` is populated.
+- **`utils.py` carries frozen snapshots.** `WORLDSPEECH_TRAIN_EXAMPLES`,
+  `CONFIG_DURATION_AT_CAP` and `LANGUAGE_HOURS_COMPUTED` were measured once; regenerate with
+  `verify_dataset_durations.py` rather than editing them by hand.
+- **`is_canonical`, not `state == 'finished'`.** During a re-run window a cell holds two runs in
+  the same serial, and once both finish, filtering on state alone resurrects the duplicate.
+- **`ha_ng`'s in-domain eval is its own selection split**, so `ha_td` is Hausa's in-domain point
+  (`utils.IN_DOMAIN_PRIMARY`).
 - **The multilingual machinery is deliberately gone.** No language-hours table, no resource
   tiers, no `NEEDS_CER` primary-error-rate switch. If this project needs per-language
   scoring, add it deliberately rather than copying MultilingualQASR's version, whose

@@ -1,34 +1,14 @@
-"""
-Training-curve plotting: one continuous variable against another, with a hue and optional
+"""Training-curve plotting: one continuous variable against another, with a hue and optional
 per-language facets.
 
-Why this is not a branch inside plot.py. plot.py's 'line' branch cannot draw this, for
-three separate reasons, none of which is a small fix:
+Separate from plot.py because its 'line' branch cannot draw this: it force-melts onto a
+hardcoded metric list (plot.py:93-101) so --y_var_name is never read as a data column,
+utils.keep_columns drops '_step' / 'audio_hours' / 'train/loss', and rename_vars rewrites the
+axis arguments. Editing that branch would change every existing figure in the sibling repos.
 
-  1. It force-melts the frame onto a hardcoded metric list (plot.py:93-101), so
-     --y_var_name is not read as a data column at all -- every caller is pushed into
-     y='value', hue='error_metric'.
-  2. utils.keep_columns whitelists columns, so '_step', 'audio_hours' and 'train/loss'
-     are silently dropped before plotting.
-  3. rename_vars rewrites the axis arguments in place via VAR_DIC.
-
-Editing that branch would change every existing figure in the sibling repos that depends on
-it. So this is a separate entry point that reads the history CSV raw, and it deliberately
-reuses everything reusable: the same seaborn theme block, the same style/context/palette/
-font/figsize/dpi/save-format arguments, the same results_dir + output_file + extension save
-convention, and utils.filter_df / METHODS_DIC / DATASETS_DIC / LANGUAGE_DIC for labelling.
-
-Three things it adds that plot.py lacks:
-  --kind             line (default) or scatter, with --annotate_var_name to label points.
-                     scatter is what the data-volume interaction figure needs: one point per
-                     language, not a curve.
-  --facet_var_name   per-language grid via seaborn relplot
-  --errorbar         EXPLICIT. seaborn's lineplot default is ('ci', 95) with bootstrapping,
-                     which silently draws a confidence band whenever several rows share an
-                     x value. Inheriting that by accident is how a figure ends up showing an
-                     interval nobody chose.
-  mkdir -p on the output subdirectory, which plot.py does not do (it only creates
-  --results_dir), so a subdirectory in --output_file fails on a bare checkout.
+Adds over plot.py: --kind scatter with --annotate_var_name, --facet_var_name for a per-language
+grid, an EXPLICIT --errorbar (seaborn's lineplot default silently bootstraps a 95% band whenever
+rows share an x value), and mkdir -p on the output subdirectory.
 
 Usage:
     python plot_curve.py --input_file data/raw_serials/history_serial_0.csv \

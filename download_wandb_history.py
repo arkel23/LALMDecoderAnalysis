@@ -1,19 +1,10 @@
-"""
-Downloads the per-step time series (wandb "history") for every run in a serial, one row
-per (run, step).
+"""Downloads the per-step wandb history for every run in a serial, one row per (run, step).
 
-This is the companion to download_save_wandb_data.py, which pulls one row per run from
-run.summary. That is the right shape for eval-only runs (wer / cer / rtfx / no_params).
-It is the wrong shape for TRAINING runs, which log a curve: eval/cer and eval/loss every
-eval_steps, train/loss every logging_steps, and a cumulative train/train_audio_seconds.
-Those curves are what make a sample-efficiency or overfitting analysis possible, so they
-need their own download path rather than a wider column list.
+Companion to download_save_wandb_data.py, which pulls one row per run from run.summary -- the
+right shape for eval-only runs, the wrong shape for training runs that log a curve. The
+argparse / results_dir / sort_save_df skeleton is kept identical to that script.
 
-Nothing else under /home/edwinrios/analysis/ touches wandb history, so there is no prior
-art to copy here -- the argparse / results_dir / sort_save_df skeleton is deliberately
-kept identical to download_save_wandb_data.py so the two read the same way.
-
-Usage (one serial per invocation, same convention as the summary downloader):
+Usage (one serial per invocation):
     python download_wandb_history.py --project_name LisTAya/LALMDecoder --serials 0 \
         --history --output_file raw_serials/history_serial_0.csv --results_dir data
 """
@@ -23,13 +14,9 @@ import wandb
 import pandas as pd
 
 
-# Config fields copied down onto every step-row so the CSV is self-contained and no
-# join against the summary CSV is needed to plot a curve.
-#
-# batch_size and gradient_accumulation_steps are here for a specific reason: the effective
-# batch is their product (8 x 64 = 512 for serial 0), and reading batch_size alone gives a
-# sample count 64x too small. That mistake silently turns "seconds of audio per sample"
-# into an impossible number, so the factors travel with the data.
+# Config fields copied onto every step-row so the CSV is self-contained. batch_size and
+# gradient_accumulation_steps travel together because the effective batch is their product
+# (8 x 64 = 512); reading batch_size alone gives a sample count 64x too small.
 CONFIG_COLS = [
     'serial', 'dataset_path', 'dataset', 'split', 'model_id', 'force_asr_language',
     'batch_size', 'gradient_accumulation_steps', 'max_steps', 'lr', 'seed',
@@ -50,22 +37,14 @@ HISTORY_KEYS = [
     'eval/samples_per_second', 'eval/steps_per_second',
 ]
 
-# A run whose config carries no `seed` predates seed logging. Left as NaN it is poison for
-# replicate analysis, because NaN != NaN in pandas: a naive comparison reports "the seed
-# varies" for every such pair and silently inflates the between-run variance estimate. It is
-# also wrong to guess the value -- the runs that logged one used 42, but an unlogged run is
-# not evidence of 42.
-#
-# So unrecorded becomes an explicit sentinel that cannot collide with a real seed (no run
-# here uses 0), paired with `seed_recorded` so the fill is never invisible. A new run always
-# logs its seed, so sentinel-vs-real reads as "these differ", which is the truthful reading:
-# they are not known to match.
+# An unrecorded seed becomes a sentinel that cannot collide with a real one, paired with
+# `seed_recorded`. NaN would be poison: NaN != NaN, so every unrecorded pair would read as
+# "seed varies". Guessing 42 would be worse -- an unlogged run is not evidence of 42.
 UNRECORDED_SEED = 0
 
 SORT_COLS = ['serial', 'dataset', 'model_id', '_step']
 
-# Statistics are stored at 6 dp: 2 dp storage turned a true 68.2479 into a wrong 68.3 in a
-# sibling repo, because it allowed two roundings instead of one.
+# 6 dp so one rounding is enough: 2 dp storage turned a true 68.2479 into a wrong 68.3.
 FLOAT_FORMAT = '%.6f'
 
 

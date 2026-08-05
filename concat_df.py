@@ -1,13 +1,8 @@
-"""
-Concatenates two results CSVs (e.g. two per-serial downloads from
-download_save_wandb_data.py) row-wise into a new CSV. Intended to be chained:
-run once per additional serial to build up a combined file without ever
-re-downloading multiple serials in a single slow wandb API call.
+"""Concatenates two results CSVs row-wise. Chain it once per additional serial to build a
+combined file without a single slow multi-serial wandb call.
 
 Usage:
-    python concat_df.py --input_file1 data/2xx/qasr_200.csv --input_file2 data/2xx/qasr_205.csv --output_file data/2xx/temp1.csv
-    python concat_df.py --input_file1 data/2xx/temp1.csv --input_file2 data/2xx/qasr_206.csv --output_file data/2xx/temp2.csv
-    ...
+    python concat_df.py --input_file1 a.csv --input_file2 b.csv --output_file temp1.csv
 """
 import argparse
 import pandas as pd

@@ -1,43 +1,20 @@
-"""
-Loss-based diagnostics: separating overfitting from domain shift and accent shift.
-
-CER alone cannot tell these apart. A cell can have a high error rate because the connector
-overfit its training stream, because the evaluation set is a different domain from training,
-because it is a different accent, or simply because the language is hard. The two loss curves
-distinguish them, and both are already logged for every run:
+"""Loss diagnostics: separating overfitting from domain and accent shift, which CER cannot.
 
   generalisation_gap = eval_loss_final - train_loss_final
-      How much worse the model is on held-out data than on what it fit. Inflated by BOTH
-      overfitting and distribution shift, so it is not by itself an overfitting measure --
-      which is exactly why the next quantity is needed.
+      Inflated by BOTH overfitting and distribution shift, so not an overfitting measure alone.
 
   eval_loss_final_minus_best = eval_loss_final - eval_loss_best
-      Eval loss RISING after its own minimum. This is overfitting proper: it needs no
-      comparison against training loss and no assumption about the eval distribution, so it
-      is unaffected by domain or accent shift. A cell with a large generalisation gap but
-      ~zero rise is shifted, not overfit.
+      Eval loss rising after its own minimum: overfitting proper, unaffected by domain or accent
+      shift. A large gap with ~zero rise means shifted, not overfit.
 
-Reading the two together against the design axes is the point:
+Read against EVAL_DOMAIN, ACCENT_MATCH and RESOURCE_TIER.
 
-  EVAL_DOMAIN   training is always WorldSpeech (parliamentary / broadcast / audiobook). Only
-                ha_ng and crs_sc evaluate on a WorldSpeech test split; the other ten evaluate
-                on FLEURS (read speech). If the generalisation gap is systematically larger
-                for the cross-domain cells while the eval-loss rise is not, the gap is
-                measuring domain transfer rather than overfitting.
-  ACCENT_MATCH  fr_fr trains on Canadian French and evaluates European French; es_419 trains
-                Mexican and evaluates Latin American (related); several cells train on two
-                country configs and evaluate one. Same logic applies.
-  RESOURCE_TIER overfitting should concentrate in the low-data tiers, where the stream is
-                consumed many times over.
-
-A caution the CSV records rather than hides: eval loss is only comparable ACROSS models within
-a language, never across languages. Different languages have different tokenizations, sequence
-lengths and label distributions, so the absolute value of a cross-entropy is not commensurable
-between them. Every aggregate below is therefore computed on within-language contrasts or
-grouped by language, never as a raw mean of losses across languages.
+Eval loss is comparable across models WITHIN a language, never across languages -- tokenisation
+and sequence length differ, so cross-entropies are not commensurable. Every aggregate is a
+within-language contrast or grouped by language.
 
 Usage:
-    python analyze_loss_metrics.py --input_file data/raw_serials/history_serial_0.csv \\
+    python analyze_loss_metrics.py --input_file data/raw_serials/history_serial_0.csv \
         --output_file results_all/acc/t6_loss_metrics.csv
 """
 import os

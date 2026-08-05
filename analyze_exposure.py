@@ -1,29 +1,14 @@
-"""
-How large is "regional specialisation", actually? And does the size of it predict anything?
+"""How large is "regional specialisation", in percentage points of post-training data?
 
-The study treats specialisation as a categorical label -- earth / fire / water -- and asks
-whether the matched label beats the mismatched ones. That framing cannot distinguish "regional
-specialisation does not help" from "the specialisation was too small to measure". The Tiny Aya
-report's Appendix A tables settle that, because they give the actual share of each variant's
-post-training mix that was in each language (fetch_tinyaya_composition.py).
+A categorical earth/fire/water label cannot distinguish "specialisation does not help" from
+"the specialisation was too small to measure". The Tiny Aya report's Appendix A gives the actual
+per-language share of each variant's mix, so excess_pp is the size of the treatment: matched
+exposure minus the mean of the two mismatched.
 
-Two quantities per language:
-
-  excess_pp   matched-variant exposure minus the mean exposure of the two mismatched variants,
-              in percentage points. This is the SIZE OF THE TREATMENT -- how much more of the
-              target language the "matched" decoder actually saw.
-  ratio_m_over_g   matched exposure divided by global exposure, i.e. how much specialisation
-              buys over the non-regional model.
-
-The headline is the treatment size, not the correlation: if the median excess is ~1 percentage
-point of post-training data, then a null region-match result is not surprising and should not
-be reported as though a strong manipulation failed.
-
-One language inverts the design and is worth reading carefully rather than dropping. English's
-matched variant is `water` at 17.0 % English, but the `fire` mix is 46.2 % English -- so for
-English the "matched" decoder is actually the LESS exposed one, `excess_pp` is negative, and
-the observed delta is positive (matched worse). That is the exposure account making a correct
-prediction on the one cell where exposure and label disagree.
+English inverts the design and is worth reading rather than dropping: its matched variant
+(water, 17.0 % English) saw LESS English than the fire mix (46.2 %), so excess_pp is negative
+and matched is worse -- the exposure account predicting correctly where label and exposure
+disagree.
 
 Usage:
     python analyze_exposure.py --output_file results_all/acc/t8_exposure.csv

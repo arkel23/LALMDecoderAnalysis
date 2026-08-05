@@ -1,59 +1,23 @@
-"""
-Dataset-integrity checker: interleave arithmetic and duration consistency, for any
+"""Dataset-integrity checker: interleave arithmetic and duration consistency, for any
 dataset_path / config list / split.
 
-WHY THIS EXISTS, and what it has already settled.
+Two modes:
 
-An earlier pass of this analysis inferred a data problem in the Tamil training stream from a
-derived ratio, and proposed two mechanisms: that uniform interleave probabilities oversampled
-the smaller config, and that a duration-column inconsistency was silently dropping samples.
-Both were wrong, and a direct test on the real data is what showed it. This script is that
-test, generalised, so the next such suspicion is checked before it is written down.
+  default   Metadata only, no audio. num_examples per config from the dataset builder, plus a
+            `duration` sample to measure the fraction of clips AT OR ABOVE the cap. That second
+            check is the important one: the upstream filter keeps a clip when
+            `length < max_input_length` -- STRICT -- so a corpus pre-segmented into fixed windows
+            exactly at the cap is deleted entirely. That removed 100% of ta_lk (23,261 clips).
+  --load    Loads the splits, computes audio_length_s from decoded arrays, asserts
+            len(interleaved) == sum of parts, and applies the duration-consistency filter.
+            Downloads audio (tens of GB), so it is opt-in and not run by plotter.sh.
 
-VERIFIED 2026-07-30 on disco-eth/WorldSpeech, configs ta_in + ta_lk, both splits:
-
-  train (run externally)      len(interleaved) == len(ta_in) + len(ta_lk); filter removed 0
-  test  (run by this script)  1690 == 466 + 1224; 0 undecodable; filter removed 0 of 1690;
-                              loaded counts match the builder metadata; 12.00 audio hours
-
-So there is no data-integrity issue with the Tamil configs, on either split, confirmed twice
-independently. The interleave semantics are sound (see also verify_interleave_semantics.py,
-which proves the same property offline with synthetic data and passes identically under
-datasets 4.5.0 and 5.0.0), and the reported `duration` column agrees with the decoded audio.
-
-Two modes, because the cheap one is usually enough:
-
-  default        Metadata only, no audio downloaded. Reads num_examples per config from the
-                 dataset builder, and samples the `duration` column via the datasets-server
-                 `rows` endpoint to measure the fraction of clips AT OR ABOVE the duration cap.
-                 That second check is the important one: the upstream filter keeps a clip when
-                 `length < max_input_length`, a STRICT comparison, so a corpus pre-segmented
-                 into fixed windows exactly at the cap is deleted in its entirety. That is not
-                 hypothetical -- it silently removed 100% of WorldSpeech ta_lk (23,261 clips,
-                 72.4% of the intended Tamil training stream) and went unnoticed until the
-                 resulting pseudo-effect had become this study's headline number.
-  --load         The full check: loads the splits map-style, computes audio_length_s from the
-                 decoded arrays, asserts len(interleaved) == sum of parts on the real objects,
-                 and applies the duration-consistency filter, reporting exactly how many
-                 samples it removes. This downloads audio and can be tens of GB, so it is
-                 opt-in and not run by plotter.sh.
-
-WHICH CONDA ENV. Run this in `asr`, not `pytorch`. `pytorch` has no audio backend at all --
-`datasets` 5.0.0 with neither soundfile nor torchcodec -- so every audio read there fails, and
-that is where the long-standing "WorldSpeech files are malformed" belief came from. `asr` has
-`datasets` 4.5.0 (the version the training runs used), torchcodec 0.9.1 and the ffmpeg shared
-objects. Retested 2026-07-30 in `asr`: the three configs previously believed undecodable
-(`la_va`, `si_lk`, `tl_ph`) all decode correctly at 24 kHz. Metadata-only mode needs no audio
-backend and runs in either env.
+Run in the `asr` env, not `pytorch`: `pytorch` has no audio backend at all, which is where the
+"WorldSpeech files are malformed" belief came from. Metadata mode works in either.
 
 Usage:
-    # cheap, authoritative sample counts
-    python verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \\
-        --dataset_configs ta_in ta_lk --split train
-
-    # the full duration-consistency + interleave check (downloads audio)
-    python verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \\
-        --dataset_configs ta_in ta_lk --split train --load --num_proc 20
+    python verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
+        --dataset_configs ta_in ta_lk --split train [--load --num_proc 20]
 
 Exit code is non-zero if a check fails, so it can gate a pipeline.
 """
