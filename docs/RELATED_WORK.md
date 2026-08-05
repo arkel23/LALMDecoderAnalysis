@@ -92,7 +92,7 @@ future intervention should be measured against.
 
 Confirmed absent: no SpecAugment, speed perturbation, noise, reverberation/RIR, or text
 augmentation, and no discussion of augmentation as a mitigation despite naming data scarcity as
-the core bottleneck. That is the gap recorded in `FUTURE_WORK_AUGMENTATION.md`.
+the core bottleneck. That is the gap recorded in `ROADMAP.md` (part 2).
 
 ---
 
@@ -112,16 +112,3 @@ the core bottleneck. That is the gap recorded in `FUTURE_WORK_AUGMENTATION.md`.
 - **`arXiv:1904.08779`** (SpecAugment) and Journal on Audio, Speech and Music Processing
   `s13636-026-00451-8` — establish speed perturbation + SpecAugment as the standard low-resource
   augmentation baseline, with combinations reported to beat either alone.
-
----
-
-## What this repo should say as a result
-
-1. Lead the low-resource discussion with the **100–200 h threshold**, and state that five of our
-   cells are below it.
-2. Present the region-match null **together with the 1.30 pp treatment size** and the contrast
-   against a 19.6 pp between-family decoder effect. The null is about magnitude, not about
-   specialisation being inert.
-3. Keep the cross-domain finding, which now has independent corroboration.
-4. Point at cross-lingual projector pretraining as the strongest known next lever, ahead of
-   augmentation.

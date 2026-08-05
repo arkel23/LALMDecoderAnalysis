@@ -29,15 +29,14 @@ import pandas as pd
 
 ACC = os.path.join('results_all', 'acc')
 # Every document that prints numbers derived from this repo's CSVs. Scanning only one of them
-# is how the median within-run late_sd sat at a stale 0.97 in PAPER_ASSESSMENT.md while the CSV
-# said 1.06 -- the number was in the spec, but the file that printed it was never read.
+# is how a stale median within-run late_sd once survived: the number was in the spec, but the
+# file that printed it was not in this list, so it was never read.
 #
 # KNOWN LIMIT, stated rather than papered over: this check asserts the CORRECT value appears
 # somewhere in the scanned text. It does not assert that a WRONG value is absent, so a stale
 # figure sitting beside a correct one still passes. Catching that needs per-claim anchoring,
 # which these specs do not yet carry.
-DOCS = [os.path.join('docs', 'PLAN_ASSESSMENT.md'),
-        os.path.join('docs', 'PAPER_ASSESSMENT.md')]
+DOCS = [os.path.join('docs', 'FINDINGS.md')]
 
 T1 = os.path.join(ACC, 't1_sample_efficiency.csv')
 T2S = os.path.join(ACC, 't2_region_match_stats.csv')

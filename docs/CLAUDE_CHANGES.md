@@ -1,5 +1,57 @@
 # Change log
 
+## 2026-08-03 (later) — less is more: condense the code, consolidate the docs
+
+Review verdict: too much prose, too little signal. Comments mixed necessary documentation with
+narrative, so neither could be picked out. `CLAUDE.md` gains a "Less is more" section as the
+standing rule.
+
+### Code
+
+| file | before | after |
+|---|---|---|
+| `create_yamls_worldspeech_lalm.py` | 245 | **58** |
+| `create_yamls_models_lalm_txf.py` | 187 | **110** |
+| `eval_lalm_decoder_txf.sh` | 143 | **87** |
+| `verify_eval_pairing.py` | 178 | **71** |
+
+The WorldSpeech generator now follows `create_yamls_short_ml.py`'s shape (one explicit list, one
+loop) and emits **all 120** WorldSpeech configs from `configs/train/worldspeech_llama_questions.yaml`,
+not just the study's 12. It no longer emits FLEURS configs -- QuantizedASR already ships 229, and
+all 11 the sweep references exist -- nor a manifest, nor a pairings table. One script, one job.
+
+`eval_lalm_decoder.sh` moved to `deprecated/`.
+
+### Docs: 7 -> 5
+
+| kept | holds |
+|---|---|
+| `FINDINGS.md` | what the study found + what to write (was `PLAN_ASSESSMENT` + `PAPER_ASSESSMENT`) |
+| `RELATED_WORK.md` | external anchors only |
+| `ROADMAP.md` | what to evaluate next + the augmentation study (was `EVAL_DATASET_PLAN` + `FUTURE_WORK_AUGMENTATION`) |
+| `UPSTREAM_FIXES.md` | changes for QuantizedASR |
+| `CLAUDE_CHANGES.md` | this chronology |
+
+**The merge caught a contradiction.** `PLAN_ASSESSMENT.md` §8 still presented the volume-decay
+hypothesis as the recommended framing -- "decays monotonically ... rho = 0.964, p = 0.0005",
+nine languages, 4.10 CER spread, mean ranks 1.69/3.19 -- while §4.1 of the same document recorded
+that hypothesis dying (rho 0.555, p 0.0767, not significant at n = 11). Section 8 is dropped;
+`PAPER_ASSESSMENT.md`'s 12-language framing supersedes it.
+
+`verify_paper_numbers.py` did not catch this, and could not: it asserts the correct value
+*appears*, not that a wrong one is *absent*, so the stale figures sat beside the correct ones.
+That limit is now recorded in the source. High-specificity passes rose 80 -> 83 once the
+duplicates were gone.
+
+**A second gap the merge exposed.** §5.3 quoted the `crs_sc` OOD spread as 1.88 across five
+TinyAya variants while the CSV column reported 4.10. Both correct, different populations -- the
+Qwen3-4B control has since finished. It reaches **17.39 CER, better than every TinyAya variant**,
+which is a finding the document omitted entirely: on a language neither component has seen, what
+matters is the decoder *family*, not its regional variant. Both aggregations are now stated.
+
+Also added to §4.1: the partial correlation's p (**0.77**, 8 residual df, so inconclusive rather
+than null) and the volume/difficulty collinearity (**rho -0.818, p 0.0021**).
+
 ## 2026-08-03 — literature positioning, generated eval pairing, and surviving a re-run window
 
 ### The re-run window broke the uniqueness contract, correctly
