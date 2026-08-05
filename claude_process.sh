@@ -185,7 +185,8 @@ set -u
 #   python tools/preprocess/create_yamls_models_lalm_txf.py    # 82 model configs
 #   python tools/preprocess/create_yamls_worldspeech_lalm.py   # 33 dataset configs + pairings
 #   bash scripts/eval_lalm_decoder_txf.sh --eval_set primary   # serial 11, 188 evals
-#   bash scripts/eval_lalm_decoder_txf.sh --eval_set all       # serial 11, 334 evals
+#   bash scripts/eval_lalm_decoder_txf.sh --eval_set all        # serial 11, 334 evals
+#   bash scripts/eval_lalm_baselines.sh                         # serial 10, 162 evals
 
 # --- 2026-08-03: PENDING, do NOT run until the crs_sc/am_et re-runs FINISH. -----------------
 # The 5 crs_sc re-runs (seed 420) are currently in serial 0 alongside the finished originals
