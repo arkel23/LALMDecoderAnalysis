@@ -177,6 +177,37 @@ which*, so none of it gets read.
 **Replies**
 - Short. No restating a point in a second form, no summarising what was just said.
 
+### A worked example of getting this wrong (2026-08-03, LALMDecoderAnalysis)
+
+A config generator was written at **245 lines**. A reference doing the same job already existed
+-- `QuantizedASR/tools/preprocess/create_yamls_short_ml.py` -- at **75**. The extra 170 lines:
+
+- a 40-line module docstring covering where the file lives and why, why the configs were needed,
+  and which earlier belief about the corpus had turned out wrong;
+- inline notes on list entries that already said the same thing (`('en_au', ..., 'Australian')`);
+- two extra jobs bolted on -- emitting a manifest CSV and a pairing table -- that nobody asked a
+  config generator to do.
+
+Rewritten to the reference's shape, one explicit list and one loop, it came to **58 lines** and
+did strictly more: 120 configs instead of 33. Nothing was lost, because none of the deleted prose
+stated an invariant. In the same session a bash sweep carried **60 lines of comment before its
+first statement**, and a docstring narrated a correction the user had given ("I previously
+claimed X was infeasible; that answered the wrong question").
+
+Two related failures from the same session:
+
+- **Seven documents, 1,695 lines, overlapping.** Two of them disagreed: one still presented a
+  hypothesis as the recommended framing that the other recorded as dead. Consolidated to five.
+- **Regenerating what already existed.** 229 FLEURS configs were in the target repo; the
+  generator emitted its own anyway. Check before generating.
+
+**The test, before writing any comment:**
+
+1. Could the reader derive this from the code? Delete it.
+2. Could they only know it from a conversation, a commit, or an incident? It belongs in
+   `docs/CLAUDE_CHANGES.md`, not here.
+3. What survives is a non-obvious invariant. That is the comment, and it is usually one line.
+
 ## Verification discipline
 
 - Independently re-derive any numeric or figure claim before trusting it — re-run the
