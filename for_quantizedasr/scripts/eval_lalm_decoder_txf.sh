@@ -60,7 +60,9 @@ if [ -n "$models" ]; then
     read -ra VARIANTS <<< "$models"
 fi
 
-base_cmd="python -m tools.evaluate --serial 11 --batch_size 128"
+base_cmd="python -m tools.evaluate --serial 11 --batch_size 128 \
+    --wandb_entity LisTAya \
+    --wandb_project LALMDecoder"
 
 for pairing in "${PAIRINGS[@]}"; do
     IFS='|' read -r lang fleurs_cfg ws_in ws_held <<< "$pairing"

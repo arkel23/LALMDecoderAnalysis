@@ -86,7 +86,9 @@ if [ -n "$models" ]; then
     read -ra MODEL_CONFIGS <<< "$models"
 fi
 
-base_cmd="python -m tools.evaluate --serial 10 --batch_size 128"
+base_cmd="python -m tools.evaluate --serial 10 --batch_size 128 \
+    --wandb_entity LisTAya \
+    --wandb_project LALMDecoder"
 
 for model_cfg in "${MODEL_CONFIGS[@]}"; do
     for dataset_cfg in "${DATASET_CONFIGS[@]}"; do

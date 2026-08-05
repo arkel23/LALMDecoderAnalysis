@@ -423,6 +423,26 @@ SELECTION_SPLIT = {
 # In-domain eval configs that reuse their own cell's selection split. Prefer the substitute.
 REUSES_SELECTION_SPLIT = {'ha_ng': 'ha_td'}
 
+# The ONE WorldSpeech config that is each cell's in-domain point. Needed because the sweeps now
+# evaluate all 33 variants of the study's languages, and they all normalise to the same study
+# cell -- so grouping by (cell, domain) without choosing would silently average a trained
+# variety together with zero-shot accent transfer.
+#
+# It is the trained variety everywhere except ha_ng, whose trained variety is also its
+# selection split; ha_td is in the same training mix and was never selected on.
+IN_DOMAIN_PRIMARY = {
+    'am_et': 'am_et', 'crs_sc': 'crs_sc', 'en_us': 'en_us', 'es_419': 'es_mx',
+    'fr_fr': 'fr_ca', 'ha_ng': 'ha_td', 'hi_in': 'hi_in', 'id_id': 'id_id',
+    'mr_in': 'mr_in', 'sw_ke': 'sw_ke', 'ta_in': 'ta_in', 'ur_pk': 'ur_pk',
+}
+
+
+def in_domain_role(study_cell, dataset, eval_domain):
+    """'primary' for the cell's in-domain point, 'accent_transfer' for its other varieties."""
+    if eval_domain != 'in_domain':
+        return ''
+    return 'primary' if IN_DOMAIN_PRIMARY.get(study_cell) == dataset else 'accent_transfer'
+
 
 def is_selection_split(language, dataset_path, dataset, split):
     """True when this eval is on the split the cell's checkpoint was chosen on."""

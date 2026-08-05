@@ -39,6 +39,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (LANGUAGE_DIC, RESOURCE_TIER, get_eval_domain, to_study_cell,
+                   in_domain_role, IN_DOMAIN_PRIMARY,
                    assert_unique_keys)
 
 FLOAT_FORMAT = '%.6f'
@@ -82,6 +83,13 @@ def build_table(df):
     out['eval_domain'] = np.where(
         out['dataset_path'].astype(str).str.contains('WorldSpeech'),
         'in_domain', 'cross_domain')
+
+    # The sweeps evaluate all 33 WorldSpeech variants of the study's languages and every one
+    # normalises to the same study cell, so a cell can hold 9 in-domain rows. Exactly one is
+    # the cell's in-domain point; the rest are zero-shot accent transfer. Averaging them would
+    # mix the two quantities and quietly change what "in-domain" means per language.
+    out['in_domain_role'] = [in_domain_role(c, d, e) for c, d, e
+                             in zip(out['study_cell'], out['dataset'], out['eval_domain'])]
 
     # A baseline is one row per (model, language, eval set). Anything else means a duplicate
     # eval, which would silently average two runs of the same cell.
@@ -136,7 +144,17 @@ def compare_with_trained(base, trained, metric='wer'):
     merged = b_best.merge(t_best, on=key, how='inner', validate='one_to_one')
     merged[f'delta_{metric}'] = merged[f'trained_{metric}'] - merged[f'baseline_{metric}']
     merged['training_helps'] = merged[f'delta_{metric}'] < 0
-    return merged
+
+    # Per eval config, so nothing is averaged -- but the reader still needs to know which row
+    # is the cell's in-domain point and which are accent transfer.
+    merged['study_cell'] = merged['dataset'].map(to_study_cell)
+    merged['eval_domain'] = np.where(
+        merged['dataset_path'].astype(str).str.contains('WorldSpeech'),
+        'in_domain', 'cross_domain')
+    merged['in_domain_role'] = [in_domain_role(c, d, e) for c, d, e
+                                in zip(merged['study_cell'], merged['dataset'],
+                                       merged['eval_domain'])]
+    return merged.sort_values(['study_cell', 'eval_domain', 'dataset'])
 
 
 def main():
@@ -188,8 +206,11 @@ def main():
 
         # Same model, same language, two domains: the cleanest read on how much harder the
         # in-domain corpus is than the read-speech benchmark.
-        both = (fin.pivot_table(index=['study_cell', 'model_short'], columns='eval_domain',
-                                values='wer')
+        primary = fin[fin['in_domain_role'] != 'accent_transfer']
+        assert_unique_keys(primary[primary['eval_domain'] == 'in_domain'],
+                           ['model_id', 'study_cell'], label='in-domain primary rows')
+        both = (primary.pivot_table(index=['study_cell', 'model_short'], columns='eval_domain',
+                                    values='wer')
                 .dropna())
         if len(both):
             both['in_over_cross'] = both['in_domain'] / both['cross_domain']

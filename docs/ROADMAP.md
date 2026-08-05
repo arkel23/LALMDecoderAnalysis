@@ -44,9 +44,10 @@ over the eval curve.
 **`ha_ng` is the exception, and switching splits does not fix it.** Hausa selected on
 `disco-eth/WorldSpeech ha_ng test` -- the same config the sweeps use as its in-domain point --
 so that number is optimistically biased where the other eleven are not. WorldSpeech has only a
-95/5 train/test split, so there is no untouched in-domain split for `ha_ng`. Use **`ha_td`**
-instead: it was in Hausa's training mix, so it is equally in-domain, and it was never used for
-selection.
+95/5 train/test split, so there is no untouched in-domain split for `ha_ng`. The analysis
+therefore uses **`ha_td`** as Hausa's in-domain point (`utils.IN_DOMAIN_PRIMARY`): it was in
+Hausa's training mix, so it is equally in-domain, and it was never used for selection.
+`ha_ng` is still evaluated, and is reported as accent transfer.
 
 ## 3. Cross-language and cross-region transfer
 

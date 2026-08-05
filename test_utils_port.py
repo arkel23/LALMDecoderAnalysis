@@ -429,5 +429,34 @@ else:
           'ha_td' in MULTI_CONFIG_TRAIN['ha_ng'])
 
 
+# --- in-domain primary -------------------------------------------------------------------
+# One WorldSpeech config per cell is its in-domain point; the rest are accent transfer. It is
+# the trained variety everywhere except ha_ng, which must use ha_td because its trained variety
+# is also its selection split.
+from utils import IN_DOMAIN_PRIMARY, in_domain_role, to_study_cell
+
+check('every study cell has an in-domain primary',
+      set(IN_DOMAIN_PRIMARY) == set(SELECTION_SPLIT))
+check('each primary normalises back to its own cell',
+      all(to_study_cell(v) == k for k, v in IN_DOMAIN_PRIMARY.items()))
+check('Hausa uses ha_td, not its selection split ha_ng',
+      IN_DOMAIN_PRIMARY['ha_ng'] == 'ha_td' == REUSES_SELECTION_SPLIT['ha_ng'])
+check('no primary is its own cell selection split',
+      not any(is_selection_split(cell, 'disco-eth/WorldSpeech', cfg, 'test')
+              for cell, cfg in IN_DOMAIN_PRIMARY.items()))
+# Everywhere else the primary IS the trained variety -- ha_ng is the only substitution.
+check('ha_ng is the only cell whose primary is not its trained variety',
+      {k for k, v in IN_DOMAIN_PRIMARY.items()
+       if v != (TRAIN_CONFIGS[k][1][0] if isinstance(TRAIN_CONFIGS[k][1], tuple)
+                else TRAIN_CONFIGS[k][1])} == {'ha_ng'})
+check('a non-primary WorldSpeech variant is labelled accent_transfer',
+      in_domain_role('ha_ng', 'ha_ng', 'in_domain') == 'accent_transfer'
+      and in_domain_role('en_us', 'en_au', 'in_domain') == 'accent_transfer')
+check('the primary is labelled primary',
+      in_domain_role('ha_ng', 'ha_td', 'in_domain') == 'primary'
+      and in_domain_role('en_us', 'en_us', 'in_domain') == 'primary')
+check('cross-domain rows get no in-domain role',
+      in_domain_role('en_us', 'en_us', 'cross_domain') == '')
+
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)

@@ -139,7 +139,8 @@ is in the repo and runs offline.
 8. **`ha_ng`'s in-domain number is not held out.** Its checkpoint was selected on
    `disco-eth/WorldSpeech ha_ng test`, the same split the eval sweeps report as in-domain.
    Every other cell selected on a different split (FLEURS validation vs test; ERISLab
-   val_clean vs test_clean). `ha_td` is the unbiased substitute.
+   val_clean vs test_clean). The analysis uses `ha_td` as Hausa's in-domain point instead;
+   `ha_ng` is reported as accent transfer.
 
 ## Where this sits in the literature
 
