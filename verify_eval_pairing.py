@@ -13,12 +13,22 @@ import sys
 import argparse
 
 SWEEP = os.path.join('for_quantizedasr', 'scripts', 'eval_lalm_decoder_txf.sh')
+BASELINES = os.path.join('for_quantizedasr', 'scripts', 'eval_lalm_baselines.sh')
+GENERATOR = os.path.join('for_quantizedasr', 'tools', 'preprocess',
+                         'create_yamls_worldspeech_lalm.py')
 
 
 def language(config):
     """fr_ca trains, fleurs_fr_fr evaluates; es_mx trains, fleurs_es_419 evaluates. Comparing
     the language prefix accepts those and still rejects ur_pk x ha_td."""
     return config.split('_')[0]
+
+
+def generated_worldspeech_configs():
+    """The generator's `configs` list -- the authority on which variants exist."""
+    block = re.search(r'^configs = \[(.*?)^\]',
+                      open(GENERATOR).read(), re.S | re.M)
+    return re.findall(r'"([^"]+)"', block.group(1)) if block else []
 
 
 def parse_pairings(path):
@@ -38,6 +48,7 @@ def parse_pairings(path):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--sweep', type=str, default=SWEEP)
+    p.add_argument('--baselines', type=str, default=BASELINES)
     args = p.parse_args()
 
     if not os.path.exists(args.sweep):
@@ -63,7 +74,26 @@ def main():
               f'{", ".join(crossings[:4])}')
         return 1
 
-    print(f'PAIRING OK ({len(pairings)} cells, {n} model-dataset pairings)')
+    # Wrong pairings were guarded; missing ones were not, and the baselines sweep silently
+    # covered 16 of 33 WorldSpeech variants. Every variant of a study language must appear in
+    # both sweeps -- a checkpoint exists only for the trained variety, but evaluating the rest
+    # is the accent-transfer axis and costs only inference.
+    study = {language(stem) for stem, _ in pairings}
+    want = {c for c in generated_worldspeech_configs() if language(c) in study}
+    missing = []
+    for path in (args.sweep, args.baselines):
+        if not os.path.exists(path):
+            continue
+        have = set(re.findall(r'worldspeech_(.+?)_test\.yaml', open(path).read()))
+        if want - have:
+            missing.append(f'{os.path.basename(path)} misses '
+                           f'{len(want - have)}: {", ".join(sorted(want - have)[:6])}')
+    if missing:
+        print('[FAIL] ' + '; '.join(missing))
+        return 1
+
+    print(f'PAIRING OK ({len(pairings)} cells, {n} model-dataset pairings, '
+          f'{len(want)} WorldSpeech variants in both sweeps)')
     return 0
 
 

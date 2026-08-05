@@ -5,6 +5,8 @@
 # serial 11 (eval_lalm_decoder_txf.sh), which uses the same configs.
 
 DATASET_CONFIGS=(
+    # FLEURS: one variant per language -- verified, no prefix in the FLEURS list has two.
+    # WorldSpeech: every variant of each study language, not only the trained one.
     "short_ml/fleurs_am_et_test.yaml"
     "short_ml/fleurs_en_us_test.yaml"
     "short_ml/fleurs_es_419_test.yaml"
@@ -18,9 +20,26 @@ DATASET_CONFIGS=(
     "short_ml/fleurs_ur_pk_test.yaml"
     "short_ml/worldspeech_am_et_test.yaml"
     "short_ml/worldspeech_crs_sc_test.yaml"
+    "short_ml/worldspeech_en_au_test.yaml"
+    "short_ml/worldspeech_en_jm_test.yaml"
+    "short_ml/worldspeech_en_ke_test.yaml"
+    "short_ml/worldspeech_en_nz_test.yaml"
+    "short_ml/worldspeech_en_pk_test.yaml"
+    "short_ml/worldspeech_en_sl_test.yaml"
     "short_ml/worldspeech_en_us_test.yaml"
+    "short_ml/worldspeech_en_zm_test.yaml"
+    "short_ml/worldspeech_es_ar_test.yaml"
+    "short_ml/worldspeech_es_cl_test.yaml"
+    "short_ml/worldspeech_es_co_test.yaml"
+    "short_ml/worldspeech_es_es_test.yaml"
     "short_ml/worldspeech_es_mx_test.yaml"
+    "short_ml/worldspeech_es_pe_test.yaml"
+    "short_ml/worldspeech_es_pr_test.yaml"
+    "short_ml/worldspeech_es_py_test.yaml"
+    "short_ml/worldspeech_es_uy_test.yaml"
     "short_ml/worldspeech_fr_ca_test.yaml"
+    "short_ml/worldspeech_fr_cd_test.yaml"
+    "short_ml/worldspeech_fr_ci_test.yaml"
     "short_ml/worldspeech_ha_ng_test.yaml"
     "short_ml/worldspeech_ha_td_test.yaml"
     "short_ml/worldspeech_hi_in_test.yaml"

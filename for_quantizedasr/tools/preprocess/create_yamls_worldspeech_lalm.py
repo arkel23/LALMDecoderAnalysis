@@ -32,9 +32,6 @@ configs = [
 # disagrees with the corpus `duration` column. disco-eth's crs_sc is uncleaned.
 overrides = {"crs_sc": ("ERISLab/WorldSpeech", "test_clean")}
 
-# Non-space-delimited scripts, matching create_yamls_fleurs_full.py's CER_LANG_IDS.
-cer_configs = {"ja_jp", "th_th", "yue_hk", "zh_tw"}
-
 output_dir = "configs/datasets/short_ml"
 os.makedirs(output_dir, exist_ok=True)
 
@@ -46,7 +43,7 @@ for config in configs:
         "dataset": QuotedStr(config),
         "split": QuotedStr(split),
         "force_asr_language": QuotedStr(config.split("_")[0]),
-        "eval_metrics": ["cer"] if config in cer_configs else ["wer_all"],
+        "eval_metrics": ["wer_all", "cer"],
     }
 
     filename = f"worldspeech_{config}_test.yaml"
