@@ -1,134 +1,5 @@
-"""
-Generates `disco-eth/WorldSpeech` *test*-split eval configs for the LALM decoder study's
-12 languages.
-
-WHERE THIS LIVES AND WHY. This file is written in QuantizedASR's `tools/preprocess/` style
-but kept in LALMDecoderAnalysis under `for_quantizedasr/`, because QuantizedASR is not to be
-modified from here. Copy `for_quantizedasr/tools/preprocess/` and `for_quantizedasr/scripts/`
-into the QuantizedASR checkout to use them; the relative `output_dir` below is written so it
-resolves correctly when run from the QuantizedASR repo root, exactly like the generators it
-mirrors.
-
-WHY THESE CONFIGS ARE NEEDED. Every model in the study trains on WorldSpeech, but 10 of the
-12 languages are evaluated on `google/fleurs` — so almost every reported number is a
-domain-transfer number (parliamentary/broadcast -> read speech) rather than an in-domain one.
-Only `ha_ng` (disco-eth/WorldSpeech test) and `crs_sc` (ERISLab/WorldSpeech val_clean) are
-in-domain today. Adding the matched WorldSpeech `test` split for every language gives each
-one an in-domain point beside its FLEURS point, which is what separates "this decoder
-specialises better" from "this decoder transfers across domain better".
-
-WorldSpeech defines a 95/5 train/test split per country-language pair, so a `test` split
-exists for every config trained on.
-
-THE la_va/si_lk/tl_ph DECODE NOTE IS STALE. The three existing WorldSpeech configs in
-QuantizedASR carry a comment saying every example hits a libsndfile/Opus decode error. That
-was an environment limitation, not a corpus problem, and it no longer applies in an env built
-from that repo's own requirements.txt: with `torchcodec==0.9.1` installed, `datasets` 4.5.0
-decodes Audio through torchcodec/FFmpeg and never touches libsndfile. Retested 2026-07-30 --
-la_va 29.54 s, si_lk 29.34 s, tl_ph 0.80 s all decode correctly at 24 kHz. See
-docs/UPSTREAM_FIXES.md.
-
-CAUTION -- the 30 s cap. `ta_lk` is pre-segmented into fixed 30.00 s windows, and the training
-filter keeps a clip only when `length < max_input_length`, so a `max_input_length: 30` run
-discards that config entirely. That is a *training*-side filter and does not affect these eval
-configs, but the same trap applies to any future training config, so screen a new config with
-LALMDecoderAnalysis's `verify_dataset_durations.py` before trusting it.
-
-Usage (from the QuantizedASR repo root, after copying):
-    python tools/preprocess/create_yamls_worldspeech_lalm.py
-"""
 import os
-
 import yaml
-
-# ALL WorldSpeech variants of every study language, not just the one each cell was trained on.
-#
-# An earlier version emitted one config per cell -- ta_in but not ta_lk, ur_pk but not ur_in --
-# on the reasoning that the eval should match the reported cell. That under-used the corpus for
-# no saving: these are evaluation-only configs, and WorldSpeech ships several country variants
-# per language. Covering them all turns a single in-domain number into a dialect/accent
-# generalisation axis at pure inference cost.
-#
-# Three statuses, carried in the manifest CSV rather than in the YAML (which stays byte-identical
-# in shape to QuantizedASR's own generators):
-#
-#   in_training     the cell trained on this config. In-distribution.
-#   dropped_by_cap  the training config LISTED it, but `max_input_length: 30` with a strict `<`
-#                   removed every clip, so the model never saw it. This is `ta_lk`, and it is
-#                   the most interesting entry here: evaluating on it is genuine HELD-OUT
-#                   dialect transfer for a model whose config claims to have trained on it.
-#   held_out        never in the training mix. Zero-shot accent/dialect transfer.
-#
-# The held_out English (7), Spanish (8) and French (2) variants are the accent-robustness axis
-# that docs/EVAL_DATASET_PLAN.md flagged as missing and proposed adding EdAcc for -- available
-# here in-domain, on the training corpus, for free.
-#
-# The variant list below was enumerated live from the Hub and then cross-checked against
-# QuantizedASR's own `configs/train/worldspeech_llama_questions.yaml`, whose 120-entry
-# `dataset_train` list is the frozen all-variants roster. The two agree exactly for every study
-# language, so the list here is not a guess about what WorldSpeech ships.
-
-# (WorldSpeech config, force_asr_language, study cell, status, note)
-WORLDSPEECH_ENTRIES = [
-    # --- English: trained on en_us, 7 further accents held out ----------------------
-    ('en_us',  'en',  'en_us',  'in_training',   'trained variety'),
-    ('en_au',  'en',  'en_us',  'held_out',      'Australian'),
-    ('en_jm',  'en',  'en_us',  'held_out',      'Jamaican'),
-    ('en_ke',  'en',  'en_us',  'held_out',      'Kenyan'),
-    ('en_nz',  'en',  'en_us',  'held_out',      'New Zealand'),
-    ('en_pk',  'en',  'en_us',  'held_out',      'Pakistani'),
-    ('en_sl',  'en',  'en_us',  'held_out',      'Sierra Leonean'),
-    ('en_zm',  'en',  'en_us',  'held_out',      'Zambian'),
-
-    # --- Spanish: trained on es_mx. es_es is the superseded training variety --------
-    ('es_mx',  'es',  'es_419', 'in_training',   'trained variety'),
-    ('es_es',  'es',  'es_419', 'held_out',      'Spain -- the superseded training variety'),
-    ('es_ar',  'es',  'es_419', 'held_out',      'Argentine'),
-    ('es_cl',  'es',  'es_419', 'held_out',      'Chilean'),
-    ('es_co',  'es',  'es_419', 'held_out',      'Colombian'),
-    ('es_pe',  'es',  'es_419', 'held_out',      'Peruvian'),
-    ('es_pr',  'es',  'es_419', 'held_out',      'Puerto Rican'),
-    ('es_py',  'es',  'es_419', 'held_out',      'Paraguayan'),
-    ('es_uy',  'es',  'es_419', 'held_out',      'Uruguayan'),
-
-    # --- French: trained on fr_ca; two African varieties held out -------------------
-    ('fr_ca',  'fr',  'fr_fr',  'in_training',   'trained variety'),
-    ('fr_cd',  'fr',  'fr_fr',  'held_out',      'DR Congo'),
-    ('fr_ci',  'fr',  'fr_fr',  'held_out',      "Cote d'Ivoire"),
-
-    # --- Multi-config cells: BOTH varieties were trained on ------------------------
-    ('ha_ng',  'ha',  'ha_ng',  'in_training',   'Nigeria'),
-    ('ha_td',  'ha',  'ha_ng',  'in_training',   'Chad'),
-    ('sw_ke',  'sw',  'sw_ke',  'in_training',   'Kenya'),
-    ('sw_tz',  'sw',  'sw_ke',  'in_training',   'Tanzania'),
-    ('ur_pk',  'ur',  'ur_pk',  'in_training',   'Pakistan'),
-    ('ur_in',  'ur',  'ur_pk',  'in_training',   'India'),
-
-    # --- Tamil: the config lists ta_lk, but the 30 s cap removed all of it ---------
-    ('ta_in',  'ta',  'ta_in',  'in_training',   'India'),
-    ('ta_lk',  'ta',  'ta_in',  'dropped_by_cap',
-     'Sri Lanka -- listed in the training config but every clip is exactly 30.00 s, so the '
-     'strict `< 30` filter removed all 23,261. Evaluating here is held-out dialect transfer.'),
-
-    # --- Single-variety cells ------------------------------------------------------
-    ('hi_in',  'hi',  'hi_in',  'in_training',   'only Hindi variety'),
-    ('id_id',  'id',  'id_id',  'in_training',   'only Indonesian variety'),
-    ('mr_in',  'mr',  'mr_in',  'in_training',   'only Marathi variety'),
-    ('am_et',  'am',  'am_et',  'in_training',   'only Amharic variety'),
-    ('crs_sc', 'crs', 'crs_sc', 'in_training',   'only Seychellois Creole variety'),
-]
-
-# Non-space-delimited scripts need CER rather than WER, matching create_yamls_fleurs_full.py's
-# CER_LANG_IDS rule. None of the languages above is in that set, but the branch is kept so a
-# later addition does not silently get a meaningless WER.
-CER_LANGS = {'th', 'my', 'km', 'zh', 'ja', 'lo'}
-
-# crs_sc must come from the ERISLab mirror, not disco-eth. That mirror's splits carry the
-# duration-consistency cleaning (samples whose decoded audio length disagrees with the corpus
-# `duration` column by >=1 s are removed) that the Seychellois Creole data required, and the
-# study's crs_sc runs train and evaluate on it. Pointing the in-domain eval at disco-eth
-# instead would evaluate on uncleaned audio the model never trained against.
-DATASET_PATH_OVERRIDE = {'crs_sc': ('ERISLab/WorldSpeech', 'test_clean')}
 
 
 class QuotedStr(str):
@@ -141,105 +12,47 @@ def quoted_scalar(dumper, data):
 
 yaml.add_representer(QuotedStr, quoted_scalar)
 
-output_dir = 'configs/datasets/short_ml'
+# Every WorldSpeech config, copied from configs/train/worldspeech_llama_questions.yaml.
+configs = [
+    "af_za", "am_et", "ar_bh", "ar_dz", "ar_eg", "ar_iq", "ar_kw", "ar_ma", "ar_sa", "ar_tn",
+    "ar_un", "as_in", "az_az", "be_by", "bn_bd", "bn_in", "ca_es", "ca_fr", "ckb_iq", "cnr_me",
+    "crs_sc", "cs_cz", "de_at", "de_li", "dgo_in", "dv_mv", "el_cy", "el_gr", "en_au", "en_jm",
+    "en_ke", "en_nz", "en_pk", "en_sl", "en_us", "en_zm", "eo", "es_ar", "es_cl", "es_co",
+    "es_es", "es_mx", "es_pe", "es_pr", "es_py", "es_uy", "fa_ir", "fr_ca", "fr_cd", "fr_ci",
+    "grc_gr", "gu_in", "ha_ng", "ha_td", "he_il", "hi_in", "hu_hu", "hy_am", "id_id", "ig_ng",
+    "ja_jp", "ka_ge", "kk_kz", "kn_in", "ko_kr", "kok_in", "la_va", "lb_lu", "mai_in", "mfe_mu",
+    "mi_nz", "ml_in", "mn_mn", "mr_in", "ms_my", "ne_in", "ne_np", "nl_be", "nl_nl", "nr_za",
+    "nso_za", "om_et", "or_in", "pa_in", "pl_pl", "pt_br", "rm_ch", "ro_md", "ro_ro", "ru_by",
+    "ru_ru", "rw_rw", "si_lk", "sm_ws", "sn_zw", "sq_al", "sq_xk", "ss_za", "st_za", "sv_ax",
+    "sw_ke", "sw_tz", "ta_in", "ta_lk", "te_in", "th_th", "ti_et", "tl_ph", "tn_bw", "tn_za",
+    "tr_tr", "ts_za", "ur_in", "ur_pk", "uz_uz", "ve_za", "xh_za", "yue_hk", "zh_tw", "zu_za",
+]
+
+# crs_sc uses the ERISLab mirror, whose splits drop samples whose decoded audio length
+# disagrees with the corpus `duration` column. disco-eth's crs_sc is uncleaned.
+overrides = {"crs_sc": ("ERISLab/WorldSpeech", "test_clean")}
+
+# Non-space-delimited scripts, matching create_yamls_fleurs_full.py's CER_LANG_IDS.
+cer_configs = {"ja_jp", "th_th", "yue_hk", "zh_tw"}
+
+output_dir = "configs/datasets/short_ml"
 os.makedirs(output_dir, exist_ok=True)
 
-manifest = []
-n_written = 0
-for ws_config, lang_code, study_cell, status, note in WORLDSPEECH_ENTRIES:
-    filename = f'worldspeech_{ws_config}_test.yaml'
-    filepath = os.path.join(output_dir, filename)
-    ds_path, split = DATASET_PATH_OVERRIDE.get(ws_config,
-                                               ('disco-eth/WorldSpeech', 'test'))
+for config in configs:
+    dataset_path, split = overrides.get(config, ("disco-eth/WorldSpeech", "test"))
+
     yaml_data = {
-        'dataset_path': QuotedStr(ds_path),
-        'dataset': QuotedStr(ws_config),
-        'split': QuotedStr(split),
-        'force_asr_language': QuotedStr(lang_code),
-        'eval_metrics': ['cer'] if lang_code in CER_LANGS else ['wer_all'],
+        "dataset_path": QuotedStr(dataset_path),
+        "dataset": QuotedStr(config),
+        "split": QuotedStr(split),
+        "force_asr_language": QuotedStr(config.split("_")[0]),
+        "eval_metrics": ["cer"] if config in cer_configs else ["wer_all"],
     }
-    if lang_code == 'en':
-        yaml_data['norm_english'] = True
 
-    with open(filepath, 'w') as f:
+    filename = f"worldspeech_{config}_test.yaml"
+    with open(os.path.join(output_dir, filename), "w") as f:
         yaml.dump(yaml_data, f, default_flow_style=False, sort_keys=False)
-    manifest.append({'config_file': filename, 'dataset_path': ds_path,
-                     'dataset': ws_config, 'split': split, 'study_cell': study_cell,
-                     'status': status, 'force_asr_language': lang_code, 'note': note})
-    n_written += 1
-    print(f'Created: {filename}  # [{status}] {note}')
 
-# The manifest is how the analysis knows which evals are in-distribution, which are zero-shot
-# accent transfer, and which is the cap-dropped Tamil variety. Keeping it out of the YAML means
-# the configs stay exactly the shape QuantizedASR's other generators produce.
-import csv
-manifest_paths = [os.path.join(output_dir, 'worldspeech_lalm_manifest.csv')]
-# A second copy next to this generator, so LALMDecoderAnalysis's verify_eval_pairing.py can
-# check the sweep from a bare clone without a QuantizedASR checkout present.
-manifest_paths.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                   'worldspeech_lalm_manifest.csv'))
-for manifest_path in manifest_paths:
-    os.makedirs(os.path.dirname(manifest_path) or '.', exist_ok=True)
-    with open(manifest_path, 'w', newline='') as fh:
-        w = csv.DictWriter(fh, fieldnames=list(manifest[0].keys()))
-        w.writeheader()
-        w.writerows(manifest)
+    print(f"Created: {filename}")
 
-
-# --- the eval sweep's PAIRINGS block, generated rather than hand-written -------------------
-#
-# scripts/eval_lalm_decoder_txf.sh pairs each trained checkpoint with only its own language's
-# eval sets. That pairing used to be a hand-maintained bash array, which is a standing invitation
-# to drift: every language added is a chance to mistype one entry and silently evaluate the Urdu
-# checkpoint on Hausa. Emitting it from the same table that writes the YAMLs makes a
-# cross-language pairing impossible by construction.
-#
-# The model checkpoint is named after the TRAINING config, which is not always the study cell:
-# the cell is `es_419` (what FLEURS evaluates) but the checkpoint stem is `es_mx` (what it
-# trained on). The stem is therefore the first in_training entry of each cell, in table order.
-#
-# `dropped_by_cap` joins the held-out column, not in-training: ta_lk is named in Tamil's
-# training config but the strict `< 30 s` filter removed all of it, so the model never saw it.
-NO_FLEURS = {'crs_sc'}  # Seychellois Creole is not a FLEURS language -- that is the OOD probe.
-
-cell_order, cell_stem, cell_in, cell_held = [], {}, {}, {}
-for ws_config, _lang, study_cell, status, _note in WORLDSPEECH_ENTRIES:
-    if study_cell not in cell_stem:
-        cell_order.append(study_cell)
-        cell_in[study_cell], cell_held[study_cell] = [], []
-    cfg = f'short_ml/worldspeech_{ws_config}_test.yaml'
-    if status == 'in_training':
-        cell_stem.setdefault(study_cell, ws_config)
-        cell_in[study_cell].append(cfg)
-    else:
-        cell_held[study_cell].append(cfg)
-
-missing_stem = [c for c in cell_order if c not in cell_stem]
-assert not missing_stem, f'cells with no in_training entry, so no checkpoint stem: {missing_stem}'
-
-pairing_lines = []
-for cell in cell_order:
-    fleurs = '' if cell in NO_FLEURS else f'short_ml/fleurs_{cell}_test.yaml'
-    pairing_lines.append(
-        f'    "{cell_stem[cell]}|{fleurs}|{" ".join(cell_in[cell])}|{" ".join(cell_held[cell])}"')
-
-pairings_paths = [os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                               'worldspeech_lalm_pairings.sh')]
-for pp in pairings_paths:
-    with open(pp, 'w') as fh:
-        fh.write('# GENERATED by tools/preprocess/create_yamls_worldspeech_lalm.py -- do not edit.\n'
-                 '# Regenerate after changing WORLDSPEECH_ENTRIES there.\n'
-                 '#\n'
-                 '# (training config stem | FLEURS eval | in-training WorldSpeech | held-out WorldSpeech)\n'
-                 'PAIRINGS=(\n')
-        fh.write('\n'.join(pairing_lines))
-        fh.write('\n)\n')
-
-print(f'\nSuccessfully generated {n_written} config files.')
-for mp in manifest_paths:
-    print(f'Wrote manifest to {mp}')
-for pp in pairings_paths:
-    print(f'Wrote {len(pairing_lines)} pairings to {pp}')
-from collections import Counter
-for status, n in sorted(Counter(m['status'] for m in manifest).items()):
-    print(f'  {status:15s} {n}')
+print(f"\nGenerated {len(configs)} config files in {output_dir}.")

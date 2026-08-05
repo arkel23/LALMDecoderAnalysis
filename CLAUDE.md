@@ -147,6 +147,36 @@ Every item below corresponds to a defect that actually shipped in these repos.
 21. No self-narration of revision history ("we previously found", "an earlier draft") and no
     implementation identifiers (script names, `\texttt{}`-wrapped code) in prose.
 
+## Less is more (2026-08-03 review — read this before writing any file)
+
+A generator here reached **245 lines doing what QuantizedASR's `create_yamls_short_ml.py` does
+in 75**, and seven docs totalled 1,695 lines. The verdict: too much prose, too little signal.
+Comments that mix necessary documentation with narrative make it *impossible to tell which is
+which*, so none of it gets read.
+
+**Code**
+- Match the reference file's size and shape. For config generators that is
+  `tools/preprocess/create_yamls_short_ml.py`: explicit parallel lists, one loop, near-zero
+  comment. If a script is 3x its reference, it is wrong.
+- One script does **one thing**. A config generator generates configs — it does not also emit
+  manifests, pairing tables, or study metadata.
+- Comment budget: **~2 lines at a site**, and only for a non-obvious invariant. If a reader
+  could derive it from the code, delete it.
+- No narrative in code. "Why I changed this", "what the old version did", "how the bug was
+  found", "what this cost" — all of that goes in `docs/CLAUDE_CHANGES.md`, never in a
+  docstring or a comment block.
+- Don't regenerate what exists. Check the target repo first (`configs/datasets/short_ml/`
+  already holds 229 FLEURS configs); reference existing files instead of re-emitting them.
+
+**Docs**
+- Prefer editing an existing doc to adding a new one. Ask which existing file this belongs in
+  before creating a file.
+- Each doc needs a distinct niche. If two overlap, merge them.
+- `docs/CLAUDE_CHANGES.md` is the only place for chronology and rationale.
+
+**Replies**
+- Short. No restating a point in a second form, no summarising what was just said.
+
 ## Verification discipline
 
 - Independently re-derive any numeric or figure claim before trusting it — re-run the
