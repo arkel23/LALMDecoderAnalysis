@@ -9,8 +9,12 @@ audio_hours is audio PROCESSED, counting repeats. The wandb train/epoch counter 
 under streaming, so epochs_logged is carried only to be flagged, never used as a divisor.
 
 Usage:
-    python analyze_sample_efficiency.py --input_file data/raw_serials/history_serial_0.csv \
+    python analyze_sample_efficiency.py \
+        --input_file data/raw_serials/history_serial_{0,2}.csv \
         --output_file results_all/acc/t1_sample_efficiency.csv
+
+Spans serials 0 (the grid) and 2 (the control arms), so the crs_sc cell keeps all six models.
+`serial` is a column; cross-language aggregates must restrict to the grid.
 """
 import os
 import argparse
@@ -18,7 +22,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (add_language_columns, assert_unique_keys, is_excluded_from_aggregate,
-                   MODEL_SHORT)
+                   MODEL_SHORT, CURVE_SERIALS, GRID_SERIAL)
 
 
 # Far enough above the optimum to be reached before the curve flattens, so they measure how
@@ -101,9 +105,10 @@ def build_table(df):
 
     out = mark_canonical(out)
 
-    # Asserted on the canonical subset: during a re-run window a cell legitimately holds two
-    # runs in the same serial.
-    assert_unique_keys(out[out['is_canonical']], ['model_id', 'dataset'],
+    # Keyed on serial too: t1 spans serials 0 and 2, and the same (model, language) can appear
+    # in both only if a control arm leaked into the grid. Asserted on the canonical subset
+    # because during a re-run window a cell legitimately holds two runs in one serial.
+    assert_unique_keys(out[out['is_canonical']], ['model_id', 'dataset', 'serial'],
                        label='t1_sample_efficiency (canonical rows)')
 
     return out.sort_values(['dataset', 'model_short', 'run_start'])
@@ -128,14 +133,15 @@ def mark_canonical(out):
     out = out.copy()
     order = out.assign(_unfinished=(out['state'] != 'finished').astype(int))
     order = order.sort_values(['_unfinished', 'run_start'], kind='mergesort')
-    keep = order.groupby(['model_id', 'dataset'], sort=False).head(1)['run_id']
+    keep = order.groupby(['model_id', 'dataset', 'serial'], sort=False).head(1)['run_id']
 
     out['is_canonical'] = out['run_id'].isin(set(keep))
-    out['n_runs_in_cell'] = out.groupby(['model_id', 'dataset'])['run_id'].transform('size')
+    out['n_runs_in_cell'] = (out.groupby(['model_id', 'dataset', 'serial'])['run_id']
+                             .transform('size'))
 
     dupes = out[out['n_runs_in_cell'] > 1]
     if not dupes.empty:
-        cells = dupes[['model_id', 'dataset']].drop_duplicates()
+        cells = dupes[['model_id', 'dataset', 'serial']].drop_duplicates()
         print(f'\n[DUPLICATE RUNS] {len(cells)} cell(s) hold more than one run in this serial. '
               f'A serial migration is pending -- move the superseded run to serial 1 with '
               f'rename_wandb_serial.py once its replacement has finished.')
@@ -148,8 +154,10 @@ def mark_canonical(out):
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument('--input_file', type=str,
-                   default=os.path.join('data', 'raw_serials', 'history_serial_0.csv'))
+    p.add_argument('--input_file', nargs='+', type=str,
+                   default=[os.path.join('data', 'raw_serials', f'history_serial_{s}.csv')
+                            for s in CURVE_SERIALS],
+                   help='One or more history CSVs; concatenated, with serial kept as a column.')
     p.add_argument('--output_file', type=str,
                    default=os.path.join('results_all', 'acc', 't1_sample_efficiency.csv'))
     p.add_argument('--keep_finished_only', action='store_true',
@@ -159,7 +167,12 @@ def parse_args():
 
 def main():
     args = parse_args()
-    df = pd.read_csv(args.input_file)
+    paths = [f for f in args.input_file if os.path.exists(f)]
+    missing = [f for f in args.input_file if not os.path.exists(f)]
+    for f in missing:
+        print(f'[SKIP] {f} not present')
+    df = pd.concat([pd.read_csv(f) for f in paths], ignore_index=True)
+    print(f'Read {len(df)} step-rows from {len(paths)} file(s): {", ".join(paths)}')
 
     if args.keep_finished_only:
         before = df['run_id'].nunique()
@@ -172,8 +185,12 @@ def main():
     out.to_csv(args.output_file, index=False, float_format=FLOAT_FORMAT)
     print(f'Wrote {len(out)} rows to {args.output_file}')
 
-    fin = out[~out['excluded_from_aggregate'] & (out['state'] == 'finished')]
-    print(f'\nmedian within-run late_sd     : {fin["late_sd"].median():.3f} CER')
+    # Summarised over the GRID only. t1 also carries serial 2's control arms, and pooling them
+    # into a cross-language statistic is the mistake this serial split exists to prevent.
+    fin = out[~out['excluded_from_aggregate'] & (out['state'] == 'finished')
+              & (out['serial'] == GRID_SERIAL) & out['is_canonical']]
+    print(f'\ngrid (serial {GRID_SERIAL}) statistics over {len(fin)} runs:')
+    print(f'median within-run late_sd     : {fin["late_sd"].median():.3f} CER')
     print(f'mean final_minus_best         : {fin["final_minus_best"].mean():.3f} CER')
     print(f'max  final_minus_best         : {fin["final_minus_best"].max():.3f} CER')
     return 0

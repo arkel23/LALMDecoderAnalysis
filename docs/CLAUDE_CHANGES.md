@@ -1,5 +1,65 @@
 # Change log
 
+## 2026-08-05 (later still) — serial 0 becomes the 12x4 grid, and two claims do not survive it
+
+Serial 0 held four different kinds of run: the grid, two control arms, and (once the `es_es` runs
+were re-added from another project) a superseded condition. Every cross-language aggregate had to
+remember to filter, and that filter had failed twice. Now a serial means one thing.
+
+| serial | n | contents |
+|---|---|---|
+| **0** | 48 | the grid: 12 languages x {earth, fire, global, water} |
+| 1 | 8 | superseded grid re-runs (`am_et`, `crs_sc`, seed 42) |
+| 2 | 4 | control arms: `base`, `qwen3-4b` |
+| 3 | 1 | superseded control (`crs_sc`/`base`) |
+| 4 | 1 | same-seed replicate (`en_us`/`water`) |
+| 5 | 4 | superseded `es_es` condition |
+
+### The trap that had not fired yet
+
+The re-added `es_es` runs share `dataset: es_419` with the `es_mx` runs. `mark_canonical` breaks
+ties by **earliest**, and `es_es` is from 2026-07-17 against `es_mx`'s 2026-07-30 — so the next
+`bash plotter.sh` would have silently made every Spanish number come from the superseded
+condition. The earliest-wins rule is right for a half-trained re-run and wrong here, and no guard
+caught it. Recorded in `CLAUDE.md`; the fix is the serial boundary, not another filter.
+
+### Two claims did not survive the clean grid
+
+**The overfitting-by-tier result survives, but only per-language.** `analyze_loss_metrics.py`
+had no variant filter, so `ta_in`'s `base` and `qwen3-4b` sat in the `very_low` tier.
+
+| | very_low | low | mid | high | monotone |
+|---|---|---|---|---|---|
+| was published (per-run, contaminated) | 0.195 | 0.188 | 0.028 | 0.003 | yes |
+| per-run, clean grid | 0.175 | 0.188 | 0.028 | 0.003 | **no** |
+| **now published (per-language, clean)** | **0.211** | **0.188** | **0.041** | **0.003** | yes |
+
+t6 now reports medians of per-language medians and carries an `aggregation` column.
+
+**The domain-shift claim does not survive at all.** Earlier drafts reported a ~6x larger
+generalisation gap cross-domain (0.196 vs 0.032). On the clean grid the two domains are
+indistinguishable: **0.184 vs 0.179** per-language, 0.190 vs 0.173 per-run. The 6x was an
+artifact of the control arms — `crs_sc`'s six near-zero runs outnumbered `ha_ng`'s four in the
+in-domain pool. Only two languages evaluate in-domain, so the comparison is underpowered either
+way. The ordering claim that asserted the gap was larger is replaced by one pinning it as a null,
+so it cannot silently become a claim again.
+
+### Coverage gap this exposed
+
+The tier ordering was machine-checked but the four **values** were not, so they went stale while
+`verify_paper_numbers.py` stayed green. Same for the domain gaps. Both are now in `DERIVED`:
+**109 numbers checked, up from 97.**
+
+### Unchanged, as predicted
+
+Region-match stats (mean -0.55, p 0.966, MDE 4.90), t5 volume, t8 exposure and t1's grid
+statistics (median `late_sd` 1.09, mean `final_minus_best` 5.36) are byte-identical — they
+already filtered to `CORE_VARIANTS`.
+
+t9 still finds **10 pairs, between-run sd 1.174**: replicate pairing now runs over
+`REPLICATE_SERIAL_PAIRS = ((0,1), (2,3), (0,4))`. Pairing 0<->1 alone would have given 8 pairs and
+dropped the only `same_seed` one.
+
 ## 2026-08-05 (later) — re-runs migrated, and the 5x noise-floor claim does not survive
 
 ### Serial migration

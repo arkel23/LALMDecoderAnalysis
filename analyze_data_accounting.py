@@ -24,7 +24,7 @@ import pandas as pd
 
 from utils import (TRAIN_CONFIGS, WORLDSPEECH_TRAIN_EXAMPLES, MULTI_CONFIG_TRAIN,
                    MODEL_SHORT, LANGUAGE_DIC, CONFIG_DURATION_AT_CAP,
-                   expected_stream_examples, assert_unique_keys)
+                   expected_stream_examples, assert_unique_keys, GRID_SERIAL)
 
 
 # max_input_length in every configs/train/*ws*.yaml is 30 s, so a mean sample duration above
@@ -152,6 +152,8 @@ def main():
     args = p.parse_args()
 
     df = pd.read_csv(args.input_file)
+    if 'serial' in df.columns:
+        df = df[df['serial'] == GRID_SERIAL]
     out = add_stream_estimates(build_table(df))
 
     os.makedirs(os.path.dirname(args.output_file) or '.', exist_ok=True)

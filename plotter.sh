@@ -13,7 +13,14 @@
 # once during development -- test_utils_port.py exited 1 and plotter.sh still reported success.
 set -eu
 
-SERIALS=(0 1)         # 0 = canonical training runs, 1 = earlier run of a twice-run cell
+# 0 = the 12x4 grid (the analysis population). 1 = superseded grid re-runs. 2 = control arms
+# (base, qwen3-4b). 3 = superseded control. 4 = same-seed replicate. 5 = superseded es_es.
+SERIALS=(0 1 2 3 4 5)
+CURVE_SERIALS=(0 2)   # t1 spans these so crs_sc keeps all six models
+CURVE_FILES=()
+for s in "${CURVE_SERIALS[@]}"; do
+  CURVE_FILES+=("data/raw_serials/history_serial_${s}.csv")
+done
 EVAL_SERIALS=(10 11)  # 10 = off-the-shelf baselines, 11 = trained TinyAya LALMs
 PROJECT='LisTAya/LALMDecoder'
 HIST=data/raw_serials/history_serial_0.csv
@@ -127,7 +134,8 @@ python -u count_data.py \
 # filter. Keeping raw completeness here means a run finishing does not require re-deriving
 # from wandb.
 python -u analyze_sample_efficiency.py \
-  --input_file "$HIST" --output_file "$ACC/t1_sample_efficiency.csv"
+  --input_file "${CURVE_FILES[@]}" \
+  --output_file "$ACC/t1_sample_efficiency.csv"
 
 # Data accounting before the contrasts, so t2 can carry each language's verdict. Derived
 # purely from logged scalars plus the frozen WorldSpeech snapshot in utils.py -- this repo
@@ -162,7 +170,6 @@ python -u analyze_baselines.py \
 # Between-run variance from replicate pairs. This is the honest noise floor; late_sd measures
 # wobble along one trajectory and understates it. Skips cleanly until serial 1 has pairs.
 python -u analyze_replicates.py \
-  --serial0_file "$HIST" --serial1_file data/raw_serials/history_serial_1.csv \
   --output_file "$ACC/t9_replicates.csv" --stats_file "$ACC/t9_replicate_stats.csv" || true
 
 python -u analyze_loss_metrics.py \

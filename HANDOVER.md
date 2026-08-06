@@ -19,8 +19,9 @@ can *hear*, or only what it can *say*?
 
 ## Current state
 
-- **12 languages x 4 grid-wide variants**, plus `base` and a non-Aya `Qwen3-4B` control on
-  `crs_sc`. Serial 0 is the canonical grid; serial 1 holds the earlier run of a twice-run cell.
+- **Serial 0 is exactly the 12 x 4 grid, 48 runs.** The control arms (`base`, `Qwen3-4B`),
+  superseded re-runs and the retired `es_es` condition live in serials 1-5, so an aggregate over
+  serial 0 needs no filtering. `docs/OUTPUTS.md` has the full table.
 - **Serial 10** (off-the-shelf baselines) is filling in; **serial 11** (trained checkpoints) is
   not yet run.
 - The headline hypothesis is a **null**, stated with a minimum detectable effect. The positive

@@ -40,6 +40,14 @@ T5S = os.path.join(ACC, 't5_volume_stats.csv')
 T9 = os.path.join(ACC, 't9_replicates.csv')
 T6A = os.path.join(ACC, 't6_loss_by_axis.csv')
 RAW = os.path.join('data', 'raw_serials', 'raw_serial_0.csv')
+# Parameter counts are a property of the MODEL, not of the grid, and tiny-aya-base lives in
+# serial 2 with the other control arm. Both serials are needed to compare them.
+RAW_CTRL = os.path.join('data', 'raw_serials', 'raw_serial_2.csv')
+
+
+def load_models():
+    frames = [load(f) for f in (RAW, RAW_CTRL) if os.path.exists(f)]
+    return pd.concat(frames, ignore_index=True)
 
 CORE = ('earth', 'fire', 'global', 'water')
 
@@ -158,6 +166,21 @@ DERIVED = [
         load(T1).query("dataset == 'ta_in' and state == 'finished'")['best_cer'].min()), 2),
 ]
 
+# The tier values themselves, not just their ordering. The ordering claim passed while all four
+# numbers were stale, because nothing required them to appear.
+for _tier in ('very_low', 'low', 'mid', 'high'):
+    DERIVED.append((f'tier {_tier} / median_eval_loss_rise',
+                    (lambda tr: lambda: _axis('resource_tier', tr, 'median_eval_loss_rise'))(_tier), 3))
+    DERIVED.append((f'tier {_tier} / mean_frac_to_best',
+                    (lambda tr: lambda: _axis('resource_tier', tr, 'mean_frac_to_best'))(_tier), 3))
+
+for _dom in ('cross_domain', 'in_domain'):
+    DERIVED.append((f'{_dom} / median_generalisation_gap',
+                    (lambda d: lambda: _axis('eval_domain', d, 'median_generalisation_gap'))(_dom), 3))
+    DERIVED.append((f'{_dom} / median_eval_loss_rise',
+                    (lambda d: lambda: _axis('eval_domain', d, 'median_eval_loss_rise'))(_dom), 3))
+
+
 # The between-run spread. Conditional because t9 only exists once serial 1 holds a pair; on a
 # bare clone the claim is not in the documents either, so skipping is correct rather than lenient.
 if os.path.exists(T9):
@@ -226,7 +249,7 @@ def _monotone_except_one():
 
 
 def _regional_params():
-    raw = load(RAW)
+    raw = load_models()
     col = 'model/num_parameters'
     regional = raw[raw['model_id'].str.contains('earth|fire|water|global', na=False)]
     vals = regional[col].dropna().unique()
@@ -235,7 +258,7 @@ def _regional_params():
 
 
 def _base_param_delta():
-    raw = load(RAW)
+    raw = load_models()
     col = 'model/num_parameters'
     base = raw[raw['model_id'].str.contains('tiny-aya-base', na=False)][col].dropna().unique()
     assert len(base) == 1, f'base parameter count is not unique: {base}'
@@ -327,9 +350,12 @@ ORDERINGS = [
     ('low-resource cells reach their best eval loss far earlier in the run',
      lambda: _axis('resource_tier', 'very_low', 'mean_frac_to_best')
      < _axis('resource_tier', 'high', 'mean_frac_to_best')),
-    ('cross-domain evals have a larger generalisation gap than in-domain',
-     lambda: _axis('eval_domain', 'cross_domain', 'median_generalisation_gap')
-     > _axis('eval_domain', 'in_domain', 'median_generalisation_gap')),
+    # Was 'cross-domain has a LARGER gap'. On the clean grid it does not: 0.184 vs 0.179. The
+    # old 6x came from the control arms sitting in the in-domain pool, where crs_sc's near-zero
+    # gaps outnumbered ha_ng's. Pinned as a null so it cannot silently become a claim again.
+    ('the generalisation gap does NOT separate the two eval domains',
+     lambda: (_axis('eval_domain', 'cross_domain', 'median_generalisation_gap')
+              / _axis('eval_domain', 'in_domain', 'median_generalisation_gap')) < 1.5),
     ('but domain shift does NOT show up as overfitting -- the two are separable',
      lambda: _axis('eval_domain', 'cross_domain', 'median_eval_loss_rise') < 0.05),
 ]

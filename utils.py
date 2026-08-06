@@ -8,7 +8,33 @@ import pandas as pd
 # A serial tags a group of wandb runs sharing a configuration; SERIAL_DIC gives its label.
 SERIAL_DIC = {
     0: 'Connector-only SFT',   # --freeze_encoder --freeze_decoder (SLAM-style)
+    1: 'Superseded grid re-run',
+    2: 'Control arms',
+    3: 'Superseded control',
+    4: 'Same-seed replicate',
+    5: 'Superseded es_es condition',
 }
+
+# What each serial holds. Serial 0 is the analysis population: exactly 12 languages x the 4
+# grid-wide variants, so a cross-language aggregate over it is correct without further filtering.
+# Everything that is not a grid cell lives elsewhere, which is what makes that structural.
+SERIAL_ROLE = {
+    0: 'grid',                  # 48 runs, 12 languages x {earth, fire, global, water}
+    1: 'superseded_grid',       # am_et and crs_sc originals, seed 42, replaced by seed 420
+    2: 'control',               # base and qwen3-4b, crs_sc and ta_in only
+    3: 'superseded_control',    # crs_sc/base original
+    4: 'same_seed_replicate',   # en_us/water; the re-run set no new seed
+    5: 'superseded_condition',  # trained on es_es, superseded by es_mx
+}
+
+GRID_SERIAL = 0
+# t1 spans these so the crs_sc cell keeps all six models -- the OOD probe is the one place a
+# control arm belongs beside the grid.
+CURVE_SERIALS = (0, 2)
+
+# (canonical, superseded). Pairing only 0<->1 would drop the control replicate and the
+# same-seed en_us/water pair, which is the outlier the noise-floor argument rests on.
+REPLICATE_SERIAL_PAIRS = ((0, 1), (2, 3), (0, 4))
 
 SERIALS_EXPLANATIONS = []
 

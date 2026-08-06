@@ -249,6 +249,11 @@ Two related failures from the same session:
   `verify_dataset_durations.py` rather than editing them by hand.
 - **`is_canonical`, not `state == 'finished'`.** During a re-run window a cell holds two runs in
   the same serial, and once both finish, filtering on state alone resurrects the duplicate.
+- **`mark_canonical` breaks ties by EARLIEST**, which is right for a half-trained re-run and wrong
+  for a superseded condition. A re-added `es_es` run nearly became the canonical Spanish cell that
+  way. Superseded work belongs in its own serial, not in serial 0 behind a filter.
+- **Serial 0 is the analysis population**, 12 x 4 with nothing else in it. Controls are serial 2;
+  t1 spans 0 and 2 only so `crs_sc` keeps all six models.
 - **`ha_ng`'s in-domain eval is its own selection split**, so `ha_td` is Hausa's in-domain point
   (`utils.IN_DOMAIN_PRIMARY`).
 - **The multilingual machinery is deliberately gone.** No language-hours table, no resource

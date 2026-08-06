@@ -1,0 +1,2 @@
+host,state,serial,dataset_path,dataset,split,model_id,force_asr_language,model/num_parameters,batch_size,gradient_accumulation_steps,max_steps,lr,wer,cer,rtfx,no_params,num_samples,audio_length_s_mean,eval/cer,eval/loss,train/loss,train/train_audio_seconds,train/epoch,train/global_step,total_flos,train_runtime
+DGX-H200-CN05,finished,4,google/fleurs,en_us,validation,q2a_openai/whisper-medium_CohereLabs/tiny-aya-water,en,3656222720,8,64,1000,0.0015,,,,,,,20.12,0.3422042429447174,0.2593,9747968.274062475,1,1000,5.499289910656893e+18,56321.7942

@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (LANGUAGE_DIC, LANGUAGE_REGION, MODEL_SHORT, RESOURCE_TIER, TIER_ORDER,
-                   get_eval_domain, get_accent_match, assert_unique_keys)
+                   get_eval_domain, get_accent_match, assert_unique_keys, GRID_SERIAL)
 
 LATE_FRACTION = 0.3
 FLOAT_FORMAT = '%.6f'
@@ -97,22 +97,34 @@ def build_table(df):
 def summarise(out):
     """Group the two loss quantities by each design axis.
 
-    Losses are not comparable across languages, so every group is reported with its language
-    count and the aggregates are means over per-run values within the group -- useful for a
-    contrast between axes, not as an absolute scale.
+    PER-LANGUAGE aggregation: each language is reduced to its own median first, and the group
+    statistic is taken over those. A per-RUN median lets a tier with many languages dominate,
+    and it silently changes when a language gains or loses runs -- which is what happened while
+    the control arms sat in the grid. The `aggregation` column records this so a reader cannot
+    mistake it for a per-run number.
+
+    Losses are not comparable across languages, so every group carries its language count and
+    is useful for contrasting axes, not as an absolute scale.
     """
     fin = out[out['state'] == 'finished']
+    metrics = {'generalisation_gap': 'generalisation_gap',
+               'eval_loss_rise': 'eval_loss_final_minus_best',
+               'frac_to_best': 'frac_of_run_to_best_eval_loss'}
     frames = []
     for axis in ('eval_domain', 'accent_match', 'resource_tier'):
-        g = (fin.groupby(axis, as_index=False)
-             .agg(n_runs=('run_id', 'count'),
+        per_lang = (fin.groupby([axis, 'dataset'], as_index=False)
+                    .agg(n_runs=('run_id', 'count'),
+                         **{k: (v, 'median') for k, v in metrics.items()}))
+        g = (per_lang.groupby(axis, as_index=False)
+             .agg(n_runs=('n_runs', 'sum'),
                   n_languages=('dataset', 'nunique'),
                   mean_generalisation_gap=('generalisation_gap', 'mean'),
                   median_generalisation_gap=('generalisation_gap', 'median'),
-                  mean_eval_loss_rise=('eval_loss_final_minus_best', 'mean'),
-                  median_eval_loss_rise=('eval_loss_final_minus_best', 'median'),
-                  mean_frac_to_best=('frac_of_run_to_best_eval_loss', 'mean')))
+                  mean_eval_loss_rise=('eval_loss_rise', 'mean'),
+                  median_eval_loss_rise=('eval_loss_rise', 'median'),
+                  mean_frac_to_best=('frac_to_best', 'mean')))
         g.insert(0, 'axis', axis)
+        g.insert(1, 'aggregation', 'median_of_per_language_medians')
         g = g.rename(columns={axis: 'level'})
         frames.append(g)
     return pd.concat(frames, ignore_index=True)
@@ -129,6 +141,9 @@ def main():
     args = p.parse_args()
 
     df = pd.read_csv(args.input_file)
+    # Grid only: the control arms are two languages deep and would distort every tier.
+    if 'serial' in df.columns:
+        df = df[df['serial'] == GRID_SERIAL]
     out = build_table(df)
 
     os.makedirs(os.path.dirname(args.output_file) or '.', exist_ok=True)

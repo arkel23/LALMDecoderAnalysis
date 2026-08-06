@@ -16,6 +16,7 @@ import pandas as pd
 
 import utils
 from utils import (CORE_VARIANTS, LANGUAGE_REGION, LANGUAGE_DIC, METHODS_DIC, MODEL_SHORT,
+                   GRID_SERIAL, SERIAL_ROLE, REPLICATE_SERIAL_PAIRS,
                    MODEL_FAMILY, TRAIN_EVAL_MATCH, EXCLUDED_MODELS_AGGREGATE,
                    MULTI_CONFIG_TRAIN, WORLDSPEECH_TRAIN_EXAMPLES, TRAIN_CONFIGS,
                    expected_stream_examples, CONFIG_DURATION_AT_CAP, MAX_INPUT_LENGTH_S,
@@ -358,14 +359,31 @@ else:
                     >= t1['audio_h_to_2x_best'].fillna(np.inf) - 1e-9).all()))
     check('no rows are flagged excluded_from_aggregate (en_us/water replicated)',
           int(t1['excluded_from_aggregate'].sum()) == 0)
-    # crs_sc and ta_in are the deep cells: both carry tiny-aya-base and the non-Aya
-    # Qwen3-4B control on top of the four grid-wide variants.
-    check('crs_sc and ta_in carry all 6 models',
-          all(t1[t1['dataset'] == l]['model_id'].nunique() == 6
-              for l in ('crs_sc', 'ta_in')))
-    check('every other language carries exactly the 4 core variants',
-          all(t1[t1['dataset'] == l]['model_id'].nunique() == 4
-              for l in set(t1['dataset']) - {'crs_sc', 'ta_in'}))
+    # The serial split is the contract: serial 0 is the analysis population and nothing else
+    # is in it, so a cross-language aggregate over it is correct without further filtering.
+    grid = t1[t1['serial'] == GRID_SERIAL]
+    check('serial 0 is exactly 12 languages x 4 variants, 48 runs',
+          len(grid) == 48 and grid['dataset'].nunique() == 12
+          and set(grid['model_short']) == set(CORE_VARIANTS))
+    check('every serial-0 language carries exactly the 4 core variants',
+          all(grid[grid['dataset'] == l]['model_id'].nunique() == 4
+              for l in grid['dataset'].unique()))
+    check('serial 0 has no duplicated (model, language) cell',
+          not grid.duplicated(subset=['model_id', 'dataset']).any())
+    # The control arms are OUT of the grid but must still reach the OOD table.
+    ctrl = t1[t1['serial'] == 2]
+    check('serial 2 holds only non-core variants',
+          len(ctrl) > 0 and not set(ctrl['model_short']) & set(CORE_VARIANTS))
+    check('crs_sc still carries all 6 models across serials 0 and 2',
+          t1[t1['dataset'] == 'crs_sc']['model_id'].nunique() == 6)
+    check('every serial present in t1 has a declared role',
+          set(t1['serial'].unique()) <= set(SERIAL_ROLE))
+    # es_es was re-added from another project and shares `dataset: es_419` with es_mx. It is
+    # older, and mark_canonical breaks ties by earliest -- so if it were still in serial 0 it
+    # would silently become the canonical Spanish run.
+    if 'dataset_train' in t1.columns:
+        check('no es_es-trained run remains in serial 0',
+              not grid['dataset_train'].astype(str).str.contains('es_es').any())
 
 # --- replicate seed classification -------------------------------------------------------
 # A pair must land in exactly one of three buckets. The trap this pins: an unrecorded seed
@@ -469,6 +487,14 @@ if _gen.exists():
           all(sum(1 for c in _study if to_study_cell(c) == cell
                   and in_domain_role(cell, c, 'in_domain') == 'primary') == 1
               for cell in SELECTION_SPLIT))
+
+# --- serial roles ------------------------------------------------------------------------
+check('every replicate pairing names declared serials',
+      all(a in SERIAL_ROLE and b in SERIAL_ROLE for a, b in REPLICATE_SERIAL_PAIRS))
+check('the grid serial is the canonical side of a replicate pairing',
+      any(a == GRID_SERIAL for a, _ in REPLICATE_SERIAL_PAIRS))
+check('no serial is both canonical and superseded',
+      not {a for a, _ in REPLICATE_SERIAL_PAIRS} & {b for _, b in REPLICATE_SERIAL_PAIRS})
 
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)

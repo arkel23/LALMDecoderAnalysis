@@ -88,15 +88,27 @@ decoder is worst (+7.39). Exposure is directionally predictive overall but not s
 
 ### 4. The clean positive result: data volume predicts overfitting, monotonically
 
-Across all four resource tiers, median eval-loss rise after its own minimum: very_low **0.195**,
-low **0.188**, mid **0.028**, high **0.003**. Fraction of the run before the best eval loss:
-0.275, 0.289, 0.629, 0.815. Low-resource cells peak a quarter of the way in and degrade for the
+Across all four resource tiers, median eval-loss rise after its own minimum: very_low **0.211**,
+low **0.188**, mid **0.041**, high **0.003**. Fraction of the run before the best eval loss:
+0.282, 0.292, 0.627, 0.816. Low-resource cells peak a quarter of the way in and degrade for the
 remaining three quarters.
 
-And it is separable from distribution shift: cross-domain evaluations show a ~6x larger
-generalisation gap (0.196 vs 0.032) with a near-zero eval-loss rise, so the gap measures domain
-transfer while the rise measures overfitting. Reporting both is what makes that separation
-visible.
+Both are **medians of per-language medians** over the 48-run grid, so a tier with seven languages
+cannot outvote one with two. Under a per-run aggregation the sequence is not monotone, and the
+per-run version was also contaminated: until the control arms moved to serial 2, `ta_in`'s `base`
+and `qwen3-4b` sat in the `very_low` tier.
+
+**A claim that did not survive the clean grid.** Earlier drafts reported a ~6x larger
+generalisation gap cross-domain (0.196 vs 0.032) and read it as the gap measuring domain
+transfer. On the 48-run grid the two domains are indistinguishable on that measure: **0.184
+cross-domain against 0.179 in-domain** per-language, and 0.190 against 0.173 per-run. The 6x was
+an artifact of the control arms, whose six near-zero `crs_sc` runs outnumbered `ha_ng`'s four in
+the in-domain pool. Only two languages evaluate in-domain, so this comparison is underpowered in
+either direction and should not be presented as a result.
+
+What does still separate is the eval-loss rise: **0.009 cross-domain against 0.001 in-domain**,
+both near zero. That supports reporting the rise as the overfitting measure, and it is why the
+tier result above rests on the rise rather than on the gap.
 
 **The contrast is the paper's spine:** training-data volume strongly predicts *how badly a cell
 overfits*, and does not predict *which decoder to pair with it*.
@@ -344,12 +356,12 @@ give-back after the optimum is **46.05** CER; the OOD `crs_sc` cell's best varia
 the eval-loss rise after its own minimum is overfitting alone.
 
 - **Overfitting is monotone across all four resource tiers**, now that Urdu fills the low tier.
-  Median eval-loss rise: very_low 0.195, low 0.188, mid 0.028, high 0.003. Time to the best eval
-  loss, as a fraction of the run: 0.275, 0.289, 0.629, 0.815. Low-resource cells peak a quarter
+  Median eval-loss rise: very_low 0.211, low 0.188, mid 0.041, high 0.003. Time to the best eval
+  loss, as a fraction of the run: 0.282, 0.292, 0.627, 0.816. Low-resource cells peak a quarter
   of the way in and then get worse for the remaining three quarters.
-- **Domain shift is separable from it.** Cross-domain evals show a 6x larger generalisation gap
-  than in-domain (0.196 vs 0.032) with a far smaller eval-loss rise (0.009 vs 0.000) -- the gap
-  is measuring domain transfer, not overfitting.
+- **The generalisation gap does NOT separate the domains** on the clean grid: 0.184 cross-domain
+  against 0.179 in-domain. The eval-loss rise does, weakly (0.009 vs 0.001), and only two
+  languages evaluate in-domain, so neither comparison carries much weight.
 
 The contrast between 4.1 and 4.2 is the real result: **training-data volume strongly predicts how
 badly a cell overfits, and does not predict whether a region-matched decoder helps it.**

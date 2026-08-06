@@ -23,11 +23,28 @@ backend at all.
 
 | File | Written by | Contents |
 |---|---|---|
-| `data/raw_serials/raw_serial_{0,1}.csv` | `download_save_wandb_data.py` | one row per training run: config + summary scalars |
-| `data/raw_serials/history_serial_{0,1}.csv` | `download_wandb_history.py --history` | one row per (run, step): the full training/eval curves |
+| `data/raw_serials/raw_serial_{0..5}.csv` | `download_save_wandb_data.py` | one row per training run: config + summary scalars |
+| `data/raw_serials/history_serial_{0..5}.csv` | `download_wandb_history.py --history` | one row per (run, step): the full training/eval curves |
 | `data/raw_serials/raw_serial_{10,11}.csv` | `download_save_wandb_data.py` | eval-only runs: 10 = off-the-shelf baselines, 11 = trained checkpoints |
 | `data/dataset_checks/*.csv` | `verify_dataset_durations.py` | per-config example counts and at-cap fractions; with `--load`, duration consistency and interleave integrity |
 | `data/tinyaya_report/tinyaya_language_composition*.csv` | `fetch_tinyaya_composition.py` | per-language share of each variant's post-training mix |
+
+## What each serial holds
+
+A serial means one thing, so an aggregate over serial 0 is correct without further filtering.
+
+| serial | n | contents |
+|---|---|---|
+| **0** | 48 | the grid: 12 languages x {earth, fire, global, water}. **The analysis population.** |
+| 1 | 8 | superseded grid re-runs (`am_et`, `crs_sc`, seed 42, replaced by seed 420) |
+| 2 | 4 | control arms: `base` and `qwen3-4b`, on `crs_sc` and `ta_in` only |
+| 3 | 1 | superseded control (`crs_sc`/`base`) |
+| 4 | 1 | same-seed replicate (`en_us`/`water`) |
+| 5 | 4 | superseded condition: trained on `es_es`, replaced by `es_mx` |
+
+t1 spans **serials 0 and 2** so the `crs_sc` cell keeps all six models; `serial` is a column and
+every cross-language table filters to 0. Replicate pairing runs over 0<->1, 2<->3 and 0<->4.
+Serials 3, 4 and 5 exist to retain the runs, not to be analysed in depth.
 
 ## Analysis tables
 
@@ -77,6 +94,11 @@ All written by `plot_curve.py` into `results_all/plots/s0/`.
   1-language mean.
 - **`is_canonical`.** During a re-run window a cell holds two runs in the same serial. t1 names
   one as canonical — finished first, then earliest — and every downstream merge filters on it.
+  Note the earliest-wins tie-break is right for a half-trained re-run and **wrong** for a
+  superseded condition, which is older: that is why `es_es` had to leave serial 0 rather than be
+  filtered out.
+- **Aggregation.** `t6_loss_by_axis.csv` carries an `aggregation` column and reports **medians of
+  per-language medians**, so a tier with seven languages cannot outvote one with two.
 - **`audio_hours`** is cumulative audio **processed**, counting repeats. It is not unique corpus
   hours. Unique hours appear as `implied_stream_hours` in t4, always with an `estimate_kind` of
   `estimate` or `lower_bound`.

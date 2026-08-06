@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from utils import CORE_VARIANTS, LANGUAGE_REGION, assert_unique_keys
+from utils import CORE_VARIANTS, LANGUAGE_REGION, assert_unique_keys, GRID_SERIAL
 
 
 REGIONAL = ('earth', 'fire', 'water')   # 'global' is the non-regional comparator
@@ -114,6 +114,9 @@ def main():
     # state alone would resurrect the duplicate and hand the paired subtraction below two rows
     # per cell. t1 names the canonical run explicitly; use it.
     df = pd.read_csv(args.input_file)
+    # t1 spans the grid and the control arms; a cross-language contrast is grid-only.
+    if 'serial' in df.columns:
+        df = df[df['serial'] == GRID_SERIAL]
     if 'is_canonical' in df.columns:
         df = df[df['is_canonical']]
     df = df[df['state'] == 'finished']

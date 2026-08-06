@@ -12,8 +12,7 @@ so it is a LOWER BOUND. `seed_status` splits pairs three ways (same_seed / seed_
 unrecorded) so the two are never pooled and the sentinel is never mistaken for a real seed.
 
 Usage:
-    python analyze_replicates.py --serial0_file data/raw_serials/history_serial_0.csv \
-        --serial1_file data/raw_serials/history_serial_1.csv
+    python analyze_replicates.py --results_dir data
 """
 import os
 import argparse
@@ -21,7 +20,8 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from utils import LANGUAGE_DIC, MODEL_SHORT, RESOURCE_TIER, assert_unique_keys
+from utils import (LANGUAGE_DIC, MODEL_SHORT, RESOURCE_TIER, assert_unique_keys,
+                   REPLICATE_SERIAL_PAIRS)
 from download_wandb_history import UNRECORDED_SEED
 
 FLOAT_FORMAT = '%.6f'
@@ -85,34 +85,45 @@ def build_pairs(s0, s1):
     return pairs
 
 
+def history_path(serial, results_dir):
+    return os.path.join(results_dir, 'raw_serials', f'history_serial_{serial}.csv')
+
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('--serial0_file', type=str,
-                   default=os.path.join('data', 'raw_serials', 'history_serial_0.csv'))
-    p.add_argument('--serial1_file', type=str,
-                   default=os.path.join('data', 'raw_serials', 'history_serial_1.csv'))
+    p.add_argument('--results_dir', type=str, default='data')
     p.add_argument('--output_file', type=str,
                    default=os.path.join('results_all', 'acc', 't9_replicates.csv'))
     p.add_argument('--stats_file', type=str,
                    default=os.path.join('results_all', 'acc', 't9_replicate_stats.csv'))
     args = p.parse_args()
 
-    if not os.path.exists(args.serial1_file):
-        print(f'[SKIP] {args.serial1_file} not present -- no replicates to pair against yet.')
-        print('Serial 1 holds the earlier run of any cell run more than once. It fills as the '
-              'am_et / crs_sc re-runs land and their originals are migrated.')
-        return 0
+    # Every (canonical, superseded) serial pair, not just 0<->1: the control arms replicate in
+    # 2<->3 and the same-seed en_us/water pair is 0<->4. Pairing 0<->1 alone silently drops both.
+    frames = []
+    for canonical, superseded in REPLICATE_SERIAL_PAIRS:
+        a, b = history_path(canonical, args.results_dir), history_path(superseded, args.results_dir)
+        if not (os.path.exists(a) and os.path.exists(b)):
+            print(f'[SKIP] serial {canonical} <-> {superseded}: history not present')
+            continue
+        pr = build_pairs(curve_summary(pd.read_csv(a), f'serial_{canonical}'),
+                         curve_summary(pd.read_csv(b), f'serial_{superseded}'))
+        if not pr.empty:
+            pr.insert(0, 'serial_pair', f'{canonical}<->{superseded}')
+            frames.append(pr)
+        print(f'serial {canonical} <-> {superseded}: {len(pr)} pair(s)')
 
-    s0 = curve_summary(pd.read_csv(args.serial0_file), 'serial_0')
-    s1 = curve_summary(pd.read_csv(args.serial1_file), 'serial_1')
-    pairs = build_pairs(s0, s1)
+    if not frames:
+        print('No replicate pairs found in any serial pairing.')
+        return 0
+    pairs = pd.concat(frames, ignore_index=True)
 
     if pairs.empty:
         print('No (model_id, dataset) cell appears in both serial 0 and serial 1 yet.')
         return 0
 
     os.makedirs(os.path.dirname(args.output_file) or '.', exist_ok=True)
-    keep = ['dataset', 'language_name', 'model_short', 'resource_tier',
+    keep = ['serial_pair', 'dataset', 'language_name', 'model_short', 'resource_tier',
             'best_cer_first', 'best_cer_rerun', 'delta_best_cer',
             'final_cer_first', 'final_cer_rerun', 'delta_final_cer',
             'late_sd_first', 'late_sd_rerun', 'seed_first', 'seed_rerun', 'seed_status']

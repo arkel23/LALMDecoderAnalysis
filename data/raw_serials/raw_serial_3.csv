@@ -1,0 +1,2 @@
+host,state,serial,dataset_path,dataset,split,model_id,force_asr_language,model/num_parameters,batch_size,gradient_accumulation_steps,max_steps,lr,wer,cer,rtfx,no_params,num_samples,audio_length_s_mean,eval/cer,eval/loss,train/loss,train/train_audio_seconds,train/epoch,train/global_step,total_flos,train_runtime
+DGX-H200-CN03,finished,3,ERISLab/WorldSpeech,crs_sc,val_clean,q2a_openai/whisper-medium_CohereLabs/tiny-aya-base,crs,3656206336,8,64,1000,0.0015,,,,,,,26.41,0.6342014074325562,0.6066,7611781.659499985,1.286,1000,5.215883359977603e+18,58505.0925
