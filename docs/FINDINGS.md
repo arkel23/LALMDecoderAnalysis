@@ -1,27 +1,16 @@
-# Findings: what this study supports, and what to write
+# Findings: the evidence behind the paper
+
+The paper is `ACL26_LALMDecoder/main.tex`; this is the working record its Results
+section is drawn from. Framing advice that predated the paper has been removed.
 
 Merges the results assessment (2026-07-30) and the paper assessment (2026-08-02). Every number
 is derived from a CSV in `results_all/acc/` and re-checked by `verify_paper_numbers.py`;
-nothing here is hand-computed. External literature is sourced in `RELATED_WORK.md`; what to run
+nothing here is hand-computed. External literature is sourced in the paper's related work; what to run
 next is in `ROADMAP.md`.
 
 ---
 
 # Part 1 — What to write
-
-## Recommendation, first
-
-**Write the 4-page workshop paper.** Not the 2-page negative-results abstract, and not the
-8-page.
-
-- **2 pages is too small**, because the study is not only a negative result. Two findings are
-  positive and would have to be cut: the monotone overfitting-vs-resource-tier result, and the
-  measurement of how small the "specialisation" treatment actually is.
-- **8 pages is not yet supported.** It needs three things the data does not have: seeds, a
-  completed baseline contrast, and in-domain evaluation. Writing 8 pages now means padding a
-  single-seed grid, which is the failure mode reviewers punish hardest.
-- **4 pages fits what exists**: one well-quantified null, one clean positive result, one
-  mechanistic explanation for the null, and one methods contribution.
 
 ## What the study actually found
 
@@ -37,7 +26,7 @@ almost this architecture and finds decoder choice matters enormously at low reso
 a median of 1.30 percentage points of post-training data (§3). A null at 1.3 pp is entirely
 consistent with a 19.6 pp effect between families, so the claim is "specialisation at this
 magnitude does not measurably change ASR, and here is the magnitude" -- considerably stronger
-than "specialisation does not help". See `docs/RELATED_WORK.md`.
+than "specialisation does not help". See the paper's related work.
 
 **The noise floor is now measured, and it is close to the proxy.** With the `am_et` and `crs_sc`
 re-runs landed there are **10 replicate pairs**, giving a between-run standard deviation of
@@ -178,40 +167,6 @@ They also use **no augmentation at all** despite naming data scarcity as the bot
 what makes `docs/ROADMAP.md` (part 2) a real gap rather than a nice-to-have. And their
 cross-lingual projector pretraining result (14.0 -> 8.6 WER in-domain at 10 h) is the strongest
 known next lever for our low tiers.
-
-## Proposed 4-page structure
-
-1. **Intro** — the question, and why Tiny Aya's matched variants make it answerable.
-2. **Setup** — 12 languages x 4 variants, connector-only, the resource-tier ladder.
-3. **Result 1, the null** — with MDE, and immediately the treatment size (~1.3 pp), which is
-   what makes the null mean something.
-4. **Result 2, the positive** — overfitting monotone in resource tier, separated from domain
-   shift by the two loss quantities.
-5. **What we tried and abandoned** — the volume-interaction hypothesis and its death across
-   7 -> 10 -> 11 languages. Short, and it buys credibility.
-6. **Methods note** — the duration-cap data loss, with the screen.
-7. **Limitations** — seeds first, honestly.
-
-## What would justify 8 pages
-
-In descending order of value per GPU-hour:
-
-1. **3 seeds on 3 languages** (~12 runs). Drops MDE from ~4.9 toward ~1 CER. Without this no
-   framing can make a strong claim, and with it the null becomes a genuinely tight bound.
-2. **Finish serial 10 and run serial 11** — the like-for-like "what did connector training
-   buy" contrast on identical FLEURS test configs. This is the result most readers will want
-   first, and both scripts are written.
-3. **Run the in-domain WorldSpeech evals**, removing the domain confound from every number.
-4. **A stronger treatment.** The natural follow-up given finding 3: if specialisation is ~1 pp
-   of post-training data, then the interesting experiment is a decoder with substantially more
-   target-language data, not another regional variant.
-
-Items 2 and 3 need no new training, only evaluation.
-
-
----
-
-# Part 2 — The evidence
 
 ## 1. Executed vs planned
 
@@ -412,7 +367,7 @@ where decoder specialisation can help.
 The non-Aya control changes the reading, and it is now finished: **Qwen3-4B reaches 17.39 CER,
 better than every TinyAya variant**, which widens the all-six-model spread to **3.96**. So on a
 language neither component has seen, the choice that matters is the decoder *family*, not its
-regional variant — the same shape as the between-family effect in `RELATED_WORK.md`, and a
+regional variant — the same shape as the between-family effect in the paper's related work, and a
 second data point for the study's central claim that the treatment here is too small to measure.
 State which aggregation is meant: 3.43 across the five TinyAya variants, 3.96 across all six.
 

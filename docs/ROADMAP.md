@@ -2,7 +2,7 @@
 
 Merges the evaluation-dataset plan (2026-07-30) and the augmentation study (2026-08-03).
 ASR-first by decision: non-ASR evaluation is explicitly lower priority, recorded here so it is
-not rediscovered, not scheduled. Literature numbers cited below are sourced in `RELATED_WORK.md`.
+not rediscovered, not scheduled. Literature numbers cited below are sourced in the paper's related work.
 
 ---
 
@@ -166,7 +166,7 @@ a `.map()` transform would be cached into one frozen realisation.
 
 ## A reference arm would be required
 
-Cross-lingual projector pretraining is large and proven (`RELATED_WORK.md` §4). Without such an
+Cross-lingual projector pretraining is large and proven (see the paper's related work). Without such an
 arm, a null on augmentation cannot be distinguished from "nothing would have helped at this data
 budget" — the same trap the region-match null fell into before the exposure magnitude was
 measured.

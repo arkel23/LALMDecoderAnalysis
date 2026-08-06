@@ -206,3 +206,10 @@ paper/*.toc
 # QuantizedASR, where it runs from the repo root). Running it here to refresh eval_datasets.csv
 # also drops that tree next to the generator. Regenerable; the registry is the deliverable.
 for_quantizedasr/tools/preprocess/configs/
+
+# 08/06: LaTeX build artifacts. main.pdf is tracked (it is the reviewable output).
+ACL26_LALMDecoder/*.aux
+ACL26_LALMDecoder/*.bbl
+ACL26_LALMDecoder/*.blg
+ACL26_LALMDecoder/*.log
+ACL26_LALMDecoder/*.out

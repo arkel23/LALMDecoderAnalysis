@@ -258,6 +258,10 @@ python -u plot_curve.py --input_file "$ACC/t5_volume_interaction.csv" \
   --title 'Same effect as a share of baseline CER (the difficulty confound)' \
   --output_file s0/s0_volume_interaction_relative --results_dir results_all/plots
 
+# --- 4b. Paper tables --------------------------------------------------------------
+# Every table the paper prints is generated from the CSVs above, so no number is transcribed.
+python -u build_paper_tables.py
+
 # --- 5. Verification guards --------------------------------------------------------
 # Always last, and they fail loudly rather than letting an inconsistency reach a document.
 #

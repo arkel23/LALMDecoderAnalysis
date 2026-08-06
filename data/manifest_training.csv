@@ -9,5 +9,5 @@ hi_in,Hindi,fire,high,['disco-eth/WorldSpeech'],['hi_in'],['train'],google/fleur
 id_id,Indonesian,water,high,['disco-eth/WorldSpeech'],['id_id'],['train'],google/fleurs,id_id,validation,,4,42,4
 mr_in,Marathi,fire,mid,['disco-eth/WorldSpeech'],['mr_in'],['train'],google/fleurs,mr_in,validation,,4,42,4
 sw_ke,Swahili,earth,high,"['disco-eth/WorldSpeech', 'disco-eth/WorldSpeech']","['sw_ke', 'sw_tz']","['train', 'train']",google/fleurs,sw_ke,validation,,4,42,4
-ta_in,Tamil,fire,very_low,"['disco-eth/WorldSpeech', 'disco-eth/WorldSpeech']","['ta_in', 'ta_lk']","['train', 'train']",google/fleurs,ta_in,validation,,4,42,4
+ta_in,Tamil,fire,very_low,['disco-eth/WorldSpeech'],['ta_in'],['train'],google/fleurs,ta_in,validation,,4,42,4
 ur_pk,Urdu,fire,low,"['disco-eth/WorldSpeech', 'disco-eth/WorldSpeech']","['ur_pk', 'ur_in']","['train', 'train']",google/fleurs,ur_pk,validation,,4,42,4

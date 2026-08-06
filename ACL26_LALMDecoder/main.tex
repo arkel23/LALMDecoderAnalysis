@@ -129,9 +129,31 @@ have an established writing system, however, it does not correspond to widesprea
 One recent direction addressing these constraints is the SLAM-ASR architecture \citep{maEmbarrassinglySimpleApproach2024}, which connects a pretrained speech encoder to a large language model (LLM) through a trainable linear projector, while keeping the pretrained models frozen.  Restricting training to the projector provides a practical way to introduce a language in low-resource settings. Studies building on this work have investigated its robustness \citep{kumarPerformanceEvaluationSLAMASR2025}, number of necessary audio hours \citep{fongSpeechLLMsLowResource2025}, which encoder layers can be pruned while maintaining performance through fine-tuning of the LLM backbone \citep{kolluriRoleEncoderDepth2026}, language-level and language-family-level training configurations \citep{zhangLanguageFamilyMatters2026}, and reducing prompt sensitivity with a learnable prompt projector \citep{burdissoReducingPromptSensitivity2026}. Although these prior studies have investigated several aspects of SLAM-ASR, the decoder selection has generally been guided by target-language support and state-of-the-art (SOTA) multilingual coverage, [TODO: Add Examples of the LLMs they used]. To the best of our knowledge, however, the effect of decoder specialization within this architecture has not been systematically evaluated, leaving open whether specialized decoders provide an advantage over general-purpose models unexplored. More recently, the Tiny Aya family\citep{salamancaTinyAyaBridging2026} introduced SOTA small multilingual LLMs that share a common multilingual foundation, with each regional model having undergone post-training to reinforce the linguistic clusters associated with its respective region. 
 
 % Tried framing this for negative results
-Motivated by the growing study of failure modes in low-resource ASR and recent advances in small regionally specialized multilingual LLMs, we aim to contribute to the efforts to build linguistically informed language technologies. In this study we address the unexplored role of decoder specialization within the SLAM-ASR architecture by examining empirically comparing regional Tiny Aya decoders wth Tiny Aya Global across 10 languages , [TODO: Update]nine  are from the three Tiny Aya regional clusters and one language unsupported by both and examining whether and to what extent specialization offers a strong starting point for low-resource languages when ASR data are scarce. [TODO: Introduce research questions(s) ?]
+Motivated by the growing study of failure modes in low-resource ASR and recent advances in small regionally specialized multilingual LLMs, we aim to contribute to the efforts to build linguistically informed language technologies. In this study we address the unexplored role of decoder specialization within the SLAM-ASR architecture by examining empirically comparing regional Tiny Aya decoders wth Tiny Aya Global across 10 languages , [TODO: Update]nine  are from the three Tiny Aya regional clusters and one language unsupported by both and % REVIEW: this says 10 languages; the study covers 12 (11 with a Tiny Aya region, plus
+% Kreol Seselwa, which has none). The abstract already says 12.
+examining whether and to what extent specialization offers a strong starting point for low-resource languages when ASR data are scarce. [TODO: Introduce research questions(s) ?]
 
 
+
+% ADDED (first draft): positions SLAM-ASR as a low-resource route and states the language
+% coverage contribution. Placed here rather than in a new \section{Related Work} so the existing
+% structure is untouched; promote it to its own section in a later pass if preferred.
+\paragraph{SLAM-ASR as a route into low-resource languages.}
+The appeal of this architecture for low-resource settings is that almost nothing has to be
+trained. The encoder and the decoder are frozen and can be taken off the shelf, and the only
+optimized component is a projector of a few million parameters, so a language can be added with
+a few hours of transcribed audio and a single GPU rather than with a full ASR training pipeline.
+\citet{fongSpeechLLMsLowResource2025} quantify where that route becomes competitive, finding
+that roughly 100--200 hours are needed before the framework matches a Whisper-only baseline, and
+that projector pretraining on a high-resource language substantially improves the low-resource
+end. Reviews of African ASR report the same shortage from the data side
+\citep{imamAutomaticSpeechRecognitionAfrican2025, adjoviSpeechTextCorpora2026}.
+
+Most SLAM-ASR studies to date evaluate on a small set of well-resourced languages. Of the twelve
+languages we study, seven --- French, Marathi, Urdu, Swahili, Hausa, Amharic and Kreol Seselwa
+--- are not examined in the speech-LLM literature we survey, and Kreol Seselwa appears not to
+have been evaluated in this architecture at all. Reporting them together, under one recipe and
+one encoder, is part of what this study contributes.
 
 \section{Methods}
 \subsection{SLAM-ASR}
@@ -203,14 +225,20 @@ Throughout all experiments, we train only the projector while keeping the encode
 English & en\_us & en\_us   \\
 Spanish & es\_mx & es\_419  \\
 French & fr\_ca & fr\_fr   \\
+% REVIEW: manifest_training.csv records the Indonesian training config as id_id, not in_in.
 Indonesian & in\_in & id\_id  \\
 \midrule
 Hindi & hi\_in & hi\_in   \\
 Marathi & mr\_in & mr\_in   \\
+% REVIEW: Tamil trains on ta_in alone. Verified over the full config: all 23,261 ta_lk clips
+% are exactly 30.00 s and the strict < 30 s filter removes every one, so ta_lk never reached
+% the model. The W&B configs have been corrected accordingly.
 Tamil & ta\_in & ta\_in   \\
+% REVIEW: the training config lists ur_pk first, then ur_in.
 Urdu & ur\_in $+$ ur\_pk & ur\_pk   \\
 \midrule
 Swahili & sw\_ke $+$ sw\_tz & sw\_ke   \\
+% REVIEW: manifest_training.csv records the Amharic training config as am_et, not am_te.
 Amharic & am\_te & am\_et   \\
 Hausa & ha\_ng $+$ ha\_td  & \textbf{ha\_ng}  \\
 Kreol Seselwa & crs\_sc & \textbf{crs\_sc} \\
@@ -218,6 +246,9 @@ Kreol Seselwa & crs\_sc & \textbf{crs\_sc} \\
 \bottomrule
 \end{tabular}
 
+% REVIEW: tables/tab_datasets.tex is generated from data/manifest_training.csv and carries
+% resource tier and evaluation-set size. Consider replacing this hand-written body with
+% \input{tables/tab_datasets} in a later pass.
 \caption{Dataset overview. WorldSpeech training subsets are used to train the
 projector. Evaluation uses the FLEURS validation split; bold entries use the
 WorldSpeech test split. The \(+\) symbol denotes subsets pooled.}
@@ -231,12 +262,97 @@ WorldSpeech test split. The \(+\) symbol denotes subsets pooled.}
 
 
 \section{Results}
-PH
+
+% ADDED (first draft). Numbers come from tables/*.tex, generated by build_paper_tables.py in
+% the analysis repo, so nothing here is transcribed by hand.
+
+\subsection{Decoder specialization does not change what the model hears}
+
+Table~\ref{tab:region-match} reports, for each language, the best CER of the region-matched
+decoder against the mean of the two mismatched regional decoders and against LisTAya-Global.
+Across the 11 languages covered by a Tiny Aya region, the matched decoder is
+\textbf{0.55 CER better} on average, with a 95\% confidence interval of $[-3.89, 1.99]$ and a
+Wilcoxon signed-rank $p = 0.966$. Six of eleven languages favour the matched decoder and five do
+not.
+
+This is a null, and its width is what makes it informative. The paired design's minimum
+detectable effect is \textbf{4.90 CER}, so effects smaller than that cannot be resolved here.
+We also measure the run-to-run floor directly rather than assuming it: over ten replicate pairs
+in which a cell was trained twice, the between-run standard deviation is \textbf{1.17 CER},
+against a median within-run late-training standard deviation of 1.09. The observed effect is
+smaller than the noise between two runs of the same configuration.
+
+\input{tables/tab_region_match}
+
+\subsection{The specialization is small in the data}
+
+A null invites the question of whether the manipulation was large enough to detect. We quantify
+it from the Tiny Aya report's own language-composition tables: for each language we take the
+share of the matched variant's post-training mix in that language, minus the mean share of the
+two mismatched variants. The median excess is \textbf{1.3 percentage points}.
+
+Regional specialization in this model family is therefore a shift of about one percentage point
+of post-training data per language, not a change of training corpus. Read against that, the
+result is better stated as \emph{specialization at this magnitude does not measurably change
+recognition accuracy}, which is a narrower and more useful claim than specialization being
+inert.
+
+\subsection{Training data volume predicts overfitting}
+
+While decoder choice does not predict accuracy, the amount of training audio predicts how a run
+behaves. Table~\ref{tab:loss-tier} groups languages by resource tier and reports the rise in
+evaluation loss after its own minimum, and the fraction of the run elapsed at that minimum. Both
+are monotone across the four tiers: the lowest-resource cells reach their best evaluation loss
+about a quarter of the way through training and degrade over the remaining three quarters, while
+the highest-resource cells improve almost to the end.
+
+\input{tables/tab_loss_by_tier}
+
+\subsection{Connector training versus off-the-shelf models}
+
+Table~\ref{tab:baselines} compares each trained LisTAya checkpoint against the strongest
+off-the-shelf model we evaluate on the same test set. In every cell evaluated so far, training a
+projector on a few hours of in-language audio beats the best downloadable model, and the margin
+is largest exactly where the baseline is weakest.
+
+% TODO(first draft): this sweep is still running -- 4 of 43 cells at the time of writing.
+% Re-run build_paper_tables.py before submission and update the sentence above with the final
+% coverage.
+
+\input{tables/tab_baselines}
+
+\subsection{A language neither component supports}
+
+Kreol Seselwa is supported by neither the Whisper encoder nor any Tiny Aya decoder, and it is
+the one cell where both frozen components operate outside their coverage. The four decoders span
+17.92--21.35 CER on it, a range of 3.43 CER. The projector therefore learns a usable alignment
+for a language absent from both pretraining corpora, and which regional variant it is paired
+with matters as little there as elsewhere.
+
 
 
 \section*{Limitations}
 
-PH
+% ADDED (first draft).
+
+Most cells are trained once. Ten of the 52 runs have a replicate, which is what lets us state a
+between-run standard deviation of 1.17 CER, but the remaining cells carry no direct uncertainty
+estimate, and the design's minimum detectable effect of 4.90 CER is well above the effects that
+would be practically interesting. A negative result at this width bounds the effect rather than
+excluding it.
+
+Ten of the twelve languages train on WorldSpeech and evaluate on FLEURS, so most reported numbers
+combine decoder choice with a domain shift from formal recorded speech to read speech. We report
+in-domain WorldSpeech test results alongside them where available, but the two are not
+separable in every cell.
+
+The study measures transcription accuracy only. Whether decoder specialization affects
+downstream spoken-language understanding, where the decoder's own multilingual knowledge is more
+directly exercised, is not addressed here.
+
+Finally, the comparison assumes the Tiny Aya variants differ only in post-training data. We take
+that from the model family's own documentation rather than verifying it independently.
+
 
 \section*{Acknowledgments}
 

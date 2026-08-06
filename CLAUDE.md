@@ -1,6 +1,6 @@
 # LALMDecoderAnalysis — conventions
 
-Analysis repo for the LisTAya / TinyAya decoder-SFT comparison. See `HANDOVER.md` for the
+Analysis repo for the LisTAya / TinyAya decoder-SFT comparison. See `README.md` for the
 project goals and the tools available here.
 
 These conventions are inherited from `/home/edwinrios/analysis/CLAUDE.md` (the shared file
@@ -264,4 +264,4 @@ Two related failures from the same session:
   tiers, no `NEEDS_CER` primary-error-rate switch. If this project needs per-language
   scoring, add it deliberately rather than copying MultilingualQASR's version, whose
   `NEEDS_CER` logic never actually fired on its own short-form data.
-- **The comparison is only causal if the variants are matched.** See `HANDOVER.md`.
+- **The comparison is only causal if the variants are matched.** See `README.md`.

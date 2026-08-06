@@ -1,5 +1,46 @@
 # Change log
 
+## 2026-08-06 (later still) — first draft of the paper's Results
+
+**Venue.** ROCLING, calibrated from proceedings rather than instructions: 149 papers across
+2023-2025 have a **median of 8 pages including references**, 60 % at 8 or fewer, 32 % at 7 or
+fewer. The draft currently compiles to **6 pages** with 0 errors, 0 undefined citations and 0
+overfull boxes.
+
+**Additive only, as instructed.** Nothing was removed from `main.tex`. The `PH` placeholders
+under Results and Limitations were filled, a related-work paragraph was appended before Methods,
+and six `% REVIEW:` comments flag things for manual attention rather than editing them: the
+Indonesian (`in_in`) and Amharic (`am_te`) training configs, Urdu's pooling order, Tamil now
+being single-config, the intro's "10 languages" against the abstract's 12, and the option of
+replacing the hand-written Table 1 with the generated one.
+
+**Tables are generated.** `build_paper_tables.py` writes `ACL26_LALMDecoder/tables/*.tex` from
+the manifests and results CSVs, wired into `plotter.sh`. Two LaTeX traps cost time and are worth
+recording:
+
+- `\input` of a bare tabular body **does not work** — inside an alignment TeX cannot read a file
+  boundary and the following `\bottomrule` fails as a misplaced `\noalign`. The generator now
+  emits the complete float, caption and label included.
+- The last row **must** keep its trailing `\\`, or the row is still open when `\bottomrule`
+  expands. An earlier "fix" that stripped it reintroduced the same error.
+- A 6-column table silently **overlapped its neighbour** while LaTeX reported no error. The wide
+  tables are now `table*`. Caught only by rendering the page, which is why the convention exists.
+
+**Serial 11 arrived.** 10 finished runs, and the first training-vs-baseline contrast:
+Hausa FLEURS 95.56 -> 68.72, Swahili FLEURS 51.52 -> 35.02, Swahili WorldSpeech 25.93 -> 20.85,
+sw_tz 78.10 -> 25.27. Training beats the strongest downloadable model in 4 of 4 cells so far.
+`compare_with_trained()` had been handed the raw frame while expecting the built one, and raised
+the first time serial 11 was non-empty.
+
+**Language coverage as a contribution.** Of the 12 study languages, seven — French, Marathi,
+Urdu, Swahili, Hausa, Amharic and Kreol Seselwa — are named nowhere in the 38 cited works. The
+claim in the paper is scoped to the speech-LLM literature surveyed, since African ASR reviews do
+cover Amharic, Hausa and Swahili; Kreol Seselwa appears unstudied in this architecture entirely.
+
+**Docs.** `HANDOVER.md` -> `README.md` (it is the index a reader looks for).
+`docs/RELATED_WORK.md` retired to `deprecated/` now its anchors are in the paper.
+`docs/FINDINGS.md` lost the framing sections that predated the paper.
+
 ## 2026-08-06 (later) — ta_lk removed from the record; one bibliography
 
 **Verified over the full config, not a sample.** Reading the `duration` column for all 23,261
