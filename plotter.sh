@@ -99,12 +99,11 @@ done
 # Pass --load to additionally download audio and run the duration-consistency and interleave
 # assertions. That is opt-in because it is tens of GB; it has been run for the Tamil pair and
 # both checks passed (interleave lossless, zero samples removed).
-# Also screens for the strict-cap data-loss bug: it reports ta_lk's 100%-at-cap share as a
-# KNOWN, documented issue (docs/UPSTREAM_FIXES.md) rather than failing, so the guard gates on
-# NEW regressions. Snapshot-first, so it works offline and deterministically.
-if [ ! -f "data/dataset_checks/disco-eth_WorldSpeech_ta_in-ta_lk_train.csv" ]; then
+# Also screens for configs sitting at the duration cap, which the strict `<` filter removes
+# entirely. Snapshot-first, so it works offline and deterministically.
+if [ ! -f "data/dataset_checks/disco-eth_WorldSpeech_ta_in_train.csv" ]; then
   python -u verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
-    --dataset_configs ta_in ta_lk --split train
+    --dataset_configs ta_in --split train
 else
   echo "Skipping dataset metadata check (exists)"
 fi

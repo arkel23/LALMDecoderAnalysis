@@ -1,5 +1,51 @@
 # Change log
 
+## 2026-08-06 (later) — ta_lk removed from the record; one bibliography
+
+**Verified over the full config, not a sample.** Reading the `duration` column for all 23,261
+`ta_lk` rows (casting the Audio column with `decode=False`, so nothing is decoded) gives a single
+unique value: **30.000000**. The upstream filter keeps a clip only when
+`length < max_input_length`, so all 23,261 fail and Tamil's stream is `ta_in` alone. An earlier
+attempt to confirm this by decoding every clip was OOM-killed at 29 % on this 7 GB box; the
+metadata read settles it in seconds and covers every row rather than a 100-row sample.
+
+`purge_ta_lk_from_configs.py` then removed `ta_lk` from `dataset_train`, and the aligned entry
+from `dataset_path_train` and `split_train`, on the **6** runs that carried it (4 in serial 0,
+2 in serial 2). Dry-run first; W&B now reports 0 runs carrying it.
+
+`utils.py` follows: Tamil is a single-config stream, out of `MULTI_CONFIG_TRAIN`, out of
+`ACCENT_MATCH` (it trains and evaluates the same variety), and `KNOWN_AT_CAP_CONFIGS` is empty.
+`ta_lk` stays in `TRAIN_CONFIG_TO_CELL` — that map normalises *any* config to its study cell, and
+removing it silently detached the eval set from Tamil.
+
+**No substantive number moved.** Only the pre-filter bookkeeping columns changed —
+`expected_stream_examples` 32,107 -> 8,846 and `n_dropped_by_cap` 23,261 -> 0, plus the ratios
+derived from them. `stream_post_filter` is still 8,846, Tamil's delta still -14.70, and t1, t2
+stats and t8 are byte-identical. Two ordering claims that asserted the loss were replaced by
+claims that every language now reconciles.
+
+`ta_lk` remains an eval set, described plainly as a Tamil variety outside the training mix —
+the same axis as the English and Spanish variants.
+
+### Bibliography
+
+`LisTAya_updated.bib` is the single bibliography; `LisTAya.bib` and the ACL template's
+`custom.bib` moved to `deprecated/`. Nothing was lost: the only key unique to `LisTAya.bib` was
+`zhang-etal-2026-language`, the ACL Anthology version of a paper `LisTAya_updated.bib` already
+carries as `zhangLanguageFamilyMatters2026` (arXiv). **Suggestion for a later pass, not applied:**
+the Anthology entry has better metadata than the arXiv one now cited, and
+`imamAutomaticSpeechRecognition` carries no year or venue.
+
+Added two references the survey turned up: `imamAutomaticSpeechRecognitionAfrican2025`
+(systematic review of ASR for African low-resource languages) and `adjoviSpeechTextCorpora2026`
+(ASR data acquisition for Fongbe and Hausa). 38 entries.
+
+### Venue calibration for the paper
+
+149 ROCLING papers, 2023-2025: **median 8 pages including references**, 60 % at 8 or fewer, 32 %
+at 7 or fewer. So 8 pages total is the norm and shorter is unremarkable — with ~38 references
+costing 1.5-2 pages, the content budget is roughly 6.
+
 ## 2026-08-06 — one registry for the eval datasets, and the source-of-truth manifests
 
 `worldspeech_ha_ng_test` is Hausa's training-time selection split. That was found, recorded in

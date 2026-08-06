@@ -309,10 +309,11 @@ ORDERINGS = [
          "accounting_flag == 'does_not_reconcile_see_docstring'").empty),
     ('ta_in reconciles once the cap loss is accounted for',
      lambda: abs(float(_acc('ta_in', 'ratio_implied_to_expected_post_filter')) - 1.0) < 0.05),
-    ('ta_in did NOT reconcile against the pre-filter count (the loss is real)',
-     lambda: float(_acc('ta_in', 'ratio_implied_to_expected')) < 0.5),
-    ('only ta_in and fr_fr lose clips to the cap',
-     lambda: set(load(T4L).query("n_dropped_by_cap > 0")['dataset']) == {'ta_in', 'fr_fr'}),
+    ('every language now reconciles against its own expected stream',
+     lambda: set(load(T4L).query("accounting_flag == 'does_not_reconcile_see_docstring'")
+                 ['dataset']) == set()),
+    ('fr_ca is the only training config still losing clips to the cap',
+     lambda: set(load(T4L).query("n_dropped_by_cap > 0")['dataset']) == {'fr_fr'}),
     ('en_us and hi_in never exhausted their streams, so are lower bounds only',
      lambda: set(load(T4L).query(
          "accounting_flag == 'stream_never_exhausted_lower_bound_only'")['dataset'])

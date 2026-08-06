@@ -177,7 +177,7 @@ All written by `plot_curve.py` into `results_all/plots/s0/`.
 
 - **Interleaving does not oversample the smaller config.** `all_exhausted_without_replacement`
   makes a combined stream exactly the sum of its parts. Proved offline in
-  `verify_interleave_semantics.py` and confirmed on the real `ta_in` + `ta_lk` splits.
+  `verify_interleave_semantics.py`.
 - **The Tamil configs contain no corrupt or mislabelled clips.** The duration-consistency filter
   removes zero samples. The Tamil loss was the duration cap, not data quality.
 - **The `crs_sc` `_clean` splits are all genuinely cleaned** — train, val and test. The committed

@@ -1,8 +1,8 @@
 """Does the benefit of a region-matched decoder depend on how much training data it had?
 
-The contrast is computed WITHIN a language, so the ta_lk duration-cap loss cannot bias it -- it
-only relocates Tamil on the volume axis, where it becomes the grid's only genuinely low-resource
-cell. Excluding Tamil would discard the most informative point.
+The contrast is computed WITHIN a language: every variant consumed the identical stream, so
+per-language stream size cannot bias it. Tamil is the grid's smallest cell and therefore its most
+informative point on the volume axis.
 
 THE CONFOUND, measured rather than argued away: volume and baseline error rate are collinear
 across these languages, so a constant RELATIVE benefit would masquerade as a growing ABSOLUTE

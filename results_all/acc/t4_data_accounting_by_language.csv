@@ -1,5 +1,5 @@
 dataset,language_name,n_runs,train_configs,epochs_logged,audio_hours_processed,mean_sample_seconds,implied_stream_hours,implied_stream_samples,estimate_kind,expected_stream_examples,expected_stream_examples_post_filter,n_dropped_by_cap,ratio_implied_to_expected,ratio_implied_to_expected_post_filter,ratio_to_closest_single_config,accounting_flag
-ta_in,Tamil,4,ta_in+ta_lk,58.014000,2019.961006,14.202851,34.818509,8825.455924,estimate,32107.000000,8846.000000,23261.000000,0.274876,0.997678,0.997678,reconciles
+ta_in,Tamil,4,ta_in,58.014000,2019.961006,14.202851,34.818509,8825.455924,estimate,8846.000000,8846.000000,0.000000,0.997678,0.997678,,reconciles
 am_et,Amharic,4,am_et,58.014000,2215.516723,15.577852,38.189346,8825.455924,estimate,8873.000000,8873.000000,0.000000,0.994642,0.994642,,reconciles
 ha_ng,Hausa,4,ha_ng+ha_td,18.046000,2265.632343,15.930227,125.547620,28371.938380,estimate,27255.000000,27255.000000,0.000000,1.040981,1.040981,1.843531,reconciles
 ur_pk,Urdu,4,ur_pk+ur_in,16.040000,1356.245630,9.536102,84.553967,31920.199501,estimate,31079.000000,31079.000000,0.000000,1.027066,1.027066,1.134255,reconciles

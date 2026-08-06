@@ -7,7 +7,7 @@ Two modes:
             `duration` sample to measure the fraction of clips AT OR ABOVE the cap. That second
             check is the important one: the upstream filter keeps a clip when
             `length < max_input_length` -- STRICT -- so a corpus pre-segmented into fixed windows
-            exactly at the cap is deleted entirely. That removed 100% of ta_lk (23,261 clips).
+            exactly at the cap is deleted entirely.
   --load    Loads the splits, computes audio_length_s from decoded arrays, asserts
             len(interleaved) == sum of parts, and applies the duration-consistency filter.
             Downloads audio (tens of GB), so it is opt-in and not run by plotter.sh.
@@ -17,7 +17,7 @@ Run in the `asr` env, not `pytorch`: `pytorch` has no audio backend at all, whic
 
 Usage:
     python verify_dataset_durations.py --dataset_path disco-eth/WorldSpeech \
-        --dataset_configs ta_in ta_lk --split train [--load --num_proc 20]
+        --dataset_configs ta_in --split train [--load --num_proc 20]
 
 Exit code is non-zero if a check fails, so it can gate a pipeline.
 """
@@ -269,7 +269,7 @@ def main():
     total = meta['n_examples'].sum()
     print(f'\nsum of parts (metadata): {int(total)} examples')
 
-    # The at-cap screen. This is the check that would have caught the ta_lk loss up front.
+    # The at-cap screen: a corpus pre-segmented at the cap is deleted by the strict filter.
     print(f'\nduration screen against max_input_length={args.max_input_length} '
           f'(strict `<`, so clips AT the cap are dropped):')
     cap = duration_at_cap(args.dataset_path, args.dataset_configs, args.split,

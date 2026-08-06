@@ -33,7 +33,6 @@ anything that loads audio.**
 
 Run `verify_dataset_durations.py --load` on a newly introduced split before trusting it — the
 `duration`-column inconsistency that forced the `crs_sc` cleaning pass could affect others.
-`ta_in` + `ta_lk` are already checked and clean.
 
 ## 2. Same-language, different domain — reframe what exists
 
@@ -69,9 +68,8 @@ thin for family-level claims, and evaluation is cheap.
   Voxtral-Mini-3B toplines already run by the team.
 - **`crs_sc`** is the strongest OOD probe in the grid: unsupported by both Whisper and TinyAya.
   Keep it framed as the encoder-and-decoder-unseen quadrant, not an ordinary language.
-- **`ta_lk`** is the single most informative eval: named in Tamil's training config, but the
-  strict `< 30 s` cap removed all 23,261 clips, so it is held-out dialect transfer for a variety
-  the config claims to have trained on.
+- **`ta_lk`** is a Tamil variety outside the training mix, so it is held-out dialect transfer --
+  the same axis as the English and Spanish variants.
 - **Long-form** if wanted: `configs/datasets/long_ml/` has 96 `espnet/floras` configs.
 
 ## 5. Lower-priority backlog — recorded, not scheduled

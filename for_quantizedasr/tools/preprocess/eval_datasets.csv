@@ -40,6 +40,6 @@ short_ml/worldspeech_mr_in_test.yaml,disco-eth/WorldSpeech,mr_in,test,worldspeec
 short_ml/worldspeech_sw_ke_test.yaml,disco-eth/WorldSpeech,sw_ke,test,worldspeech,sw_ke,True,False,primary,True
 short_ml/worldspeech_sw_tz_test.yaml,disco-eth/WorldSpeech,sw_tz,test,worldspeech,sw_ke,True,False,accent_transfer,True
 short_ml/worldspeech_ta_in_test.yaml,disco-eth/WorldSpeech,ta_in,test,worldspeech,ta_in,True,False,primary,True
-short_ml/worldspeech_ta_lk_test.yaml,disco-eth/WorldSpeech,ta_lk,test,worldspeech,ta_in,True,False,accent_transfer,True
+short_ml/worldspeech_ta_lk_test.yaml,disco-eth/WorldSpeech,ta_lk,test,worldspeech,ta_in,False,False,accent_transfer,True
 short_ml/worldspeech_ur_in_test.yaml,disco-eth/WorldSpeech,ur_in,test,worldspeech,ur_pk,True,False,accent_transfer,True
 short_ml/worldspeech_ur_pk_test.yaml,disco-eth/WorldSpeech,ur_pk,test,worldspeech,ur_pk,True,False,primary,True

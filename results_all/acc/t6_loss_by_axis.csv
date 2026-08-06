@@ -2,9 +2,9 @@ axis,aggregation,level,n_runs,n_languages,mean_generalisation_gap,median_general
 eval_domain,median_of_per_language_medians,cross_domain,40,10,0.256071,0.184497,0.071933,0.008931,0.602076
 eval_domain,median_of_per_language_medians,in_domain,8,2,0.178529,0.178529,0.000658,0.000658,0.899975
 accent_match,median_of_per_language_medians,different,4,1,0.170485,0.170485,0.012969,0.012969,0.790470
-accent_match,median_of_per_language_medians,partial,16,4,0.268500,0.242454,0.113983,0.094585,0.573347
+accent_match,median_of_per_language_medians,partial,12,3,-0.011782,0.198509,0.063396,0.001126,0.669489
 accent_match,median_of_per_language_medians,related,4,1,0.125524,0.125524,0.003603,0.003603,0.690051
-accent_match,median_of_per_language_medians,same,24,6,0.257959,0.136303,0.041357,0.004156,0.674466
+accent_match,median_of_per_language_medians,same,28,7,0.379586,0.201948,0.073412,0.004893,0.618817
 resource_tier,median_of_per_language_medians,high,28,7,0.088899,0.125524,0.004063,0.003420,0.815618
 resource_tier,median_of_per_language_medians,low,4,1,-0.520253,-0.520253,0.188045,0.188045,0.291663
 resource_tier,median_of_per_language_medians,mid,8,2,0.532254,0.532254,0.040990,0.040990,0.627429

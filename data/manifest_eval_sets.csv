@@ -40,6 +40,6 @@ short_ml/worldspeech_mr_in_test.yaml,disco-eth/WorldSpeech,mr_in,test,worldspeec
 short_ml/worldspeech_sw_ke_test.yaml,disco-eth/WorldSpeech,sw_ke,test,worldspeech,sw_ke,True,False,primary,True,5352.000000,8.560433,6.243523,1.212000,29.980062
 short_ml/worldspeech_sw_tz_test.yaml,disco-eth/WorldSpeech,sw_tz,test,worldspeech,sw_ke,True,False,accent_transfer,True,10542.000000,11.568961,7.984718,1.020000,29.980062
 short_ml/worldspeech_ta_in_test.yaml,disco-eth/WorldSpeech,ta_in,test,worldspeech,ta_in,True,False,primary,True,466.000000,13.893889,7.201758,2.044000,29.948000
-short_ml/worldspeech_ta_lk_test.yaml,disco-eth/WorldSpeech,ta_lk,test,worldspeech,ta_in,True,False,accent_transfer,True,1224.000000,30.000000,0.000000,30.000000,30.000000
+short_ml/worldspeech_ta_lk_test.yaml,disco-eth/WorldSpeech,ta_lk,test,worldspeech,ta_in,False,False,accent_transfer,True,1224.000000,30.000000,0.000000,30.000000,30.000000
 short_ml/worldspeech_ur_in_test.yaml,disco-eth/WorldSpeech,ur_in,test,worldspeech,ur_pk,True,False,accent_transfer,True,155.000000,14.424698,7.836071,2.108000,29.820000
 short_ml/worldspeech_ur_pk_test.yaml,disco-eth/WorldSpeech,ur_pk,test,worldspeech,ur_pk,True,False,primary,True,1482.000000,9.051470,8.825499,1.020000,29.980000

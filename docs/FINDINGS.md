@@ -291,17 +291,11 @@ against-hypothesis point. The superseded first run lives under serial 1
 - **Interleaving is NOT a confound.** The loader uses `all_exhausted_without_replacement`, so a
   combined stream is exactly the sum of its parts. Do not re-raise it.
 
-### 4.1 The 30 s cap, and the volume hypothesis that did not survive
+### 4.1 The volume hypothesis that did not survive
 
-**The bug.** `make_audio_length_filter_fn` keeps a clip when `length < max_input_length` -- a
-*strict* comparison -- against `max_input_length: 30`. WorldSpeech `ta_lk` is pre-segmented into
-fixed 30-second windows (100/100 sampled rows at exactly 30.00 s), so every clip fails
-`30.0 < 30`. Filtering the interleaved Tamil stream leaves exactly **8,846** rows -- `len(ta_in)`
--- against an intended **32107**: 23,261 clips, 72.4 % of the intended Tamil training data,
-silently discarded. Only `ta_lk` is totally affected; `fr_ca` loses ~4 %; `am_et` and `ur_pk`
-sample 0/100 at the cap. Written up in `docs/UPSTREAM_FIXES.md`. The epoch-based reconstruction
-inferred **8825** samples against a true 8,846 -- 99.76 % -- which is why that accounting is
-trusted elsewhere.
+Tamil trains on `ta_in` alone: **8,846** clips, the smallest stream in the grid. The epoch-based
+reconstruction infers **8825** against that true 8,846 -- 99.76 % -- which is why the accounting
+is trusted elsewhere.
 
 Tamil is **not** excluded: the contrast is within-language, so the loss reduced every arm equally.
 

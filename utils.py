@@ -164,7 +164,6 @@ TRAIN_EVAL_MATCH = {
 # because it changes what the published per-config hour count means (it becomes a lower bound
 # on the combined stream), not because the interleaving distorts sampling.
 MULTI_CONFIG_TRAIN = {
-    'ta_in': ('ta_in', 'ta_lk'),
     'ur_pk': ('ur_pk', 'ur_in'),
     'ha_ng': ('ha_ng', 'ha_td'),
     'sw_ke': ('sw_ke', 'sw_tz'),
@@ -186,7 +185,7 @@ TRAIN_CONFIGS = {
     'id_id':  ('disco-eth/WorldSpeech', ('id_id',),          'train'),
     'mr_in':  ('disco-eth/WorldSpeech', ('mr_in',),          'train'),
     'sw_ke':  ('disco-eth/WorldSpeech', ('sw_ke', 'sw_tz'),  'train'),
-    'ta_in':  ('disco-eth/WorldSpeech', ('ta_in', 'ta_lk'),  'train'),
+    'ta_in':  ('disco-eth/WorldSpeech', ('ta_in',),          'train'),
     'ha_ng':  ('disco-eth/WorldSpeech', ('ha_ng', 'ha_td'),  'train'),
     'crs_sc': ('ERISLab/WorldSpeech',   ('crs_sc',),         'train_val_exc_clean'),
 }
@@ -205,7 +204,6 @@ WORLDSPEECH_TRAIN_EXAMPLES = {
     'ha_ng':  11865,
     'ha_td':  15390,
     'ta_in':  8846,
-    'ta_lk':  23261,
     'mr_in':  58201,
     'id_id':  101112,
     'am_et':  8873,
@@ -216,17 +214,12 @@ WORLDSPEECH_TRAIN_EXAMPLES = {
 
 # --- The duration cap -------------------------------------------------------------------
 # The upstream filter keeps a clip when `length < max_input_length` -- STRICT -- so a clip at
-# exactly 30.000 s is dropped. ta_lk is pre-segmented into fixed 30 s windows, so all 23,261
-# of its clips fail and Tamil collapses to ta_in: 8,846 of 32,107 intended, 72.4% lost.
+# exactly 30.000 s is dropped.
 MAX_INPUT_LENGTH_S = 30
 
 # Fraction of each config's clips at or above the cap. FROZEN SNAPSHOT (2026-07-30, 100-row
-# `duration` sample). Only ta_lk is total; fr_ca loses ~4%, the rest ~0.
+# `duration` sample). fr_ca loses ~4%, the rest ~0.
 CONFIG_DURATION_AT_CAP = {
-    'ta_lk': 1.00,
-    # ta_in: 0.00 is not a sample, it is proven. Filtering the interleaved ta_in+ta_lk stream
-    # with the real training filter leaves exactly 8,846 rows == len(ta_in), so every ta_in
-    # clip survived the cap and every ta_lk clip was removed.
     'ta_in': 0.00,
     'fr_ca': 0.04,
     'hi_in': 0.00,
@@ -242,10 +235,9 @@ CONFIG_DURATION_AT_CAP = {
 }
 
 
-# Configs already known to be gutted by the strict cap, with the loss analysed and written up
-# (docs/UPSTREAM_FIXES.md). The screen acknowledges these instead of failing on them forever, so
-# it gates on NEW regressions rather than on a documented problem awaiting an upstream fix.
-KNOWN_AT_CAP_CONFIGS = ('ta_lk',)
+# Configs known to sit entirely at the cap, acknowledged rather than failed on, so the screen
+# gates on NEW regressions. Empty: the one such config is no longer part of any training stream.
+KNOWN_AT_CAP_CONFIGS = ()
 
 
 def expected_stream_examples(language, post_filter=False):
@@ -309,7 +301,6 @@ EVAL_DOMAIN = {
 ACCENT_MATCH = {
     'fr_fr': 'different',        # trains fr_ca (Canadian), evaluates fr_fr (European)
     'es_419': 'related',         # trains es_mx, evaluates es_419 -- both Latin American
-    'ta_in': 'partial',          # trains ta_in + ta_lk, evaluates ta_in
     'ur_pk': 'partial',          # trains ur_pk + ur_in, evaluates ur_pk
     'sw_ke': 'partial',          # trains sw_ke + sw_tz, evaluates sw_ke
     'ha_ng': 'partial',          # trains ha_ng + ha_td, evaluates ha_ng
@@ -362,9 +353,9 @@ def is_selection_split(language, dataset_path, dataset, split):
 # resource tier and no region, and silently drop out of any grouped table.
 TRAIN_CONFIG_TO_CELL = {
     'fr_ca': 'fr_fr',
+    'ta_lk': 'ta_in',
     'es_mx': 'es_419',
     'es_es': 'es_419',
-    'ta_lk': 'ta_in',
     'ur_in': 'ur_pk',
     'sw_tz': 'sw_ke',
     'ha_td': 'ha_ng',

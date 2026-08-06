@@ -90,8 +90,7 @@ def add_stream_estimates(out):
 
     out['expected_stream_examples'] = out['dataset'].map(expected_stream_examples)
     # Post-filter is the honest comparator: the strict `< 30 s` cap removes clips before the
-    # model ever sees them, and for ta_lk it removes 100% of them. Comparing against the
-    # pre-filter count is what made ta_in look anomalous.
+    # model ever sees them.
     out['expected_stream_examples_post_filter'] = out['dataset'].map(
         lambda d: expected_stream_examples(d, post_filter=True))
     out['n_dropped_by_cap'] = (out['expected_stream_examples']

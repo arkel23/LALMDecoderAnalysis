@@ -8,7 +8,7 @@ hi_in,fire,clean,fire,13.110000,False,12.050000,2,13.180000,True,1.060000,-0.070
 id_id,water,clean,water,5.740000,False,6.135000,2,6.050000,True,-0.395000,-0.310000,primary_excluding_failed_runs,reconciles,1.009709
 mr_in,fire,clean,fire,13.570000,False,14.010000,2,14.140000,True,-0.440000,-0.570000,primary_excluding_failed_runs,reconciles,1.086598
 sw_ke,earth,clean,earth,13.530000,False,13.675000,2,12.600000,True,-0.145000,0.930000,primary_excluding_failed_runs,reconciles,1.201184
-ta_in,fire,clean,fire,43.630000,False,58.325000,2,61.210000,True,-14.695000,-17.580000,primary_excluding_failed_runs,reconciles,0.274876
+ta_in,fire,clean,fire,43.630000,False,58.325000,2,61.210000,True,-14.695000,-17.580000,primary_excluding_failed_runs,reconciles,0.997678
 ur_pk,fire,clean,fire,22.240000,False,20.805000,2,17.640000,True,1.435000,4.600000,primary_excluding_failed_runs,reconciles,1.027066
 am_et,earth,clean,earth,29.250000,False,27.930000,2,27.000000,True,1.320000,2.250000,sensitivity_including_all_runs,reconciles,0.994642
 en_us,water,clean,water,12.050000,False,4.665000,2,4.960000,True,7.385000,7.090000,sensitivity_including_all_runs,stream_never_exhausted_lower_bound_only,0.767941
@@ -19,5 +19,5 @@ hi_in,fire,clean,fire,13.110000,False,12.050000,2,13.180000,True,1.060000,-0.070
 id_id,water,clean,water,5.740000,False,6.135000,2,6.050000,True,-0.395000,-0.310000,sensitivity_including_all_runs,reconciles,1.009709
 mr_in,fire,clean,fire,13.570000,False,14.010000,2,14.140000,True,-0.440000,-0.570000,sensitivity_including_all_runs,reconciles,1.086598
 sw_ke,earth,clean,earth,13.530000,False,13.675000,2,12.600000,True,-0.145000,0.930000,sensitivity_including_all_runs,reconciles,1.201184
-ta_in,fire,clean,fire,43.630000,False,58.325000,2,61.210000,True,-14.695000,-17.580000,sensitivity_including_all_runs,reconciles,0.274876
+ta_in,fire,clean,fire,43.630000,False,58.325000,2,61.210000,True,-14.695000,-17.580000,sensitivity_including_all_runs,reconciles,0.997678
 ur_pk,fire,clean,fire,22.240000,False,20.805000,2,17.640000,True,1.435000,4.600000,sensitivity_including_all_runs,reconciles,1.027066

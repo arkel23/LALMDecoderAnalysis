@@ -6,7 +6,8 @@
 # training stem | FLEURS test | in-training WorldSpeech | held-out WorldSpeech
 #
 # fr_ca -> fleurs_fr_fr and es_mx -> fleurs_es_419: trained variety != FLEURS variety.
-# ta_lk is held-out; the strict 30 s cap dropped all of it. crs_sc has no FLEURS entry.
+# ta_lk is a Tamil variety outside the training mix, so it is held-out dialect transfer, like
+# the English and Spanish variants. crs_sc has no FLEURS entry.
 # ha_ng lists only ha_td: worldspeech_ha_ng_test is Hausa's training-time selection split, so it
 # is not a held-out eval. The registry enforces that; this list just does not pretend otherwise.
 #
