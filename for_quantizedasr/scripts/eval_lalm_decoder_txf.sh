@@ -30,14 +30,14 @@ PAIRINGS=(
 # languages, so they are not part of this sweep.
 VARIANTS=(earth fire global water)
 
-# --models     a subset of {earth, fire, global, water}, e.g. --models fire
-#              or --models "fire water". Default: all four.
-# --eval_set   primary  FLEURS + in-training WorldSpeech  (26 datasets/variant)
-#              all      adds the held-out variants        (44 datasets/variant)
+# Every variant is evaluated on all 44 datasets of its own languages: 11 FLEURS plus 33
+# WorldSpeech, the latter covering every country variant, not only the trained one.
+#
+# --models   a subset of {earth, fire, global, water}, e.g. --models fire, or
+#            --models "fire water". Default: all four, so 4 x 44 = 176 evaluations.
 models=''
-eval_set='primary'
 
-VALID_ARGS=$(getopt -o '' --long models:,eval_set: -- "$@")
+VALID_ARGS=$(getopt -o '' --long models: -- "$@")
 if [[ $? -ne 0 ]]; then
     exit 1;
 fi
@@ -47,10 +47,6 @@ while [ : ]; do
   case "$1" in
     --models)
         models=${2}
-        shift 2
-        ;;
-    --eval_set)
-        eval_set=${2}
         shift 2
         ;;
     --) shift;
@@ -77,10 +73,10 @@ base_cmd="python -m tools.evaluate --serial 11 --batch_size 128 \
 for pairing in "${PAIRINGS[@]}"; do
     IFS='|' read -r lang fleurs_cfg ws_in ws_held <<< "$pairing"
 
-    eval_cfgs="$fleurs_cfg $ws_in"
-    if [ "$eval_set" = "all" ]; then
-        eval_cfgs="$eval_cfgs $ws_held"
-    fi
+    # in-training and held-out together: the held-out country variants are the accent-transfer
+    # axis and cost only inference. PAIRINGS keeps them in separate fields so the guard can tell
+    # them apart, not so the sweep can skip them.
+    eval_cfgs="$fleurs_cfg $ws_in $ws_held"
 
     for variant in "${VARIANTS[@]}"; do
         # BEST checkpoint only. Every cell has exactly two, the best step and step 1000, and the

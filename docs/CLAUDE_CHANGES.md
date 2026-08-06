@@ -16,8 +16,13 @@ control configs are ever wanted. Skip counts are now reported by reason and reco
 | | before | after |
 |---|---|---|
 | model configs generated | 104 | **48** |
-| `--eval_set all` | 368 | **176** (44 per variant) |
-| `--eval_set primary` | 220 | **104** (26 per variant) |
+| evaluations | 368 | **176** (44 per variant) |
+
+`--eval_set` is gone. It defaulted to `primary`, so a plain `--models fire` ran 26 of the 44
+datasets -- the flag's default contradicted the stated target and that is exactly how it was
+caught, by eye, in a real run. The sweep now always evaluates all 44, and
+`verify_eval_pairing.py` asserts it consumes every pairing field so the subset cannot come back.
+The guard already reported "44 pairings"; it simply was not checking that the sweep used them.
 
 `--models` now selects among `{earth, fire, global, water}` by short name and rejects anything
 else, so `--models fire` runs that variant's 44 evals and nothing else. It was previously a list

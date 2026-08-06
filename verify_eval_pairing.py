@@ -18,6 +18,11 @@ GENERATOR = os.path.join('for_quantizedasr', 'tools', 'preprocess',
                          'create_yamls_worldspeech_lalm.py')
 
 
+def check(name, cond, detail=''):
+    print(f'[{"PASS" if cond else "FAIL"}] {name}' + (f'  -- {detail}' if detail else ''))
+    return bool(cond)
+
+
 def language(config):
     """fr_ca trains, fleurs_fr_fr evaluates; es_mx trains, fleurs_es_419 evaluates. Comparing
     the language prefix accepts those and still rejects ur_pk x ha_td."""
@@ -92,7 +97,20 @@ def main():
         print('[FAIL] ' + '; '.join(missing))
         return 1
 
-    print(f'PAIRING OK ({len(pairings)} cells, {n} model-dataset pairings, '
+    # The sweep must consume every field of every pairing. It once defaulted to a subset flag
+    # and silently ran 26 of the 44 datasets per variant -- the guard already knew the number
+    # was 44, it just was not checking that the sweep used them all.
+    body = open(args.sweep).read().split('PAIRINGS=', 1)[-1]
+    uses_all = '"$fleurs_cfg $ws_in $ws_held"' in body
+    no_subset = 'eval_set' not in body
+    check('the sweep evaluates every pairing field, with no subset flag',
+          uses_all and no_subset,
+          '' if uses_all and no_subset else
+          f'uses_all={uses_all} no_subset_flag={no_subset}')
+    if not (uses_all and no_subset):
+        return 1
+
+    print(f'PAIRING OK ({len(pairings)} cells, {n} datasets per variant, '
           f'{len(want)} WorldSpeech variants in both sweeps)')
     return 0
 

@@ -185,9 +185,8 @@ set -u
 #   python tools/preprocess/create_yamls_models_lalm_txf.py    # 48 model configs (best step,
 #                                                              # 4 grid variants x 12 languages)
 #   python tools/preprocess/create_yamls_worldspeech_lalm.py   # 120 dataset configs
-#   bash scripts/eval_lalm_decoder_txf.sh --eval_set primary   # serial 11, 104 evals (26/variant)
-#   bash scripts/eval_lalm_decoder_txf.sh --eval_set all        # serial 11, 176 evals (44/variant)
-#   bash scripts/eval_lalm_decoder_txf.sh --models fire --eval_set all   # one variant, 44 evals
+#   bash scripts/eval_lalm_decoder_txf.sh                      # serial 11, 176 evals (44/variant)
+#   bash scripts/eval_lalm_decoder_txf.sh --models fire        # one variant, 44 evals
 #   bash scripts/eval_lalm_baselines.sh                         # serial 10, 264 evals
 #
 # NOTE: the earlier version of the generator wrote 104 configs including step-1000 and the
