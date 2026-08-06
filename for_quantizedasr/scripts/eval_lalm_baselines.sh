@@ -86,7 +86,10 @@ if [ -n "$models" ]; then
     read -ra MODEL_CONFIGS <<< "$models"
 fi
 
+# --eval_metrics is explicit because the upstream default is ['wer_all'] alone, so CER would
+# not be computed. The training runs report CER, and a reader will expect the two to meet.
 base_cmd="python -m tools.evaluate --serial 10 --batch_size 128 \
+    --eval_metrics wer_all cer \
     --wandb_entity LisTAya \
     --wandb_project LALMDecoder"
 

@@ -3,12 +3,16 @@
 Three serials, three measurements, and only one pair is comparable:
 
   serial 0   training runs. eval/cer on the model-SELECTION curve, so not held out.
-  serial 10  baselines. wer / mer / wil / wip on FLEURS test.
+  serial 10  baselines, on FLEURS/WorldSpeech test.
   serial 11  the trained checkpoints over the SAME configs as serial 10.
 
 So 11 minus 10 is the like-for-like "what did training buy" contrast, and this script computes
-it as soon as 11 exists. Serial 0's CER against serial 10's WER would be two metrics on two
-splits, and is deliberately not done.
+it as soon as 11 exists. Serial 0 still does not join that comparison: it is a different split
+and a selection curve, not a held-out number.
+
+Both sweeps now pass `--eval_metrics wer_all cer`, so WER and CER are available on both sides --
+the upstream default is `['wer_all']` alone, which is why earlier baseline runs logged no CER.
+`--metric` chooses which drives the contrast.
 
 Handles partial data: serial 10 fills in incrementally, so every cell is reported as
 present/absent rather than assumed.
@@ -29,9 +33,10 @@ from utils import (LANGUAGE_DIC, RESOURCE_TIER, get_eval_domain, to_study_cell,
 
 FLOAT_FORMAT = '%.6f'
 
-# wer is primary; the rest disambiguate failure modes -- high wer with low mer means
-# insertions/deletions rather than substitutions, which is what prompt-ignoring produces.
-WER_FAMILY = ('wer', 'mer', 'wil', 'wip')
+# wer is primary; mer/wil/wip disambiguate failure modes -- high wer with low mer means
+# insertions/deletions rather than substitutions, which is what prompt-ignoring produces. cer is
+# carried because the training runs report CER, so it is what makes serial 11 comparable to them.
+WER_FAMILY = ('wer', 'mer', 'wil', 'wip', 'cer')
 
 # A baseline that wins on WER while being 7x larger is not the same result as one at parity.
 COST_COLS = ('rtfx', 'no_params', 'n_params', 'total_MB', 'bpw', 'max_memory')

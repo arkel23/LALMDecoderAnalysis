@@ -1,5 +1,16 @@
 # Change log
 
+## 2026-08-05 (later still) — both sweeps request WER and CER explicitly
+
+`--eval_metrics` defaults to `['wer_all']` upstream (`qasr/misc/misc_utils.py:158`), so CER was
+not computed unless the dataset YAML asked for it. Both sweeps now pass
+`--eval_metrics wer_all cer`, which makes it independent of how a config happens to be written.
+
+That exposed a second gap: serial 10 already carried CER for 123 of its 129 runs, but
+`analyze_baselines.py`'s `WER_FAMILY` did not list `cer`, so `t7_baselines.csv` dropped the
+column. CER is the metric the training runs report, so it is what makes serial 11 comparable to
+them. Added.
+
 ## 2026-08-05 (later still) — the txf sweep evaluates best checkpoints only, four variants only
 
 The sweep swept all 104 generated configs: both checkpoints per cell and both control decoders.
