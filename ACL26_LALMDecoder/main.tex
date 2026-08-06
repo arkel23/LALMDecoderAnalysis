@@ -1,0 +1,258 @@
+\documentclass[11pt]{article}
+
+% Change "review" to "final" to generate the final (sometimes called camera-ready) version.
+% Change to "preprint" to generate a non-anonymous version with page numbers.
+\usepackage[review]{acl}
+
+% Standard package includes
+\usepackage{times}
+\usepackage{latexsym}
+
+% For proper rendering and hyphenation of words containing Latin characters (including in bib files)
+\usepackage[T1]{fontenc}
+% For Vietnamese characters
+% \usepackage[T5]{fontenc}
+% See https://www.latex-project.org/help/documentation/encguide.pdf for other character sets
+
+% This assumes your files are encoded as UTF8
+\usepackage[utf8]{inputenc}
+
+% This is not strictly necessary, and may be commented out,
+% but it will improve the layout of the manuscript,
+% and will typically save some space.
+\usepackage{microtype}
+
+% This is also not strictly necessary, and may be commented out.
+% However, it will improve the aesthetics of text in
+% the typewriter font.
+\usepackage{inconsolata}
+
+%Including images in your LaTeX document requires adding
+%additional package(s)
+\usepackage{graphicx}
+
+% If the title and author information does not fit in the area allocated, uncomment the following
+%
+%\setlength\titlebox{<dim>}
+%
+% and set <dim> to something 5cm or larger.
+
+
+% ADDITIONAL PACKAGES
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+%
+
+\title{Placeholder}
+
+% Author information can be set in various styles:
+% For several authors from the same institution:
+% \author{Author 1 \and ... \and Author n \\
+%         Address line \\ ... \\ Address line}
+% if the names do not fit well on one line use
+%         Author 1 \\ {\bf Author 2} \\ ... \\ {\bf Author n} \\
+% For authors from different institutions:
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \And  ... \And
+%         Author n \\ Address line \\ ... \\ Address line}
+% To start a separate ``row'' of authors use \AND, as in
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \AND
+%         Author 2 \\ Address line \\ ... \\ Address line \And
+%         Author 3 \\ Address line \\ ... \\ Address line}
+
+\author{First Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  \texttt{email@domain} \\\And
+  Second Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  \texttt{email@domain} \\}
+
+%\author{
+%  \textbf{First Author\textsuperscript{1}},
+%  \textbf{Second Author\textsuperscript{1,2}},
+%  \textbf{Third T. Author\textsuperscript{1}},
+%  \textbf{Fourth Author\textsuperscript{1}},
+%\\
+%  \textbf{Fifth Author\textsuperscript{1,2}},
+%  \textbf{Sixth Author\textsuperscript{1}},
+%  \textbf{Seventh Author\textsuperscript{1}},
+%  \textbf{Eighth Author \textsuperscript{1,2,3,4}},
+%\\
+%  \textbf{Ninth Author\textsuperscript{1}},
+%  \textbf{Tenth Author\textsuperscript{1}},
+%  \textbf{Eleventh E. Author\textsuperscript{1,2,3,4,5}},
+%  \textbf{Twelfth Author\textsuperscript{1}},
+%\\
+%  \textbf{Thirteenth Author\textsuperscript{3}},
+%  \textbf{Fourteenth F. Author\textsuperscript{2,4}},
+%  \textbf{Fifteenth Author\textsuperscript{1}},
+%  \textbf{Sixteenth Author\textsuperscript{1}},
+%\\
+%  \textbf{Seventeenth S. Author\textsuperscript{4,5}},
+%  \textbf{Eighteenth Author\textsuperscript{3,4}},
+%  \textbf{Nineteenth N. Author\textsuperscript{2,5}},
+%  \textbf{Twentieth Author\textsuperscript{1}}
+%\\
+%\\
+%  \textsuperscript{1}Affiliation 1,
+%  \textsuperscript{2}Affiliation 2,
+%  \textsuperscript{3}Affiliation 3,
+%  \textsuperscript{4}Affiliation 4,
+%  \textsuperscript{5}Affiliation 5
+%\\
+%  \small{
+%    \textbf{Correspondence:} \href{mailto:email@domain}{email@domain}
+%  }
+%}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+% Word count: 181
+The emergence of Large Audio Language Models (LALMs) has broadened access to advanced and currently developing language technologies by supporting audio input alongside text. However, this convenience has primarily benefited speakers of high-resource languages, when this can be valuable to speakers of languages in low-resource settings, especially those where speech is the primary mode of communication. While recent research has focused on including low-resource languages by simply restricting training to a linear projector connecting a speech encoder and a large language model, as the decoder, the impact of the specialization of the large language model (LLM) used as the decoder remains unexplored in this setup. In this work, we investigate decoder specialization using a family of state-of-the-art (SOTA) small multilingual LLMs developed specifically to address the challenges of low-resource languages.
+
+Extensive experiments across 12 languages, spanning a range of resource levels, including morphologically rich languages that remain challenging for automatic speech recognition (ASR) systems, reveal only minor differences in character error rate (CER) between the three regionally specialized decoders and their general-purpose counterpart. We release all checkpoints to support further investigation.
+
+\end{abstract}
+
+\section{Introduction}
+
+Automatic speech recognition (ASR) models such as Whisper \citep{radfordRobustSpeechRecognition} and Omnilingual ASR\citep{teamOmnilingualASROpenSource2025} have expanded multilingual speech recognition to a growing number of languages, including low-resource languages. Despite this progress, substantial work remains to address the breadth and diversity of low resource languages and dialects, which has motivated recent studies to investigate the failure modes of these systems in low-resource settings \citep{imamAutomaticSpeechRecognition, kyslyiBuildingASRResources, kumarOvercomingDecoderInconsistencies2026, bharathiFindingsTamilDialect, azisDevelopmentLowResourceAutomatic2026}.  These limitations are important to address because language technologies today are increasingly multimodal, although text-based interfaces as the default in many settings and the speech modality is still developed primarily for high-resource languages. This is crucial given that, of the roughly 7,000 languages spoken worldwide, around 4,000 are estimated to
+have an established writing system, however, it does not correspond to widespread literacy or everyday use among speakers \footnote{Ethnologue, 28th edition \url{https://www.ethnologue.com/}}. Considering this, Speech-first technologies may benefit speakers of languages in low resource settings by enabling them access to services that are better supported in high resource languages with current technologies. However developing end-to-end speech language systems remains computationally expensive and relies on abundant, high-quality annotated data. 
+
+One recent direction addressing these constraints is the SLAM-ASR architecture \citep{maEmbarrassinglySimpleApproach2024}, which connects a pretrained speech encoder to a large language model (LLM) through a trainable linear projector, while keeping the pretrained models frozen.  Restricting training to the projector provides a practical way to introduce a language in low-resource settings. Studies building on this work have investigated its robustness \citep{kumarPerformanceEvaluationSLAMASR2025}, number of necessary audio hours \citep{fongSpeechLLMsLowResource2025}, which encoder layers can be pruned while maintaining performance through fine-tuning of the LLM backbone \citep{kolluriRoleEncoderDepth2026}, language-level and language-family-level training configurations \citep{zhangLanguageFamilyMatters2026}, and reducing prompt sensitivity with a learnable prompt projector \citep{burdissoReducingPromptSensitivity2026}. Although these prior studies have investigated several aspects of SLAM-ASR, the decoder selection has generally been guided by target-language support and state-of-the-art (SOTA) multilingual coverage, [TODO: Add Examples of the LLMs they used]. To the best of our knowledge, however, the effect of decoder specialization within this architecture has not been systematically evaluated, leaving open whether specialized decoders provide an advantage over general-purpose models unexplored. More recently, the Tiny Aya family\citep{salamancaTinyAyaBridging2026} introduced SOTA small multilingual LLMs that share a common multilingual foundation, with each regional model having undergone post-training to reinforce the linguistic clusters associated with its respective region. 
+
+% Tried framing this for negative results
+Motivated by the growing study of failure modes in low-resource ASR and recent advances in small regionally specialized multilingual LLMs, we aim to contribute to the efforts to build linguistically informed language technologies. In this study we address the unexplored role of decoder specialization within the SLAM-ASR architecture by examining empirically comparing regional Tiny Aya decoders wth Tiny Aya Global across 10 languages , [TODO: Update]nine  are from the three Tiny Aya regional clusters and one language unsupported by both and examining whether and to what extent specialization offers a strong starting point for low-resource languages when ASR data are scarce. [TODO: Introduce research questions(s) ?]
+
+
+
+\section{Methods}
+\subsection{SLAM-ASR}
+
+\begin{figure}[t]
+  \includegraphics[width=\columnwidth]{assets/images/ph_listaya.png}
+  \caption{LisTAya}
+  \label{fig:ph_listaya}
+\end{figure}
+
+
+%Note: Cover the trainable linear projector
+
+[TODO:  then remove specifics of encoder and decoder names and write them at the end. ]
+Our implementation follows the Encoder--Connector--Decoder architecture introduced in SLAM-ASR \citet{maEmbarrassinglySimpleApproach2024} and is built upon the Qwen2-Audio codebase \footnote{Qwen2-Audio codebase, \url{Qwen2-Audio codebase}}, as Illustrated in Figure~\ref{fig:ph_listaya}
+%which follows an Encoder--Connector (projector)--Decoder framework. A frozen encoder first extracts acoustic representations from the input speech. These representations are then downsampled and projected into the embedding space through a trainable  Connector (projector). The projected speech embeddings are subsequently provided to the frozen  decoder, which autoregressively generates the transcription.
+
+Following the original SLAM-ASR framework, only the Connector (projector) is optimized during training, while both the  encoder and the  decoder remain frozen. This design enables efficient adaptation by learning the alignment between speech representations and the language model embedding space while minimizing the number of trainable parameters.  
+
+\subsection{Decoder Specialization}
+PH Note: Add details regarding the Tiny Aya Family, include a table.
+
+To study the effect of decoder specialization on multilingual ASR, we employ models from the \textit{TinyAya} family as the frozen decoder within the SLAM-ASR architecture. 
+
+
+\textit{TinyAya-Base} is a pretrained 3.35B-parameter multilingual language model covering more than 70 languages. Built upon this foundation, \textit{TinyAya-Global} provides balanced instruction-tuned performance across 67 languages, while three regionally specialized variants are available: \textit{TinyAya-Earth} for languages from Africa and West Asia, \textit{TinyAya-Fire} for South Asian languages, and \textit{TinyAya-Water} for languages from the Asia-Pacific and Europe.
+
+[TODO: Post training for each variant, tokenizer specialization]
+
+All TinyAya variants share a common multilingual tokenizer, which is trained using a balanced weighting strategy that combines data-distribution and language-family information to achieve equitable representation of both high- and low-resource languages. Furthermore, TinyAya adopts a region-aware multilingual posttraining strategy in which high-quality instruction-tuning data is constructed through language-specific translation, prompt transformation, and Fusion-of-N teacher generation, enabling balanced multilingual instruction tuning across diverse language groups while improving coverage for low-resource languages.
+
+%Across all experiments, the Whisper speech encoder and the trainable Connector (projector) remain unchanged, while only the frozen \textit{TinyAya} decoder is replaced with a different variant. This controlled setup isolates the effect of decoder specialization on multilingual ASR while keeping all other architectural components and training procedures identical.
+
+
+\section{Experimental Setup}
+\subsection{Datasets}
+Our experiments use two multilingual speech corpora: World Speech \citep{asonitisWorldSpeechMultilingualSpeech2026} and FLEURS\citep{conneauFLEURSFEWShotLearning2023}. WorldSpeech primarily contains formal speech collected from diverse public sources such as parliamentary proceedings, international broadcasts, with smaller contributions from public-domain audiobooks. FLEURS contains read speech based on parallel sentences from the FLoRes-101 dataset, recorded were under relatively controlled conditions. We use subsets of train sets from WorldSpeech for training, excluding audio samples with durations of 30 seconds or longer. For evaluation, we use the validation sets from FLEURS when available and on the WorldSpeech test sets otherwise. 
+
+We select 12 languages for this study (Table~\ref{tab:dataset-overview}). 11 are covered by the regional Tiny Aya models:  Water (English, French, Spanish, and Indonesian), Fire (Hindi, Tamil, Marathi, and Urdu), and Earth (Swahili, Hausa, Amharic). Kreol Seselwa is an African language selected because it is unsupported by both backbone models. We include it to assess whether the trainable connector (projector) can effectively learn the alignment between speech representations and the language model, despite this lack of support.
+
+
+%These datasets provide diverse multilingual speech samples for evaluating the effectiveness of different TinyAya decoder variants.
+
+%From the \textit{TinyAya-Water} region, we include English, French, Spanish, and Indonesian. From \textit{TinyAya-Fire}, we select Hindi, Tamil, and Marathi, while Swahili and Hausa are chosen from \textit{TinyAya-Earth}. These 9 languages are supported by both the Whisper encoder and the corresponding TinyAya decoder variants.
+
+
+
+\subsection{Training Configuration}
+%[TODO Find other info in WandB]
+
+In our study, we use \textbf{Lis}tening \textbf{T}iny \textbf{A}ya (LisTAya; see Figure~\ref{fig:ph_listaya}) to refer to models that use Whisper Medium as the fixed speech encoder, paired with different regional variants from the Tiny Aya family as decoders. Depending on the specialized regional decoder we refer to the resulting models as LisTAya-Water, LisTAya-Fire, LisTAya-Earth; LisTAya-Global for the general-purpose variant.
+
+Throughout all experiments, we train only the projector while keeping the encoder and decoder components frozen. We use the AdamW optimizer with a learning rate set at 1.5e-3, training steps 1, 000, batch size 8, gradient accumulation of 64 (an effective batch size of 512), and no weight decay. We retain the checkpoint after 1,000 steps, as well as an additional checkpoint achieving the lowest validation CER. All models were trained with one NVIDIA H200 GPU.
+
+
+\begin{table}[t]
+\centering
+
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.08}
+
+\begin{tabular}{@{}lll@{}}
+\toprule
+& \textbf{WorldSpeech} & \textbf{FLEURS} \\
+\cmidrule(lr){2-2} \cmidrule(l){3-3}
+
+\textbf{Language} & \textbf{Train} & \textbf{Test} \\
+\midrule
+English & en\_us & en\_us   \\
+Spanish & es\_mx & es\_419  \\
+French & fr\_ca & fr\_fr   \\
+Indonesian & in\_in & id\_id  \\
+\midrule
+Hindi & hi\_in & hi\_in   \\
+Marathi & mr\_in & mr\_in   \\
+Tamil & ta\_in & ta\_in   \\
+Urdu & ur\_in $+$ ur\_pk & ur\_pk   \\
+\midrule
+Swahili & sw\_ke $+$ sw\_tz & sw\_ke   \\
+Amharic & am\_te & am\_et   \\
+Hausa & ha\_ng $+$ ha\_td  & \textbf{ha\_ng}  \\
+Kreol Seselwa & crs\_sc & \textbf{crs\_sc} \\
+
+\bottomrule
+\end{tabular}
+
+\caption{Dataset overview. WorldSpeech training subsets are used to train the
+projector. Evaluation uses the FLEURS validation split; bold entries use the
+WorldSpeech test split. The \(+\) symbol denotes subsets pooled.}
+
+%and language subsets used for training and evaluation.
+
+
+\label{tab:dataset-overview}
+\end{table}
+
+
+
+\section{Results}
+PH
+
+
+\section*{Limitations}
+
+PH
+
+\section*{Acknowledgments}
+
+PH
+
+% Bibliography entries for the entire Anthology, followed by custom entries
+%\bibliography{custom,anthology-overleaf-1,anthology-overleaf-2}
+
+% Custom bibliography entries only
+%\bibliography{LisTAya}
+\bibliography{LisTAya_updated}
+\appendix
+
+\section{Example Appendix}
+\label{sec:appendix}
+
+This is an appendix.
+
+\end{document}
