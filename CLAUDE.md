@@ -256,7 +256,10 @@ Two related failures from the same session:
 - **Serial 0 is the analysis population**, 12 x 4 with nothing else in it. Controls are serial 2;
   t1 spans 0 and 2 only so `crs_sc` keeps all six models.
 - **`ha_ng`'s in-domain eval is its own selection split**, so `ha_td` is Hausa's in-domain point
-  (`utils.IN_DOMAIN_PRIMARY`).
+  (`utils.IN_DOMAIN_PRIMARY`) and `worldspeech_ha_ng_test` is excluded from both sweeps.
+- **Eval-dataset membership is derived, never typed.** `eval_datasets.csv` is the registry;
+  both sweeps and `missing_runs.py` read it. Typing the list separately is what let the two
+  sweeps drift to 43 and 44 entries on exactly the config that must not be evaluated.
 - **The multilingual machinery is deliberately gone.** No language-hours table, no resource
   tiers, no `NEEDS_CER` primary-error-rate switch. If this project needs per-language
   scoring, add it deliberately rather than copying MultilingualQASR's version, whose

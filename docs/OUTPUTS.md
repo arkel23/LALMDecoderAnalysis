@@ -27,7 +27,11 @@ backend at all.
 | `data/raw_serials/history_serial_{0..5}.csv` | `download_wandb_history.py --history` | one row per (run, step): the full training/eval curves |
 | `data/raw_serials/raw_serial_{10,11}.csv` | `download_save_wandb_data.py` | eval-only runs: 10 = off-the-shelf baselines, 11 = trained checkpoints |
 | `data/dataset_checks/*.csv` | `verify_dataset_durations.py` | per-config example counts and at-cap fractions; with `--load`, duration consistency and interleave integrity |
-| `data/tinyaya_report/tinyaya_language_composition*.csv` | `fetch_tinyaya_composition.py` | per-language share of each variant's post-training mix |
+| `data/tinyaya_report/tinyaya_language_composition*.csv` | `fetch_tinyaya_composition.py` | per-language share of each variant's post-training mix; **69 languages with their region** |
+| `data/manifest_training.csv` | `build_manifests.py` | one row per training cell: what it trained on, what its checkpoint was selected on, and whether that split collides with an eval config |
+| `data/manifest_eval_sets.csv` | `build_manifests.py` | the eval registry joined to the audio statistics every eval run logs (`num_samples`, `audio_length_s_*`) |
+| `data/language_hours_whisper.csv` | `build_manifests.py` | frozen snapshot of Whisper pretraining hours per language, copied from MultilingualQASR. Covers 11 of our 12 — `crs_sc` is absent because Whisper does not support it |
+| `for_quantizedasr/tools/preprocess/eval_datasets.csv` | `create_yamls_worldspeech_lalm.py` | **the eval-dataset registry** — the single source of truth for which datasets the sweeps run |
 
 ## What each serial holds
 
@@ -69,6 +73,18 @@ All in `results_all/acc/`.
 | `t8_exposure_stats.csv` | `analyze_exposure.py` | exposure-vs-effect correlations |
 | `t9_replicates.csv` | `analyze_replicates.py` | serial 0 against serial 1, per replicate pair |
 | `t9_replicate_stats.csv` | `analyze_replicates.py` | pooled between-run standard deviation |
+
+## The eval-dataset registry
+
+`eval_datasets.csv` is the one place an eval dataset's membership is decided. Both sweeps read it
+at runtime and `missing_runs.py` reads it too, so the list cannot drift — it had, with the
+baselines sweep at 43 datasets and the trained sweep at 44, differing on exactly the config that
+must not be evaluated.
+
+`use_in_sweep` is **derived**, never typed: it is `not is_selection_split(...)`. A config that is
+some cell's training-time selection split is not a held-out eval, which excludes exactly
+`worldspeech_ha_ng_test` — Hausa selected its checkpoint on that split. `manifest_training.csv`
+shows the collision directly.
 
 ## Missing-run checks
 

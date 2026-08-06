@@ -119,6 +119,12 @@ else
   echo "Skipping Tiny Aya composition fetch (exists)"
 fi
 
+# --- 1d. Source-of-truth manifests -------------------------------------------------
+# What each cell trained on and was SELECTED on, the eval-dataset registry joined to the audio
+# statistics the eval runs already log, and a frozen copy of Whisper's per-language hours.
+# All derived; nothing here is hand-maintained.
+python -u build_manifests.py
+
 # --- 2. Sanity gate ----------------------------------------------------------------
 # Cheap, and it runs before anything derives numbers: per-dataset run counts and state
 # breakdowns, so a half-finished grid is visible rather than silently averaged.

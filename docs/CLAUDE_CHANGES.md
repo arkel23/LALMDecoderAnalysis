@@ -1,5 +1,58 @@
 # Change log
 
+## 2026-08-06 — one registry for the eval datasets, and the source-of-truth manifests
+
+`worldspeech_ha_ng_test` is Hausa's training-time selection split. That was found, recorded in
+`utils.SELECTION_SPLIT`, and used to move Hausa's in-domain point to `ha_td` -- and then the
+config was left in both sweeps anyway.
+
+**The lists had already drifted.** The deployed `eval_lalm_baselines.sh` carried 43 datasets with
+`ha_ng` removed by hand; `eval_lalm_decoder_txf.sh` carried 44 with it in. So it was excluded
+from the baselines, where it is harmless, and included in the trained sweep, where it is
+contaminated -- exactly backwards. `missing_runs.py` had a third copy of the list and reported
+three phantom `ha_ng` runs as missing.
+
+### The registry
+
+`for_quantizedasr/tools/preprocess/eval_datasets.csv`, written by the WorldSpeech generator.
+Both sweeps read it at runtime (header-driven awk) and `missing_runs.py` reads it too, so there
+is one list. `use_in_sweep` is **derived** -- `not is_selection_split(...)` -- so the exclusion is
+computed, never typed. It flags exactly one config across all 44.
+
+A real trap on the way: `csv.DictWriter` defaults to CRLF, which left a trailing `\r` on the last
+field and made every shell reader match nothing. The writer now sets `lineterminator='\n'` and
+the awk strips `\r` anyway.
+
+### Audit: most of what was "missing" already existed
+
+- **dataset statistics** -- every eval run already logs `num_samples` and
+  `audio_length_s_{mean,std,min,max}`. Complete for 43/43 eval sets. Only an extractor was needed.
+- **TinyAya languages and regions** -- already in
+  `data/tinyaya_report/tinyaya_language_composition.csv`: 69 languages with `report_region`.
+- **train/test record** -- already in the wandb run configs. Now extracted.
+- **Whisper hours** -- copied as a frozen snapshot from MultilingualQASR. 11 of our 12;
+  `crs_sc` is absent because Whisper does not support it, which is the finding, not a gap.
+
+`build_manifests.py` writes `manifest_training.csv` (12 cells, with the column that names which
+eval config collides with a cell's selection split -- populated for `ha_ng` alone),
+`manifest_eval_sets.csv` (registry + audio statistics) and `language_hours_whisper.csv`.
+
+### Numbers
+
+| | before | after |
+|---|---|---|
+| serial 11 | 176 (44/variant) | **172** (43/variant) |
+| serial 10 expected | 132 | **129** |
+| serial 10 missing | 9 | **6** -- the three ha_ng entries were never real |
+
+The training analysis is untouched: t1, t2, t3, t5, t6, t8 and t9 are byte-identical.
+
+### Also fixed
+
+`verify_eval_pairing.py` printed `[FAIL]` and exited 0 -- the same defect that once let
+`plotter.sh` report success over a failing guard. It now records failures and exits non-zero,
+negative-tested.
+
 ## 2026-08-05 (later still) — missing-run check, and what serial 10 is actually missing
 
 `missing_runs.py`, adapted from ChineseQASR's `missing_scripts.py` (same finished-wins state

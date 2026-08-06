@@ -1,5 +1,12 @@
 host,state,serial,dataset_path,dataset,split,model_id,force_asr_language,task,batch_size,max_eval_samples,norm_english,long_form,model/num_parameters,wer,mer,wil,wip,cer,rtfx,no_params,n_params,num_samples,audio_length_s_mean,audio_length_s_std,audio_length_s_min,audio_length_s_max,max_memory,bpw,total_MB
-DGX-H200-CN05,running,11,google/fleurs,ha_ng,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-earth_ws-ha_ng-600,ha,,128,,False,False,,,,,,,,,,,,,,,,,
-DGX-H200-CN05,running,11,google/fleurs,ha_ng,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-fire_ws-ha_ng-650,ha,,128,,False,False,,,,,,,,,,,,,,,,,
-DGX-H200-CN05,running,11,google/fleurs,ha_ng,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-global_ws-ha_ng-900,ha,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,failed,11,disco-eth/WorldSpeech,ha_td,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-earth_ws-ha_ng-600,ha,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,failed,11,disco-eth/WorldSpeech,ha_td,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-fire_ws-ha_ng-650,ha,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,failed,11,disco-eth/WorldSpeech,ha_td,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-global_ws-ha_ng-900,ha,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,running,11,disco-eth/WorldSpeech,sw_ke,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-global_ws-sw_ke-550,sw,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,finished,11,google/fleurs,ha_ng,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-earth_ws-ha_ng-600,ha,,128,,False,False,,77.69,58.67,75.92,24.08,44.36,131.9,3656.2227,4190773248.0,556.0,17.251726618705035,5.672033549000205,6.12,29.64,135222.0,32.0,15986.53125
+DGX-H200-CN05,finished,11,google/fleurs,ha_ng,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-fire_ws-ha_ng-650,ha,,128,,False,False,,68.83,54.16,72.16,27.84,36.38,130.69,3656.2227,4190773248.0,556.0,17.251726618705035,5.672033549000205,6.12,29.64,135222.0,32.0,15986.53125
+DGX-H200-CN05,finished,11,google/fleurs,ha_ng,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-global_ws-ha_ng-900,ha,,128,,False,False,,68.72,55.7,74.34,25.66,38.53,130.44,3656.2227,4190773248.0,556.0,17.251726618705035,5.672033549000205,6.12,29.64,135222.0,32.0,15986.53125
 DGX-H200-CN05,running,11,google/fleurs,ha_ng,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-water_ws-ha_ng-700,ha,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,running,11,google/fleurs,sw_ke,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-earth_ws-sw_ke-550,sw,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,running,11,google/fleurs,sw_ke,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-fire_ws-sw_ke-700,sw,,128,,False,False,,,,,,,,,,,,,,,,,
+DGX-H200-CN05,finished,11,google/fleurs,sw_ke,test,ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-global_ws-sw_ke-550,sw,,128,,False,False,,38.8,34.91,51.6,48.4,18.56,128.77,3656.2227,4190773248.0,487.0,14.249322381930185,4.414707479831654,4.56,29.16,130876.0,32.0,15986.53125

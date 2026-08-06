@@ -496,36 +496,38 @@ check('the grid serial is the canonical side of a replicate pairing',
 check('no serial is both canonical and superseded',
       not {a for a, _ in REPLICATE_SERIAL_PAIRS} & {b for _, b in REPLICATE_SERIAL_PAIRS})
 
-# --- missing_runs static lists ------------------------------------------------------------
-# missing_runs.py hardcodes the serial-10 grid so the check stays simple, which means the lists
-# are duplicated from the sweep. Pin them together, or the tool silently checks the wrong grid.
-import re as _re2
+# --- the eval-dataset registry -------------------------------------------------------------
+# The dataset list used to be typed in three places and drifted: the baselines sweep had 43
+# entries and the trained sweep 44, differing on exactly the config that must not be evaluated.
+# There is now one registry and membership is derived, so these check the derivation, not a
+# copy-for-copy match.
 import missing_runs as _mr
+from utils import is_selection_split as _iss
 
-_sweep_path = pathlib.Path('for_quantizedasr/scripts/eval_lalm_baselines.sh')
-if _sweep_path.exists():
-    _t = _sweep_path.read_text()
+_reg_path = pathlib.Path(_mr.REGISTRY)
+if not _reg_path.exists():
+    print(f'[SKIP] {_reg_path} not present -- run create_yamls_worldspeech_lalm.py')
+else:
+    _reg = pd.read_csv(_reg_path)
+    check('every registry row resolves to a dataset key',
+          all(_mr.dataset_key(c, _reg) is not None for c in _reg['config_yaml']))
+    check('use_in_sweep is exactly "not a selection split"',
+          all(bool(r['use_in_sweep']) != bool(
+              _iss(r['study_cell'], r['dataset_path'], r['dataset'], r['split']))
+              for _, r in _reg.iterrows()))
+    check('exactly one config is excluded, and it is ha_ng\'s selection split',
+          list(_reg[~_reg['use_in_sweep']]['config_yaml'])
+          == ['short_ml/worldspeech_ha_ng_test.yaml'])
+    check('every study cell has exactly one in-domain primary in the registry',
+          (_reg[_reg['in_domain_role'] == 'primary'].groupby('study_cell').size() == 1).all())
+    check('Hausa\'s primary is ha_td, not the excluded ha_ng',
+          _reg[(_reg['study_cell'] == 'ha_ng')
+               & (_reg['in_domain_role'] == 'primary')]['dataset'].tolist() == ['ha_td'])
+    check('the registry holds 44 configs, 43 swept',
+          len(_reg) == 44 and int(_reg['use_in_sweep'].sum()) == 43)
+    check('missing_runs MODEL_CONFIGS excludes the instruct Qwen',
+          not any('instruct' in c for c in _mr.MODEL_CONFIGS))
 
-    def _arr(name):
-        m = _re2.search(rf'^{name}=\((.*?)\n?\)', _t, _re2.S | _re2.M)
-        body = '\n'.join(l for l in m.group(1).splitlines() if not l.strip().startswith('#'))
-        return sorted(_re2.findall(r'"([^"]+)"', body))
-
-    check('missing_runs MODEL_CONFIGS matches the baselines sweep',
-          sorted(_mr.MODEL_CONFIGS) == _arr('MODEL_CONFIGS'))
-    check('missing_runs DATASET_CONFIGS matches the baselines sweep',
-          sorted(_mr.DATASET_CONFIGS) == _arr('DATASET_CONFIGS'))
-    check('the instruct Qwen variant is in neither', not any(
-        'instruct' in c for c in _mr.MODEL_CONFIGS + _arr('MODEL_CONFIGS')))
-    # crs_sc is the one dataset whose path and split differ from its siblings.
-    check('dataset_key resolves the crs_sc override',
-          _mr.dataset_key('short_ml/worldspeech_crs_sc_test.yaml')
-          == ('ERISLab/WorldSpeech', 'crs_sc', 'test_clean'))
-    check('dataset_key resolves a plain WorldSpeech and a FLEURS config',
-          _mr.dataset_key('short_ml/worldspeech_en_au_test.yaml')
-          == ('disco-eth/WorldSpeech', 'en_au', 'test')
-          and _mr.dataset_key('short_ml/fleurs_es_419_test.yaml')
-          == ('google/fleurs', 'es_419', 'test'))
 
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)

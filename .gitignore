@@ -201,3 +201,8 @@ paper/*.toc
 # 08/05: claude_process.sh is a local running log of one-off commands, not a deliverable.
 # Kept on disk for inspection, out of git.
 /claude_process.sh
+
+# 08/06: create_yamls_worldspeech_lalm.py writes YAMLs to a cwd-relative path (correct in
+# QuantizedASR, where it runs from the repo root). Running it here to refresh eval_datasets.csv
+# also drops that tree next to the generator. Regenerable; the registry is the deliverable.
+for_quantizedasr/tools/preprocess/configs/

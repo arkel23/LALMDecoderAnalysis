@@ -31,43 +31,35 @@ from verify_eval_pairing import parse_pairings
 RERUN_STATES = (None, 'failed', 'crashed')
 QA_MODELS = '/home/edwinrios/projects/QuantizedASR/configs/models'
 
-# The serial 10 baselines: the study's own encoder plus the two commercial LALMs. Pinned against
-# eval_lalm_baselines.sh by test_utils_port.py.
+# The serial 10 baselines: the study's own encoder plus the two commercial LALMs. Pinned
+# against eval_lalm_baselines.sh by test_utils_port.py.
 MODEL_CONFIGS = [
     'whisper_medium.yaml',
     'voxtral_mini_3b.yaml',
     'qwen_2_audio_7b.yaml',
 ]
 
-# 11 FLEURS (one variant per language) + 33 WorldSpeech (every variant of a study language).
-FLEURS_LANGS = ['am_et', 'en_us', 'es_419', 'fr_fr', 'ha_ng', 'hi_in', 'id_id', 'mr_in',
-                'sw_ke', 'ta_in', 'ur_pk']
-WORLDSPEECH_LANGS = [
-    'am_et', 'crs_sc',
-    'en_au', 'en_jm', 'en_ke', 'en_nz', 'en_pk', 'en_sl', 'en_us', 'en_zm',
-    'es_ar', 'es_cl', 'es_co', 'es_es', 'es_mx', 'es_pe', 'es_pr', 'es_py', 'es_uy',
-    'fr_ca', 'fr_cd', 'fr_ci', 'ha_ng', 'ha_td', 'hi_in', 'id_id', 'mr_in',
-    'sw_ke', 'sw_tz', 'ta_in', 'ta_lk', 'ur_in', 'ur_pk',
-]
-DATASET_CONFIGS = ([f'short_ml/fleurs_{l}_test.yaml' for l in FLEURS_LANGS]
-                   + [f'short_ml/worldspeech_{l}_test.yaml' for l in WORLDSPEECH_LANGS])
+REGISTRY = os.path.join('for_quantizedasr', 'tools', 'preprocess', 'eval_datasets.csv')
 
 
-def dataset_key(config):
-    """'short_ml/worldspeech_crs_sc_test.yaml' -> (dataset_path, dataset, split).
+def load_registry(path=REGISTRY, swept_only=True):
+    """The eval-dataset registry: one row per config, with use_in_sweep derived.
 
-    crs_sc is the one override: it trains and evaluates on the cleaned ERISLab mirror.
+    Single source of truth, shared with both sweeps. Reading it here is the point -- this list
+    used to be typed out separately and drifted from the sweep by exactly the config that must
+    not be evaluated.
     """
-    base = os.path.basename(config).replace('.yaml', '')
-    m = re.match(r'(fleurs|worldspeech)_(.+)_(test|dev)$', base)
-    if not m:
+    d = pd.read_csv(path)
+    return d[d['use_in_sweep']] if swept_only else d
+
+
+def dataset_key(config, registry):
+    """config_yaml -> (dataset_path, dataset, split), straight from the registry."""
+    row = registry[registry['config_yaml'] == config]
+    if row.empty:
         return None
-    source, name, split = m.groups()
-    if source == 'fleurs':
-        return ('google/fleurs', name, split)
-    if name == 'crs_sc':
-        return ('ERISLab/WorldSpeech', name, 'test_clean')
-    return ('disco-eth/WorldSpeech', name, split)
+    r = row.iloc[0]
+    return (r['dataset_path'], r['dataset'], r['split'])
 
 
 def model_id_of(config, model_dir):
@@ -81,8 +73,9 @@ def model_id_of(config, model_dir):
     return None
 
 
-def paired_grid(sweep, model_dir):
-    """Each trained checkpoint against only its own language's datasets."""
+def paired_grid(sweep, model_dir, registry):
+    """Each trained checkpoint against only its own language's datasets, registry-filtered."""
+    swept = set(registry['config_yaml'])
     text = open(sweep).read()
     variants = re.findall(r'[\w]+', re.search(r'^VARIANTS=\((.*?)\)', text, re.M).group(1))
     out = []
@@ -92,7 +85,7 @@ def paired_grid(sweep, model_dir):
                 model_dir, f'cq2a_whisper_medium_tiny_aya_{v}_txf_ws_{stem}_*.yaml')))
                 if not h.endswith('_1k.yaml')]
             for h in hits:
-                out += [(os.path.basename(h), c) for c in cfgs]
+                out += [(os.path.basename(h), c) for c in cfgs if c in swept]
     return out
 
 
@@ -101,7 +94,7 @@ def main():
     p.add_argument('--serial', type=int, default=10)
     p.add_argument('--input_file', type=str, default=None)
     p.add_argument('--model_configs', nargs='+', default=MODEL_CONFIGS)
-    p.add_argument('--dataset_configs', nargs='+', default=DATASET_CONFIGS)
+    p.add_argument('--registry', type=str, default=REGISTRY)
     p.add_argument('--pairings', type=str, default=None,
                    help='Sweep script to read per-language pairings from, instead of a cross '
                         'product. Needed for serial 11.')
@@ -122,12 +115,13 @@ def main():
         if key not in state or r['state'] == 'finished':
             state[key] = r['state']
 
-    grid = (paired_grid(args.pairings, args.model_dir) if args.pairings else
-            [(m, d) for m in args.model_configs for d in args.dataset_configs])
+    registry = load_registry(args.registry)
+    grid = (paired_grid(args.pairings, args.model_dir, registry) if args.pairings else
+            [(m, d) for m in args.model_configs for d in registry['config_yaml']])
 
     lines, reasons, unresolved = [], [], []
     for model_cfg, ds_cfg in grid:
-        mid, dkey = model_id_of(model_cfg, args.model_dir), dataset_key(ds_cfg)
+        mid, dkey = model_id_of(model_cfg, args.model_dir), dataset_key(ds_cfg, registry)
         if mid is None or dkey is None:
             unresolved.append((model_cfg, ds_cfg))
             continue

@@ -1,0 +1,13 @@
+study_cell,language_name,region,resource_tier,dataset_path_train,dataset_train,split_train,eval_dataset_path,eval_dataset,eval_split,selection_split_collides_with,variants,seeds,n_runs
+am_et,Amharic,earth,very_low,['disco-eth/WorldSpeech'],['am_et'],['train'],google/fleurs,am_et,validation,,4,420,4
+crs_sc,Seychellois Creole,,high,['ERISLab/WorldSpeech'],['crs_sc'],['train_val_exc_clean'],ERISLab/WorldSpeech,crs_sc,val_clean,,4,420,4
+en_us,English,water,high,['disco-eth/WorldSpeech'],['en_us'],['train'],google/fleurs,en_us,validation,,4,42,4
+es_419,Spanish (LatAm),water,high,['disco-eth/WorldSpeech'],['es_mx'],['train'],google/fleurs,es_419,validation,,4,42,4
+fr_fr,French,water,high,['disco-eth/WorldSpeech'],['fr_ca'],['train'],google/fleurs,fr_fr,validation,,4,42,4
+ha_ng,Hausa,earth,mid,"['disco-eth/WorldSpeech', 'disco-eth/WorldSpeech']","['ha_ng', 'ha_td']","['train', 'train']",disco-eth/WorldSpeech,ha_ng,test,short_ml/worldspeech_ha_ng_test.yaml,4,42,4
+hi_in,Hindi,fire,high,['disco-eth/WorldSpeech'],['hi_in'],['train'],google/fleurs,hi_in,validation,,4,42,4
+id_id,Indonesian,water,high,['disco-eth/WorldSpeech'],['id_id'],['train'],google/fleurs,id_id,validation,,4,42,4
+mr_in,Marathi,fire,mid,['disco-eth/WorldSpeech'],['mr_in'],['train'],google/fleurs,mr_in,validation,,4,42,4
+sw_ke,Swahili,earth,high,"['disco-eth/WorldSpeech', 'disco-eth/WorldSpeech']","['sw_ke', 'sw_tz']","['train', 'train']",google/fleurs,sw_ke,validation,,4,42,4
+ta_in,Tamil,fire,very_low,"['disco-eth/WorldSpeech', 'disco-eth/WorldSpeech']","['ta_in', 'ta_lk']","['train', 'train']",google/fleurs,ta_in,validation,,4,42,4
+ur_pk,Urdu,fire,low,"['disco-eth/WorldSpeech', 'disco-eth/WorldSpeech']","['ur_pk', 'ur_in']","['train', 'train']",google/fleurs,ur_pk,validation,,4,42,4
