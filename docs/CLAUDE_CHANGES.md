@@ -1,5 +1,32 @@
 # Change log
 
+## 2026-08-05 (later still) — missing-run check, and what serial 10 is actually missing
+
+`missing_runs.py`, adapted from ChineseQASR's `missing_scripts.py` (same finished-wins state
+lookup, same MISSING / FAILED / CRASHED rerun rule, no quantisation axis). The serial-10 grid is
+an explicit cross product held in the script; `test_utils_port.py` pins both lists against
+`eval_lalm_baselines.sh` so the duplication cannot rot. Serial 11 is not a cross product, so it
+takes `--pairings`.
+
+**Serial 10: 264 expected, 123 done, 141 to run.**
+
+| model | missing |
+|---|---|
+| `whisper_tiny` | 44 (never started) |
+| `whisper_small` | 44 (never started) |
+| `whisper_large_v3_turbo` | 44 (never started) |
+| `voxtral_mini_3b` | 4 |
+| `qwen_2_audio_7b` | 3 |
+| `whisper_medium` | 2 |
+
+The nine stragglers are all WorldSpeech: `crs_sc` and `ha_ng` for whisper-medium, those plus
+`fr_ca`/`fr_cd` for Voxtral, and `ha_ng`/`hi_in`/`mr_in` for Qwen2-Audio.
+
+**The sweep named the wrong Qwen.** `MODEL_CONFIGS` listed `qwen_2_audio_7b_instruct.yaml` while
+every actual run used `qwen_2_audio_7b.yaml`, so 41 finished runs matched no expected cell and
+the instruct variant showed as 44 missing. The instruct variant performs badly and is not wanted,
+so the sweep now names the plain one and a test asserts neither list mentions "instruct".
+
 ## 2026-08-05 (later still) — both sweeps request WER and CER explicitly
 
 `--eval_metrics` defaults to `['wer_all']` upstream (`qasr/misc/misc_utils.py:158`), so CER was

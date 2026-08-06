@@ -70,6 +70,18 @@ All in `results_all/acc/`.
 | `t9_replicates.csv` | `analyze_replicates.py` | serial 0 against serial 1, per replicate pair |
 | `t9_replicate_stats.csv` | `analyze_replicates.py` | pooled between-run standard deviation |
 
+## Missing-run checks
+
+`missing_runs.py` diffs a downloaded serial against the grid that should exist and writes
+`results_all/<serial>_missing.sh` with the commands to fill the gaps. A cell that failed once and
+later succeeded counts as done; MISSING, FAILED and CRASHED all rerun. `--model_dir` must point at
+a QuantizedASR checkout for the model YAMLs.
+
+The serial-10 grid is an explicit `MODEL_CONFIGS` x `DATASET_CONFIGS` cross product held in the
+script; `test_utils_port.py` asserts both lists match `eval_lalm_baselines.sh` so the duplication
+cannot rot. Serial 11 is not a cross product — each checkpoint pairs only with its own language —
+so it needs `--pairings <sweep>`.
+
 ## Figures
 
 All written by `plot_curve.py` into `results_all/plots/s0/`.

@@ -227,3 +227,13 @@ set -u
 # python rename_wandb_serial.py --run_ids n4cot5v7 --from_serial 1 --to_serial 4 --execute
 # python rename_wandb_serial.py --run_ids 7z4munf2 31wgxqpp e8h3ys8j xejcc9qt \
 #     --from_serial 0 --to_serial 5 --execute
+
+# --- 2026-08-05: which eval runs are still missing, and a .sh to fill them. Re-run any time -----
+# after downloading a serial; it diffs the raw CSV against the grid the sweep itself would run,
+# so it cannot drift. Needs --model_dir pointing at a QuantizedASR checkout for the model YAMLs.
+#
+#   python missing_runs.py --serial 10                      # -> results_all/10_missing.sh
+#   python missing_runs.py --serial 11 \
+#       --pairings for_quantizedasr/scripts/eval_lalm_decoder_txf.sh  # -> 11_missing.sh
+#
+# Then run the generated .sh from the QuantizedASR repo root.

@@ -496,5 +496,36 @@ check('the grid serial is the canonical side of a replicate pairing',
 check('no serial is both canonical and superseded',
       not {a for a, _ in REPLICATE_SERIAL_PAIRS} & {b for _, b in REPLICATE_SERIAL_PAIRS})
 
+# --- missing_runs static lists ------------------------------------------------------------
+# missing_runs.py hardcodes the serial-10 grid so the check stays simple, which means the lists
+# are duplicated from the sweep. Pin them together, or the tool silently checks the wrong grid.
+import re as _re2
+import missing_runs as _mr
+
+_sweep_path = pathlib.Path('for_quantizedasr/scripts/eval_lalm_baselines.sh')
+if _sweep_path.exists():
+    _t = _sweep_path.read_text()
+
+    def _arr(name):
+        m = _re2.search(rf'^{name}=\((.*?)\n?\)', _t, _re2.S | _re2.M)
+        body = '\n'.join(l for l in m.group(1).splitlines() if not l.strip().startswith('#'))
+        return sorted(_re2.findall(r'"([^"]+)"', body))
+
+    check('missing_runs MODEL_CONFIGS matches the baselines sweep',
+          sorted(_mr.MODEL_CONFIGS) == _arr('MODEL_CONFIGS'))
+    check('missing_runs DATASET_CONFIGS matches the baselines sweep',
+          sorted(_mr.DATASET_CONFIGS) == _arr('DATASET_CONFIGS'))
+    check('the instruct Qwen variant is in neither', not any(
+        'instruct' in c for c in _mr.MODEL_CONFIGS + _arr('MODEL_CONFIGS')))
+    # crs_sc is the one dataset whose path and split differ from its siblings.
+    check('dataset_key resolves the crs_sc override',
+          _mr.dataset_key('short_ml/worldspeech_crs_sc_test.yaml')
+          == ('ERISLab/WorldSpeech', 'crs_sc', 'test_clean'))
+    check('dataset_key resolves a plain WorldSpeech and a FLEURS config',
+          _mr.dataset_key('short_ml/worldspeech_en_au_test.yaml')
+          == ('disco-eth/WorldSpeech', 'en_au', 'test')
+          and _mr.dataset_key('short_ml/fleurs_es_419_test.yaml')
+          == ('google/fleurs', 'es_419', 'test'))
+
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)

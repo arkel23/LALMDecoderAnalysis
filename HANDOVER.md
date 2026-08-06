@@ -57,6 +57,7 @@ that repo is never modified from this one.
 | `plot_curve.py` | Every figure. `plot.py` cannot draw training curves — see its docstring. |
 | `verify_*.py`, `test_utils_port.py` | The guards; all run last in `plotter.sh` and fail loudly. |
 | `rename_wandb_serial.py` | Moves runs between serials in place. Dry-run by default. |
+| `missing_runs.py` | Diffs a downloaded serial against the grid its sweep would run, and writes the commands to fill the gaps. |
 | `utils.py` | Data dicts plus the preprocessing pipeline. |
 
 ## Correctness risks still open
