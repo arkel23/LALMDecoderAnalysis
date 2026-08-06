@@ -1,9 +1,9 @@
 """Between-run variance, measured from replicate pairs rather than inferred from `late_sd`.
 
 `late_sd` measures wobble along ONE trajectory; what matters when comparing two runs is how far
-apart two INDEPENDENT runs of the same cell land. The one pair that exists differs by 5.01 CER
-on best (en_us/water, both seed 42), against a grid-wide median late_sd of 1.06 and a
-region-match effect of -0.61 -- so the quoted noise floor is roughly 5x too small.
+apart two INDEPENDENT runs of the same cell land. With 10 pairs the two turn out to be close:
+between-run sd 1.17 CER against a median within-run late_sd of 1.09. The single en_us/water pair
+that differs by 5.01 CER is the outlier, not the rule.
 
 Serial 1 holds the earlier run of a twice-run cell, so pairing is a join on (model_id, dataset).
 
@@ -151,8 +151,9 @@ def main():
         br = all_row['between_run_sd'].iloc[0]
         wr = all_row['median_within_run_late_sd'].iloc[0]
         if np.isfinite(br) and np.isfinite(wr) and wr > 0:
-            print(f'\nBetween-run sd is {br / wr:.1f}x the within-run late_sd. '
-                  f'Uncertainty statements based on late_sd are optimistic by that factor.')
+            print(f'\nBetween-run sd is {br / wr:.2f}x the within-run late_sd '
+                  f'({br:.2f} vs {wr:.2f}). Above ~1.5x, uncertainty statements resting on '
+                  f'late_sd are optimistic by that factor.')
     else:
         print(f'\nOnly {len(pairs)} pair(s) -- too few for a pooled sd. '
               f'The largest observed |delta| on best CER is '

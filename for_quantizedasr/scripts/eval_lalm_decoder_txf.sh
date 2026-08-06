@@ -26,8 +26,9 @@ PAIRINGS=(
     "crs_sc||short_ml/worldspeech_crs_sc_test.yaml|"
 )
 
-# base exists for ta_in and crs_sc only; the glob below skips the rest.
-VARIANTS=(earth fire global water base)
+# Decoder slugs, matching create_yamls_models_lalm_txf.py's filenames. tiny_aya_base and
+# qwen3_4b exist for ta_in and crs_sc only; the glob below skips the rest.
+VARIANTS=(tiny_aya_earth tiny_aya_fire tiny_aya_global tiny_aya_water tiny_aya_base qwen3_4b)
 
 # --eval_set primary  FLEURS + in-training WorldSpeech (default)
 # --eval_set all      adds the held-out variants (the accent-transfer axis)
@@ -75,7 +76,7 @@ for pairing in "${PAIRINGS[@]}"; do
     for variant in "${VARIANTS[@]}"; do
         # Both checkpoints per cell: the best step (which differs per cell, hence the glob)
         # and step 1000.
-        for model_cfg_path in configs/models/cq2a_whisper_medium_tiny_aya_${variant}_txf_ws_${lang}_*.yaml; do
+        for model_cfg_path in configs/models/cq2a_whisper_medium_${variant}_txf_ws_${lang}_*.yaml; do
             [ -e "$model_cfg_path" ] || continue
 
             for dataset_cfg in $eval_cfgs; do

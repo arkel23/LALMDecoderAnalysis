@@ -1,2 +1,11 @@
 dataset,language_name,model_short,resource_tier,best_cer_first,best_cer_rerun,delta_best_cer,final_cer_first,final_cer_rerun,delta_final_cer,late_sd_first,late_sd_rerun,seed_first,seed_rerun,seed_status
+am_et,Amharic,earth,very_low,29.860000,29.250000,-0.610000,38.210000,38.650000,0.440000,3.282411,3.063428,42,420,seed_varies
+am_et,Amharic,fire,very_low,30.380000,31.010000,0.630000,34.160000,42.740000,8.580000,2.915209,1.767918,42,420,seed_varies
+am_et,Amharic,global,very_low,30.020000,27.000000,-3.020000,40.070000,37.680000,-2.390000,3.055121,1.779665,42,420,seed_varies
+am_et,Amharic,water,very_low,28.060000,24.850000,-3.210000,37.250000,40.370000,3.120000,2.166942,3.105993,42,420,seed_varies
+crs_sc,Seychellois Creole,base,high,21.490000,21.350000,-0.140000,26.410000,23.330000,-3.080000,0.881013,0.916487,42,420,seed_varies
+crs_sc,Seychellois Creole,earth,high,19.610000,17.920000,-1.690000,21.990000,21.780000,-0.210000,1.026993,1.117964,42,420,seed_varies
+crs_sc,Seychellois Creole,fire,high,20.790000,19.910000,-0.880000,27.910000,22.400000,-5.510000,0.644882,0.933062,42,420,seed_varies
+crs_sc,Seychellois Creole,global,high,20.480000,18.550000,-1.930000,20.780000,23.560000,2.780000,1.651083,1.083320,42,420,seed_varies
+crs_sc,Seychellois Creole,water,high,20.670000,19.210000,-1.460000,24.220000,21.450000,-2.770000,1.041345,0.972600,42,420,seed_varies
 en_us,English,water,high,17.060000,12.050000,-5.010000,20.120000,13.120000,-7.000000,0.409503,0.451833,42,42,same_seed

@@ -201,3 +201,11 @@ set -u
 #   python rename_wandb_serial.py --run_ids 12sof3iv g8f56u6p wvi4k6py ea7a4ud8 95kqse0h \
 #       --from_serial 0 --to_serial 1 --execute    # then: rm data/raw_serials/history_serial_*.csv
 #                                                  #       bash plotter.sh
+
+# --- 2026-08-05: the am_et/crs_sc re-runs finished and their checkpoints are on HF, so the -----
+# originals move to serial 1. 4 am_et (earth/fire/global/water) + 5 crs_sc (those plus base),
+# all seed 42; the replacements are seed 420. SPENT.
+#
+# python rename_wandb_serial.py \
+#     --run_ids wd3s5858 p7yi3bau u1t6bx57 8fupnxu6 12sof3iv g8f56u6p wvi4k6py ea7a4ud8 95kqse0h \
+#     --from_serial 0 --to_serial 1 --execute

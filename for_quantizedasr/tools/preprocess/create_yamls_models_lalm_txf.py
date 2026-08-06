@@ -21,9 +21,17 @@ HF_API = 'https://huggingface.co/api/models'
 HF_AUTHOR = 'ERISLab'
 
 # ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-earth_ws-ur_pk-250
+# The decoder is org_name, and it is not always a TinyAya variant -- Qwen3-4B is the non-Aya
+# control. Matching only tiny-aya silently dropped its four checkpoints.
 CKPT_RE = re.compile(
-    r'^ERISLab/q2a_(?P<encoder>.+?)_(?P<decoder>CohereLabs_tiny-aya-\w+)'
+    r'^ERISLab/q2a_(?P<encoder>[^_]+_[^_]+)_(?P<decoder>[^_]+_[\w.-]+)'
     r'_(?P<dataset>[a-z]+)-(?P<lang>[a-z]{2,3}_[a-z]{2,3})-(?P<step>\d+)$')
+
+
+def slug(org_name):
+    """'CohereLabs_tiny-aya-earth' -> 'tiny_aya_earth'; 'openai_whisper-medium' ->
+    'whisper_medium'; 'Qwen_Qwen3-4B' -> 'qwen3_4b'."""
+    return org_name.split('_', 1)[1].replace('-', '_').lower()
 
 # es_es was re-run from es_mx; its checkpoints remain on the Hub but evaluating them would
 # measure a condition no longer in the study.
@@ -69,10 +77,9 @@ for ckpt in sorted(checkpoints, key=lambda c: (c['lang'], c['decoder'], int(c['s
         n_skipped += 1
         continue
 
-    variant = ckpt['decoder'].rsplit('-', 1)[-1]
     step = int(ckpt['step'])
     step_label = f'{step // 1000}k' if step >= 1000 and step % 1000 == 0 else str(step)
-    filename = (f"cq2a_whisper_medium_tiny_aya_{variant}_txf_"
+    filename = (f"cq2a_{slug(ckpt['encoder'])}_{slug(ckpt['decoder'])}_txf_"
                 f"{ckpt['dataset']}_{ckpt['lang']}_{step_label}.yaml")
 
     yaml_data = {
@@ -93,12 +100,12 @@ for ckpt in sorted(checkpoints, key=lambda c: (c['lang'], c['decoder'], int(c['s
     print(f'Created: {filename}')
 
 langs = sorted({c['lang'] for c in checkpoints})
-variants = sorted({c['decoder'].rsplit('-', 1)[-1] for c in checkpoints})
+variants = sorted({slug(c['decoder']) for c in checkpoints})
 print(f'\nGenerated {n_written} model config files ({n_skipped} superseded skipped).')
 print(f'Coverage: {len(langs)} languages x up to {len(variants)} variants')
 
 for lang in langs:
-    have = {c['decoder'].rsplit('-', 1)[-1] for c in checkpoints if c['lang'] == lang}
+    have = {slug(c['decoder']) for c in checkpoints if c['lang'] == lang}
     notes = ([f'no {"/".join(sorted(set(variants) - have))}'] if have != set(variants) else [])
     if not any(int(c['step']) == 1000 for c in checkpoints if c['lang'] == lang):
         notes.append('no step-1000 checkpoint')

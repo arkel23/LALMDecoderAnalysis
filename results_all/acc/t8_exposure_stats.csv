@@ -1,5 +1,5 @@
 x,y,n,spearman_rho,spearman_p,pearson_r,pearson_p
-excess_pp,delta_vs_mismatched,11,-0.238542,0.479951,-0.534529,0.090263
-excess_pp,delta_vs_global,11,-0.412861,0.206951,-0.466486,0.148074
-ratio_matched_over_global,delta_vs_mismatched,11,-0.050578,0.882594,-0.392632,0.232302
-ratio_matched_over_global,delta_vs_global,11,-0.197714,0.560066,-0.350416,0.290736
+excess_pp,delta_vs_mismatched,11,-0.293590,0.380890,-0.530951,0.092852
+excess_pp,delta_vs_global,11,-0.440386,0.175228,-0.457156,0.157456
+ratio_matched_over_global,delta_vs_mismatched,11,-0.096558,0.777621,-0.400019,0.222844
+ratio_matched_over_global,delta_vs_global,11,-0.216106,0.523329,-0.373364,0.258048

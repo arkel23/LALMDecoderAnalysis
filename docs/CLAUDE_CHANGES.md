@@ -1,5 +1,59 @@
 # Change log
 
+## 2026-08-05 (later) — re-runs migrated, and the 5x noise-floor claim does not survive
+
+### Serial migration
+
+The `am_et` and `crs_sc` re-runs finished and their checkpoints are on HF, so the 9 originals
+(4 am_et: earth/fire/global/water; 5 crs_sc: those plus base — all seed 42) moved to serial 1.
+Serial 0 is now 52 runs with **zero duplicates**: 4 variants per language, 6 for `crs_sc` and
+`ta_in`. Serial 1 holds 10.
+
+### The noise floor is measured, and the earlier claim is refuted
+
+With 10 replicate pairs instead of 1:
+
+| | value |
+|---|---|
+| between-run sd, all 10 pairs | **1.17 CER** |
+| between-run sd, the 9 seed-varying pairs | **0.90 CER** |
+| median within-run `late_sd` | **1.09 CER** |
+
+An earlier entry concluded, from the single `en_us`/water pair differing by 5.01 CER, that
+`late_sd` understated run-to-run variance by ~5x and that every uncertainty statement resting on
+it was optimistic by that factor. **Nine further pairs do not support that.** They average 1.51
+CER apart with a maximum of 3.21, so `en_us`/water is the outlier. Between-run sd is 1.07x the
+within-run proxy, not 5x. `late_sd` is a defensible noise floor after all, and the minimum
+detectable effect stands where it was.
+
+Nine of the ten pairs vary the seed (42 vs 420), so they estimate seed sensitivity, not just
+nondeterminism — the larger quantity, and it is *smaller* than the same-seed outlier.
+
+### Numbers that moved
+
+41 checked values changed, because `am_et` and `crs_sc` now report their re-runs. The
+significant ones: Wilcoxon p on the primary contrast 1.000 -> **0.966**; matched-vs-global
+p 0.638 -> **0.966** and mean delta -0.72 -> **-0.50**; `am_et`'s delta +0.64 -> **+1.32**; the
+volume correlation 0.555/0.0767 -> **0.482/0.1334**, so it is further from significance; mean
+final-minus-best 5.02 -> **5.36**. `crs_sc`'s best TinyAya variant improved to 17.92, narrowing
+the all-six spread to 3.96 while Qwen3-4B still leads at 17.39.
+
+The per-language table in `FINDINGS.md` is now regenerated from `t5` with half-up rounding
+rather than hand-patched — an intermediate attempt used Python's banker's default and produced
+5.01/6.13/-0.14 where the convention requires 5.02/6.14/-0.15.
+
+### A checkpoint family was being silently dropped
+
+`create_yamls_models_lalm_txf.py`'s `CKPT_RE` matched only `CohereLabs_tiny-aya-*`, so the four
+**Qwen3-4B** checkpoints never became configs. The regex now matches any `org_name` decoder and
+derives the filename slug from it, which leaves every existing TinyAya filename byte-identical
+and adds `cq2a_whisper_medium_qwen3_4b_txf_*`. The sweep's glob hardcoded `tiny_aya` too;
+`VARIANTS` now carries full decoder slugs.
+
+Verified against HF: **108 repos, 108 matched**; 104 configs generated (108 minus the 4
+superseded `es_es`), **104 of 104 reachable** by the sweep's glob. 13 languages for each of
+earth/fire/global/water, 2 each for base and qwen3-4b.
+
 ## 2026-08-05 — comment cleanup and a documentation index
 
 ### Code: 24% prose -> 17%

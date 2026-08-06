@@ -27,9 +27,9 @@ next is in `ROADMAP.md`.
 
 ### 1. The headline hypothesis is null, and cleanly so
 
-Region-matched decoders do not beat mismatched ones: n = 11 languages, mean **-0.61 CER**,
-Wilcoxon **p = 1.000**, 95 % CI [-3.95, 2.53]. A p of exactly 1.000 is about as flat as a null
-gets. The design's minimum detectable effect is **4.89 CER**.
+Region-matched decoders do not beat mismatched ones: n = 11 languages, mean **-0.55 CER**,
+Wilcoxon **p = 0.966**, 95 % CI [-3.89, 1.99]. The design's minimum detectable effect is
+**4.90 CER**, so the point estimate sits well inside what the design cannot resolve.
 
 **The null is about magnitude, not about specialisation being inert.** `arXiv:2508.05149` uses
 almost this architecture and finds decoder choice matters enormously at low resource -- EuroLLM
@@ -39,12 +39,16 @@ consistent with a 19.6 pp effect between families, so the claim is "specialisati
 magnitude does not measurably change ASR, and here is the magnitude" -- considerably stronger
 than "specialisation does not help". See `docs/RELATED_WORK.md`.
 
-**Caution on the noise floor.** Earlier drafts cited the median within-run late-training standard
-deviation (1.06 CER) as the noise floor. That is the wrong quantity: it measures wobble along one
-trajectory, not how far two independent runs of the same cell land apart. The single replicate
-pair we have (`en_us`/water, same seed) differs by **5.01 CER** on best -- five times that figure.
-`analyze_replicates.py` replaces the proxy with a measured between-run standard deviation as the
-`am_et` and `crs_sc` re-runs land. Until then, every uncertainty statement here is optimistic.
+**The noise floor is now measured, and it is close to the proxy.** With the `am_et` and `crs_sc`
+re-runs landed there are **10 replicate pairs**, giving a between-run standard deviation of
+**1.17 CER** against a median within-run `late_sd` of **1.09**. An earlier draft, working from the
+single `en_us`/water pair that differs by 5.01 CER, concluded the proxy was optimistic by ~5x.
+Nine further pairs do not support that: they average **1.51 CER** apart with a maximum of 3.21, so
+`en_us`/water is the outlier rather than the rule. `late_sd` turns out to be a defensible proxy,
+and the minimum detectable effect stands roughly where it was.
+
+Nine of the ten pairs vary the seed (42 against 420) and so estimate the larger quantity --
+seed sensitivity, not just nondeterminism. Their between-run sd is **0.90 CER**.
 
 ### 2. A secondary hypothesis formed and then died on replication — worth reporting as such
 
@@ -56,9 +60,10 @@ it killed it:
 |---|---|---|
 | 7 | 0.964 | 0.0005 |
 | 10 | 0.721 | 0.0186 |
-| 11 | **0.555** | **0.0767** |
+| 11 | 0.555 | 0.0767 |
+| 11, `am_et`/`crs_sc` re-run | **0.482** | **0.1334** |
 
-The three lowest-resource cells are `ta_in` (-14.70), `am_et` (+0.64) and `ur_pk` (+1.44), so
+The three lowest-resource cells are `ta_in` (-14.70), `am_et` (+1.32) and `ur_pk` (+1.44), so
 **two of three favour the mismatched decoder**. `am_et` at 8,873 training clips against
 `ta_in`'s 8,846 is nearly a controlled comparison with the opposite sign. Tamil is an outlier;
 the trend was one language plus a small sample.
@@ -121,8 +126,9 @@ is in the repo and runs offline.
 
 ## Weaknesses, in the order a reviewer will raise them
 
-1. **One seed.** MDE 4.89 CER against effects plausibly under 1 CER. This is the single biggest
-   limitation and it caps what any framing can claim.
+1. **One seed per cell across most of the grid.** MDE 4.90 CER against effects plausibly under
+   1 CER. Ten cells now have a second run, which is what made the noise floor measurable, but the
+   other 42 do not. This is the single biggest limitation and it caps what any framing can claim.
 2. **The primary hypothesis is null and the secondary died.** The paper's positive content is
    the overfitting result and the treatment-size measurement, which is thinner than the
    original plan promised.
@@ -247,17 +253,19 @@ Nothing is excluded, so the primary and sensitivity analyses coincide:
 
 | contrast | n | mean Δ | 95 % CI | Wilcoxon p | min. detectable effect |
 |---|---|---|---|---|---|
-| matched vs mismatched | 11 | -0.61 | [-3.95, 2.53] | 1.000 | 4.89 |
-| matched vs global | 11 | -0.72 | [-3.86, 2.21] | 0.638 | 5.77 |
+| matched vs mismatched | 11 | -0.55 | [-3.89, 1.99] | 0.966 | 4.90 |
+| matched vs global | 11 | -0.50 | [-4.53, 2.42] | 0.966 | 5.83 |
 
-A Wilcoxon p of exactly 1.000 on the primary contrast is about as flat as a null gets. The
-minimum detectable effect is 4.89-5.77 CER, so the design still cannot resolve a small effect --
-but the point estimate is now small *and* stable across three rounds of added data.
+A Wilcoxon p of 0.966 on the primary contrast is about as flat as a null gets. The minimum
+detectable effect is 4.90-5.83 CER, so the design still cannot resolve a small effect -- but the
+point estimate is small *and* stable across four rounds of added data.
 
 ### Nothing is excluded any more
 
 `en_us` / water was excluded as an optimisation failure until it was re-run on 2026-07-31 and
-**replicated**: best 12.05 CER against 17.06 the first time, both far worse than earth, fire and
+**replicated**: best 12.05 CER against 17.06 the first time -- the widest of the ten replicate
+pairs, whose best-CER values reach 30.38 on the first run and 31.01 on the re-run. Both are far
+worse than earth, fire and
 global on the identical eval set. Two independent runs that bad is an effect, not a failure, and
 since water is English's *matched* variant, excluding it had been removing the grid's strongest
 against-hypothesis point. The superseded first run lives under serial 1
@@ -293,11 +301,12 @@ to fill the middle and low tiers was meant to test that. It did:
 |---|---|---|
 | 7 | 0.964 | 0.0005 |
 | 10 (+ am_et, en_us re-run) | 0.721 | 0.0186 |
-| **11 (+ ur_pk)** | **0.555** | **0.0767** |
+| 11 (+ ur_pk) | 0.555 | 0.0767 |
+| **11, am_et/crs_sc re-run** | **0.482** | **0.1334** |
 
 Every addition shrank it, and it is now **not significant even with every language**. Without
-the extreme point it falls further, to rho **0.406**, p **0.2443**. The partial correlation
-controlling for baseline CER is r = **-0.100**, p **0.77** -- but with 8 residual degrees of
+the extreme point it falls further, to rho **0.309**, p **0.3848**. The partial correlation
+controlling for baseline CER is r = **-0.129**, p **0.71** -- but with 8 residual degrees of
 freedom a null there is inconclusive, not evidence of no effect. Data volume and baseline
 difficulty are strongly collinear across these languages (Spearman rho **-0.818**, p
 **0.0021**), which is why the cross-language comparison cannot fully separate them.
@@ -307,7 +316,7 @@ The per-language table shows why:
 | language | region | tier | stream | epochs | Δ vs mismatched | baseline CER | relative Δ (%) |
 |---|---|---|---|---|---|---|---|
 | `ta_in` | fire | very_low | 8846 | 58.01 | -14.70 | 58.33 | -25.20 |
-| `am_et` | earth | very_low | 8873 | 58.01 | 0.64 | 29.22 | 2.19 |
+| `am_et` | earth | very_low | 8873 | 58.01 | 1.32 | 27.93 | 4.73 |
 | `ha_ng` | earth | mid | 27255 | 18.05 | -1.19 | 34.62 | -3.42 |
 | `ur_pk` | fire | low | 31079 | 16.04 | 1.44 | 20.81 | 6.90 |
 | `mr_in` | fire | mid | 58201 | 8.10 | -0.44 | 14.01 | -3.14 |
@@ -358,14 +367,14 @@ Ranking variants by hours-to-reach-1.5×-best-CER (`t1_sample_efficiency.csv`, m
 
 | variant | mean rank |
 |---|---|
-| fire | 2.08 |
-| water | 1.88 |
-| earth | 2.96 |
-| global | 3.08 |
+| fire | 2.00 |
+| water | 2.08 |
+| earth | 2.75 |
+| global | 3.17 |
 
 This separates the variants far more cleanly than final CER does, because it uses 101 points
 per run instead of 1. Note also that the ordering is **not** the same as the accuracy ordering
-(by best CER: earth 2.08, fire 2.50, water 2.67, global 2.75) — *how fast* a connector learns
+(by best CER: earth 2.17, fire 2.50, water 2.67, global 2.67) — *how fast* a connector learns
 and *how well* it ends up are behaving as separate axes here. That is a more interesting
 observation than either ranking alone, and it is free.
 
@@ -375,8 +384,8 @@ should be presented as suggestive, not established.
 
 ### 5.2 Overfitting — the best-vs-final gap
 
-The last checkpoint is frequently not the best one. Mean final-minus-best CER is **3.52**. Any table quoting last-step CER is reporting a partly
-arbitrary point on a curve.
+The last checkpoint is frequently not the best one. Mean final-minus-best CER is **5.36**. Any
+table quoting last-step CER is reporting a partly arbitrary point on a curve.
 
 The gap is worth reporting as a metric in its own right: it measures how much a run gives back
 after its optimum, and it is largest exactly where a language cannot fill a clean epoch. That
@@ -388,18 +397,18 @@ Seychellois Creole is officially supported by **neither** Whisper nor TinyAya, m
 only cell where both components are outside their coverage. It is also the only language with
 six models, including the non-Aya `Qwen3-4B` control.
 
-Across the five finished TinyAya variants, best CER spans **19.61 to 21.49** — a spread of
-**1.88**, against per-run late-training noise of 0.62–1.65. In other words, when neither the
+Across the five finished TinyAya variants, best CER spans **17.92 to 21.35** — a spread of
+**3.43**, against per-run late-training noise of 0.62–1.12. In other words, when neither the
 encoder nor the decoder has seen the language, **which regional variant is chosen barely
 matters**. That is a clean, interpretable negative result and a genuine contribution: it bounds
 where decoder specialisation can help.
 
 The non-Aya control changes the reading, and it is now finished: **Qwen3-4B reaches 17.39 CER,
-better than every TinyAya variant**, which widens the all-six-model spread to **4.10**. So on a
+better than every TinyAya variant**, which widens the all-six-model spread to **3.96**. So on a
 language neither component has seen, the choice that matters is the decoder *family*, not its
 regional variant — the same shape as the between-family effect in `RELATED_WORK.md`, and a
 second data point for the study's central claim that the treatment here is too small to measure.
-State which aggregation is meant: 1.88 across the five TinyAya variants, 4.10 across all six.
+State which aggregation is meant: 3.43 across the five TinyAya variants, 3.96 across all six.
 
 Recorded on the table itself: these runs train on `train_val_exc_clean` and evaluate on
 `val_clean`, and both carry the same duration-consistency cleaning as `test_clean` — samples

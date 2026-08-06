@@ -69,7 +69,7 @@ All written by `plot_curve.py` into `results_all/plots/s0/`.
 ## Definitions a reader could otherwise get wrong
 
 - **`best_cer`** is the minimum CER over a run's 101 evaluations, and is the **primary** metric.
-  `final_cer` is the last evaluation and is secondary: mean `final_minus_best` is 5.30, so the
+  `final_cer` is the last evaluation and is secondary: mean `final_minus_best` is 5.36, so the
   last checkpoint is frequently not the best.
 - **Aggregation population.** Every aggregate in `FINDINGS.md` is over **finished, canonical
   runs of the four grid-wide variants** (`earth, fire, global, water`). `base` and `Qwen3-4B`
@@ -91,7 +91,7 @@ All written by `plot_curve.py` into `results_all/plots/s0/`.
   the run. Integrity is checked only by `verify_dataset_durations.py`.
 - **Absolute vs relative effect.** Both are reported. Volume and baseline CER are collinear
   (Spearman rho **-0.818**, p 0.0021), so the two candidate explanations are entangled: the
-  partial correlation controlling for baseline CER is r **-0.100**, p **0.77**, inconclusive at
+  partial correlation controlling for baseline CER is r **-0.129**, p **0.71**, inconclusive at
   8 residual degrees of freedom rather than null.
 - **Why `ta_in` is not excluded.** The region-match contrast is within-language, so the cap loss
   cannot bias it. Excluding the language would remove the only low-resource cell.
