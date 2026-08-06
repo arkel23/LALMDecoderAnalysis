@@ -1,5 +1,33 @@
 # Change log
 
+## 2026-08-05 (later still) — the txf sweep evaluates best checkpoints only, four variants only
+
+The sweep swept all 104 generated configs: both checkpoints per cell and both control decoders.
+Step 1000 is the overfitted end of the curve, and the best-to-final gap is already read off the
+training curves in t1, so evaluating it buys nothing. The controls exist for 2 of 13 languages
+and are not part of the grid.
+
+The generator now emits **only what the sweep needs** -- 48 configs, the best checkpoint of each
+of the four grid variants across 12 languages -- so the sweep's glob matches exactly one file per
+(variant, language). `INCLUDE_FINAL` and `INCLUDE_CONTROLS` flip that back if the step-1000 or
+control configs are ever wanted. Skip counts are now reported by reason and reconcile exactly:
+48 written + 4 superseded lang + 52 final step + 4 control decoder = 108 Hub checkpoints.
+
+| | before | after |
+|---|---|---|
+| model configs generated | 104 | **48** |
+| `--eval_set all` | 368 | **176** (44 per variant) |
+| `--eval_set primary` | 220 | **104** (26 per variant) |
+
+`--models` now selects among `{earth, fire, global, water}` by short name and rejects anything
+else, so `--models fire` runs that variant's 44 evals and nothing else. It was previously a list
+of decoder slugs that happened to work but read as unused.
+
+The sweep keeps a `_1k` guard even though the generator no longer emits those configs: an earlier
+run of the generator wrote 104 files, and if they are already sitting in a QuantizedASR checkout
+the sweep must still ignore them. Verified by dropping a stray `_1k` config in and confirming the
+count stays at 176.
+
 ## 2026-08-05 (later still) — serial 0 becomes the 12x4 grid, and two claims do not survive it
 
 Serial 0 held four different kinds of run: the grid, two control arms, and (once the `es_es` runs

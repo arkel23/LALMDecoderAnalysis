@@ -3,8 +3,9 @@ Generates configs/models/*_txf_*.yaml for the trained connector checkpoints, by 
 ERISLab HF organisation. `txf` marks a checkpoint trained by us, as opposed to an off-the-shelf
 composition with a randomly-initialised connector.
 
-Two checkpoints exist per cell -- the best step by eval CER and step 1000 -- and both get a
-config, since the study reports best as primary and final as secondary.
+Emits only what the eval sweep needs: the BEST checkpoint of each of the four grid-wide
+variants. Step 1000 and the two control decoders are on the Hub but skipped -- flip
+INCLUDE_FINAL / INCLUDE_CONTROLS to emit them.
 
 Usage (from the QuantizedASR repo root):
     python tools/preprocess/create_yamls_models_lalm_txf.py
@@ -38,6 +39,18 @@ def slug(org_name):
 SUPERSEDED_LANGS = ('es_es',)
 INCLUDE_SUPERSEDED = False
 
+# Two checkpoints exist per cell: the best step and step 1000. Only the best is evaluated --
+# step 1000 is the overfitted end of the curve, and the best-to-final gap is already read off
+# the training curves in t1. "Best" is whichever step is not 1000; verified against the Hub,
+# every cell has exactly two and the best is always below 1000.
+FINAL_STEP = 1000
+INCLUDE_FINAL = False
+
+# base and Qwen3-4B are controls that exist for only 2 of the 13 languages, so they are not part
+# of the eval sweep. Kept configurable because they are what the crs_sc OOD contrast rests on.
+CONTROL_DECODERS = ('tiny_aya_base', 'qwen3_4b')
+INCLUDE_CONTROLS = False
+
 # The existing txf configs all evaluate in float32, though training used bfloat16.
 MODEL_DTYPE = 'float32'
 
@@ -70,11 +83,18 @@ output_dir = 'configs/models'
 os.makedirs(output_dir, exist_ok=True)
 
 checkpoints = fetch_checkpoints()
-n_written, n_skipped = 0, 0
+n_written = 0
+skipped = {'superseded lang': 0, 'final step': 0, 'control decoder': 0}
 
 for ckpt in sorted(checkpoints, key=lambda c: (c['lang'], c['decoder'], int(c['step']))):
     if ckpt['lang'] in SUPERSEDED_LANGS and not INCLUDE_SUPERSEDED:
-        n_skipped += 1
+        skipped['superseded lang'] += 1
+        continue
+    if int(ckpt['step']) == FINAL_STEP and not INCLUDE_FINAL:
+        skipped['final step'] += 1
+        continue
+    if slug(ckpt['decoder']) in CONTROL_DECODERS and not INCLUDE_CONTROLS:
+        skipped['control decoder'] += 1
         continue
 
     step = int(ckpt['step'])
@@ -101,8 +121,11 @@ for ckpt in sorted(checkpoints, key=lambda c: (c['lang'], c['decoder'], int(c['s
 
 langs = sorted({c['lang'] for c in checkpoints})
 variants = sorted({slug(c['decoder']) for c in checkpoints})
-print(f'\nGenerated {n_written} model config files ({n_skipped} superseded skipped).')
-print(f'Coverage: {len(langs)} languages x up to {len(variants)} variants')
+print(f'\nGenerated {n_written} model config files from {len(checkpoints)} Hub checkpoints.')
+for reason, n in skipped.items():
+    if n:
+        print(f'  skipped {n:3d}  {reason}')
+print(f'Hub coverage: {len(langs)} languages x up to {len(variants)} decoders')
 
 for lang in langs:
     have = {slug(c['decoder']) for c in checkpoints if c['lang'] == lang}

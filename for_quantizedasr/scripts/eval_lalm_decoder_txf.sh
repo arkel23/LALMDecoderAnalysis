@@ -26,12 +26,14 @@ PAIRINGS=(
     "crs_sc||short_ml/worldspeech_crs_sc_test.yaml|"
 )
 
-# Decoder slugs, matching create_yamls_models_lalm_txf.py's filenames. tiny_aya_base and
-# qwen3_4b exist for ta_in and crs_sc only; the glob below skips the rest.
-VARIANTS=(tiny_aya_earth tiny_aya_fire tiny_aya_global tiny_aya_water tiny_aya_base qwen3_4b)
+# The four grid-wide variants. tiny-aya-base and Qwen3-4B are controls that exist for only two
+# languages, so they are not part of this sweep.
+VARIANTS=(earth fire global water)
 
-# --eval_set primary  FLEURS + in-training WorldSpeech (default)
-# --eval_set all      adds the held-out variants (the accent-transfer axis)
+# --models     a subset of {earth, fire, global, water}, e.g. --models fire
+#              or --models "fire water". Default: all four.
+# --eval_set   primary  FLEURS + in-training WorldSpeech  (26 datasets/variant)
+#              all      adds the held-out variants        (44 datasets/variant)
 models=''
 eval_set='primary'
 
@@ -59,6 +61,13 @@ done
 
 if [ -n "$models" ]; then
     read -ra VARIANTS <<< "$models"
+    for v in "${VARIANTS[@]}"; do
+        case "$v" in
+            earth|fire|global|water) ;;
+            *) echo "ERROR: unknown variant '$v'. Choose from: earth fire global water" >&2
+               exit 1 ;;
+        esac
+    done
 fi
 
 base_cmd="python -m tools.evaluate --serial 11 --batch_size 128 \
@@ -74,10 +83,13 @@ for pairing in "${PAIRINGS[@]}"; do
     fi
 
     for variant in "${VARIANTS[@]}"; do
-        # Both checkpoints per cell: the best step (which differs per cell, hence the glob)
-        # and step 1000.
-        for model_cfg_path in configs/models/cq2a_whisper_medium_${variant}_txf_ws_${lang}_*.yaml; do
+        # BEST checkpoint only. Every cell has exactly two, the best step and step 1000, and the
+        # best is always below 1000 -- so excluding `_1k` selects it. Evaluating step 1000 would
+        # measure the overfitted end of the curve, and the best-to-final gap is already read off
+        # the training curves in t1.
+        for model_cfg_path in configs/models/cq2a_whisper_medium_tiny_aya_${variant}_txf_ws_${lang}_*.yaml; do
             [ -e "$model_cfg_path" ] || continue
+            case "$model_cfg_path" in *_1k.yaml) continue ;; esac
 
             for dataset_cfg in $eval_cfgs; do
                 cmd="$base_cmd --config configs/models/$(basename "$model_cfg_path") configs/datasets/$dataset_cfg"

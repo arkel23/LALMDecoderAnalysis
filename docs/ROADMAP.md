@@ -21,7 +21,10 @@ also mix two different quantities.
 
 `create_yamls_worldspeech_lalm.py` now generates all 120 WorldSpeech `test` configs, so every
 language has an in-domain point to sit beside its FLEURS point. `eval_lalm_decoder_txf.sh` runs
-them under serial 11.
+them under serial 11: the **best** checkpoint of each of the four grid variants, 44 datasets per
+variant (176 evals), or 26 per variant with the default `--eval_set primary`. Step 1000 is not
+evaluated -- it is the overfitted end of the curve, and the best-to-final gap already comes off
+the training curves. `--models fire` restricts the sweep to one variant.
 
 The decode bug that blocked this was an environment problem, not a corpus one: the `pytorch` env
 has no audio backend at all (`datasets` 5.0.0, neither soundfile nor torchcodec). In `asr`,

@@ -182,11 +182,17 @@ set -u
 # --- 2026-08-03: SUPERSEDES the 2026-08-02 block above -- 12 pairings, not 11, and the -------
 # eval count depends on --eval_set. NOT YET RUN in QuantizedASR. From its root:
 #
-#   python tools/preprocess/create_yamls_models_lalm_txf.py    # 82 model configs
-#   python tools/preprocess/create_yamls_worldspeech_lalm.py   # 33 dataset configs + pairings
-#   bash scripts/eval_lalm_decoder_txf.sh --eval_set primary   # serial 11, 188 evals
-#   bash scripts/eval_lalm_decoder_txf.sh --eval_set all        # serial 11, 334 evals
+#   python tools/preprocess/create_yamls_models_lalm_txf.py    # 48 model configs (best step,
+#                                                              # 4 grid variants x 12 languages)
+#   python tools/preprocess/create_yamls_worldspeech_lalm.py   # 120 dataset configs
+#   bash scripts/eval_lalm_decoder_txf.sh --eval_set primary   # serial 11, 104 evals (26/variant)
+#   bash scripts/eval_lalm_decoder_txf.sh --eval_set all        # serial 11, 176 evals (44/variant)
+#   bash scripts/eval_lalm_decoder_txf.sh --models fire --eval_set all   # one variant, 44 evals
 #   bash scripts/eval_lalm_baselines.sh                         # serial 10, 264 evals
+#
+# NOTE: the earlier version of the generator wrote 104 configs including step-1000 and the
+# controls. If those are already in configs/models/, delete them -- the sweep skips `_1k` but
+# the control configs would just sit there unused.
 
 # --- 2026-08-03: PENDING, do NOT run until the crs_sc/am_et re-runs FINISH. -----------------
 # The 5 crs_sc re-runs (seed 420) are currently in serial 0 alongside the finished originals
