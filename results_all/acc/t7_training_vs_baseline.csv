@@ -1,0 +1,5 @@
+dataset,dataset_path,split,baseline_wer,baseline_model,trained_wer,trained_model,delta_wer,training_helps,study_cell,eval_domain,in_domain_role
+ha_ng,google/fleurs,test,95.560000,Voxtral-Mini-3B-2507,68.720000,tiny-aya-global,-26.840000,True,ha_ng,cross_domain,
+sw_ke,google/fleurs,test,51.520000,Voxtral-Mini-3B-2507,35.020000,tiny-aya-earth,-16.500000,True,sw_ke,cross_domain,
+sw_ke,disco-eth/WorldSpeech,test,25.930000,Voxtral-Mini-3B-2507,20.850000,tiny-aya-fire,-5.080000,True,sw_ke,in_domain,primary
+sw_tz,disco-eth/WorldSpeech,test,78.100000,Voxtral-Mini-3B-2507,25.270000,tiny-aya-global,-52.830000,True,sw_ke,in_domain,accent_transfer

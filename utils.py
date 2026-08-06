@@ -1,5 +1,6 @@
 """Data dicts and the preprocessing pipeline for LALMDecoderAnalysis."""
 import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -367,6 +368,33 @@ TRAIN_CONFIG_TO_CELL = {
     'es_pr': 'es_419', 'es_py': 'es_419', 'es_uy': 'es_419',
     'fr_cd': 'fr_fr', 'fr_ci': 'fr_fr',
 }
+
+
+# A trained checkpoint's model_id names the checkpoint, not the model:
+# ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-water_ws-ha_ng-700. Serial 11 therefore
+# joins to nothing until the id is reduced to its parent, which is a METHODS_DIC key.
+CHECKPOINT_RE = re.compile(
+    r'^[\w.-]+/q2a_(?P<enc_org>[^_]+)_(?P<enc>[\w.-]+?)_(?P<dec_org>[^_]+)_(?P<dec>[\w.-]+?)'
+    r'_(?P<corpus>[a-z]+)-(?P<lang>[a-z]{2,3}_[a-z]{2,3})-(?P<step>\d+)$')
+
+
+def parent_model_id(model_id):
+    """Checkpoint id -> the METHODS_DIC key for the model it fine-tuned.
+
+    Returns the id unchanged when it is already a parent, so this is safe to map over a column
+    holding both.
+    """
+    m = CHECKPOINT_RE.match(str(model_id))
+    if not m:
+        return model_id
+    g = m.groupdict()
+    return f"q2a_{g['enc_org']}/{g['enc']}_{g['dec_org']}/{g['dec']}"
+
+
+def checkpoint_fields(model_id):
+    """-> (training language, step) for a checkpoint id; (None, None) for a parent id."""
+    m = CHECKPOINT_RE.match(str(model_id))
+    return (m.group('lang'), int(m.group('step'))) if m else (None, None)
 
 
 def to_study_cell(code):

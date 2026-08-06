@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (LANGUAGE_DIC, RESOURCE_TIER, get_eval_domain, to_study_cell,
-                   in_domain_role, IN_DOMAIN_PRIMARY,
+                   in_domain_role, IN_DOMAIN_PRIMARY, parent_model_id, checkpoint_fields,
                    assert_unique_keys)
 
 FLOAT_FORMAT = '%.6f'
@@ -47,12 +47,21 @@ def load_serial(path, label):
         print(f'[SKIP] {label}: {path} not present')
         return None
     df = pd.read_csv(path)
+    # A trained checkpoint's model_id names the checkpoint, so serial 11 joins to nothing until
+    # it is reduced to its parent. Parent ids pass through unchanged, so this is safe for both.
+    if 'model_id' in df.columns:
+        df['checkpoint_id'] = df['model_id']
+        df['model_id'] = df['model_id'].map(parent_model_id)
+        fields = df['checkpoint_id'].map(checkpoint_fields)
+        df['checkpoint_lang'] = [f[0] for f in fields]
+        df['checkpoint_step'] = [f[1] for f in fields]
     print(f'{label}: {len(df)} rows from {path}')
     return df
 
 
 def build_table(df):
-    keep = ['serial', 'model_id', 'dataset', 'dataset_path', 'split', 'state',
+    keep = ['serial', 'model_id', 'checkpoint_id', 'checkpoint_lang', 'checkpoint_step',
+            'dataset', 'dataset_path', 'split', 'state',
             'force_asr_language', 'num_samples', 'audio_length_s_mean']
     keep += [c for c in WER_FAMILY + COST_COLS if c in df.columns]
     out = df[[c for c in keep if c in df.columns]].copy()
@@ -102,6 +111,9 @@ def compare_with_trained(base, trained, metric='wer'):
     """
     if trained is None or base is None or metric not in trained.columns:
         return None
+    # Both sides go through build_table, so model_short / study_cell / in_domain_role exist on
+    # each. Passing the raw frame here is what made this path fail the first time it ran.
+    trained = build_table(trained)
 
     key = ['dataset', 'dataset_path', 'split']
     b = base[base['state'] == 'finished'].copy()

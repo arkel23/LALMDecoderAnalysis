@@ -526,5 +526,29 @@ else:
           not any('instruct' in c for c in _mr.MODEL_CONFIGS))
 
 
+# --- serial 11 checkpoint ids --------------------------------------------------------------
+# A trained checkpoint's model_id names the checkpoint, not the model, so serial 11 joins to
+# nothing until it is reduced to its parent.
+from utils import parent_model_id as _pmi, checkpoint_fields as _cf
+
+_s11 = pathlib.Path('data/raw_serials/raw_serial_11.csv')
+check('a parent model_id passes through parent_model_id unchanged',
+      _pmi('q2a_openai/whisper-medium_CohereLabs/tiny-aya-fire')
+      == 'q2a_openai/whisper-medium_CohereLabs/tiny-aya-fire')
+check('a checkpoint id reduces to its METHODS_DIC parent',
+      _pmi('ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-water_ws-ha_ng-700')
+      == 'q2a_openai/whisper-medium_CohereLabs/tiny-aya-water')
+check('checkpoint_fields recovers the training language and step',
+      _cf('ERISLab/q2a_openai_whisper-medium_CohereLabs_tiny-aya-water_ws-ha_ng-700')
+      == ('ha_ng', 700))
+check('a parent id yields no checkpoint fields',
+      _cf('q2a_openai/whisper-medium_CohereLabs/tiny-aya-fire') == (None, None))
+if _s11.exists():
+    _d = pd.read_csv(_s11)
+    check('every serial-11 model_id reduces onto a METHODS_DIC key',
+          all(_pmi(m) in METHODS_DIC for m in _d['model_id'].unique()))
+    check('every serial-11 checkpoint records a training language',
+          all(_cf(m)[0] is not None for m in _d['model_id'].unique()))
+
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)
