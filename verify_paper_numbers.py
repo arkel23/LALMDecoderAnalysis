@@ -20,6 +20,8 @@ from decimal import Decimal, ROUND_HALF_UP
 
 import pandas as pd
 
+from utils import GRID_SERIAL
+
 ACC = os.path.join('results_all', 'acc')
 # Every document that prints numbers derived from this repo's CSVs. Scanning only one of them
 # is how a stale median within-run late_sd once survived: the number was in the spec, but the
@@ -29,7 +31,9 @@ ACC = os.path.join('results_all', 'acc')
 # somewhere in the scanned text. It does not assert that a WRONG value is absent, so a stale
 # figure sitting beside a correct one still passes. Catching that needs per-claim anchoring,
 # which these specs do not yet carry.
-DOCS = [os.path.join('docs', 'FINDINGS.md')]
+# main.tex is scanned only once it exists, so a bare clone without the paper still passes.
+DOCS = [d for d in (os.path.join('docs', 'FINDINGS.md'),
+                    os.path.join('ACL26_LALMDecoder', 'main.tex')) if os.path.exists(d)]
 
 T1 = os.path.join(ACC, 't1_sample_efficiency.csv')
 T2S = os.path.join(ACC, 't2_region_match_stats.csv')
@@ -39,6 +43,8 @@ T5 = os.path.join(ACC, 't5_volume_interaction.csv')
 T5S = os.path.join(ACC, 't5_volume_stats.csv')
 T9 = os.path.join(ACC, 't9_replicates.csv')
 T6A = os.path.join(ACC, 't6_loss_by_axis.csv')
+T8 = os.path.join(ACC, 't8_exposure.csv')
+T8S = os.path.join(ACC, 't8_exposure_stats.csv')
 RAW = os.path.join('data', 'raw_serials', 'raw_serial_0.csv')
 # Parameter counts are a property of the MODEL, not of the grid, and tiny-aya-base lives in
 # serial 2 with the other control arm. Both serials are needed to compare them.
@@ -359,6 +365,84 @@ ORDERINGS = [
               / _axis('eval_domain', 'in_domain', 'median_generalisation_gap')) < 1.5),
     ('but domain shift does NOT show up as overfitting -- the two are separable',
      lambda: _axis('eval_domain', 'cross_domain', 'median_eval_loss_rise') < 0.05),
+]
+
+
+# --- numbers the paper prints that no earlier claim covered -------------------------------
+T7B = os.path.join(ACC, 't7_baselines.csv')
+T7C = os.path.join(ACC, 't7_training_vs_baseline.csv')
+HOURS = os.path.join('data', 'language_hours_whisper.csv')
+
+
+def _t8s(x, y, col):
+    d = load(T8S)
+    sel = d[(d['x'] == x) & (d['y'] == y)]
+    assert len(sel) == 1, f'{x}/{y} matched {len(sel)} rows in {T8S}'
+    return float(sel.iloc[0][col])
+
+
+def _t8(lang, col):
+    d = load(T8)
+    sel = d[d['dataset'] == lang]
+    assert len(sel) == 1, f'{lang} matched {len(sel)} rows in {T8}'
+    return float(sel.iloc[0][col])
+
+
+def _hours(code):
+    d = load(HOURS)
+    sel = d[d['language_code'] == code]
+    assert len(sel) == 1, f'{code} matched {len(sel)} rows in {HOURS}'
+    return float(sel.iloc[0]['hours'])
+
+
+def _rank_mean(col, variant):
+    """Mean per-language rank of one variant, over the canonical finished grid."""
+    d = load(T1)
+    d = d[(d['serial'] == GRID_SERIAL) & d['is_canonical'] & (d['state'] == 'finished')]
+    r = d.pivot_table(index='dataset', columns='model_short', values=col).rank(axis=1)
+    return float(r.mean()[variant])
+
+
+DERIVED += [
+    ('exposure vs region-match effect, pearson r',
+     lambda: _t8s('excess_pp', 'delta_vs_mismatched', 'pearson_r'), 2),
+    ('exposure vs region-match effect, pearson p',
+     lambda: _t8s('excess_pp', 'delta_vs_mismatched', 'pearson_p'), 2),
+    ('exposure vs region-match effect, spearman rho',
+     lambda: _t8s('excess_pp', 'delta_vs_mismatched', 'spearman_rho'), 2),
+    ("English's excess exposure, the one negative one",
+     lambda: _t8('en_us', 'excess_pp'), 1),
+    ("English's matched-decoder exposure",
+     lambda: _t8('en_us', 'exposure_matched_pct'), 1),
+    ('the largest gain training buys over the best baseline',
+     lambda: load(T7C)['delta_wer'].min(), 1),
+    ('held-out accent/dialect varieties evaluated',
+     lambda: load(T7B).query("in_domain_role == 'accent_transfer'")['dataset'].nunique(), 0),
+    ('Whisper hours, Marathi', lambda: _hours('mr'), 0),
+    ('Whisper hours, Swahili', lambda: _hours('sw'), 0),
+    ('Whisper hours, Amharic', lambda: _hours('am'), 0),
+    ('Whisper hours, Hausa', lambda: _hours('ha'), 0),
+]
+DERIVED += [(f'mean rank, {col.split("_")[0]}, {v}',
+             (lambda c, m: lambda: _rank_mean(c, m))(col, v), 2)
+            for col in ('audio_h_to_1.5x_best', 'best_cer')
+            for v in ('earth', 'fire', 'global', 'water')]
+
+ORDERINGS += [
+    ('LisTAya-Global is slowest to converge and no better at the end',
+     lambda: (_rank_mean('audio_h_to_1.5x_best', 'global')
+              == max(_rank_mean('audio_h_to_1.5x_best', v)
+                     for v in ('earth', 'fire', 'global', 'water'))
+              and _rank_mean('best_cer', 'global') >= _rank_mean('best_cer', 'earth'))),
+    ('the convergence-speed ordering is NOT the accuracy ordering',
+     lambda: (min(('earth', 'fire', 'global', 'water'),
+                  key=lambda v: _rank_mean('audio_h_to_1.5x_best', v))
+              != min(('earth', 'fire', 'global', 'water'),
+                     key=lambda v: _rank_mean('best_cer', v)))),
+    ('English is the only language whose matched decoder saw LESS of it',
+     lambda: set(load(T8).query('excess_pp < 0')['dataset']) == {'en_us'}),
+    ('training beats the best baseline on every cell evaluated so far',
+     lambda: bool(load(T7C)['training_helps'].all())),
 ]
 
 

@@ -83,9 +83,14 @@ def build_table(df):
     out['in_domain_role'] = [in_domain_role(c, d, e) for c, d, e
                              in zip(out['study_cell'], out['dataset'], out['eval_domain'])]
 
-    # One row per (model, language, eval set); anything else is a duplicate eval.
-    assert_unique_keys(out, ['model_id', 'dataset', 'dataset_path', 'split'],
-                       label='t7_baselines')
+    # One FINISHED row per (model, language, eval set). A failed attempt sitting beside its
+    # retry is a re-run, not a duplicate eval, so only finished rows carry the constraint.
+    key = ['model_id', 'dataset', 'dataset_path', 'split']
+    assert_unique_keys(out[out['state'] == 'finished'], key, label='t7_baselines')
+    retried = out[out.duplicated(key, keep=False)]
+    if len(retried):
+        print(f'{retried[key].drop_duplicates().shape[0]} eval config(s) have a re-run; '
+              f'states: {sorted(retried["state"].unique())}')
     return out.sort_values(['dataset', 'model_short'])
 
 

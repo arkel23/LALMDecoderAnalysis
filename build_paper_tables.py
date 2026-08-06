@@ -127,6 +127,52 @@ def tab_baselines():
     return '\n'.join(rows)
 
 
+def tab_exposure():
+    """How much of each language the matched decoder actually saw."""
+    d = pd.read_csv(os.path.join(ACC, 't8_exposure.csv')).sort_values('excess_pp')
+    rows = []
+    for _, r in d.iterrows():
+        rows.append(
+            f"{LANGUAGE_DIC.get(r['dataset'], r['dataset'])} & "
+            f"{REGION_LABEL.get(r['region'], '--')} & "
+            f"{fmt(r['exposure_matched_pct'], 1)} & "
+            f"{fmt(r['exposure_mismatched_mean_pct'], 1)} & "
+            f"{fmt(r['excess_pp'], 1)} & {fmt(r['delta_vs_mismatched'])} \\\\")
+    return '\n'.join(rows)
+
+
+def tab_baselines_full():
+    """Serial 10: the off-the-shelf models on each language's primary eval sets."""
+    d = pd.read_csv(os.path.join(ACC, 't7_baselines.csv'))
+    d = d[(d['state'] == 'finished') & d['wer'].notna()]
+    d = d[(d['in_domain_role'] == 'primary') | (d['eval_domain'] == 'cross_domain')]
+    piv = d.pivot_table(index=['study_cell', 'eval_domain'], columns='model_short', values='wer')
+    models = [m for m in ('whisper-medium', 'Voxtral-Mini-3B-2507', 'Qwen2-Audio-7B')
+              if m in piv.columns]
+    rows = []
+    for (cell, dom), r in piv.iterrows():
+        rows.append(f"{LANGUAGE_DIC.get(cell, cell)} & "
+                    f"{'FLEURS' if dom == 'cross_domain' else 'in-domain'} & "
+                    + ' & '.join(fmt(r[m]) for m in models) + ' \\\\')
+    return '\n'.join(rows)
+
+
+def tab_dataset_stats():
+    """Evaluation-set size and audio duration, measured by the eval runs themselves."""
+    d = pd.read_csv(os.path.join('data', 'manifest_eval_sets.csv'))
+    d = d[(d['in_domain_role'] == 'primary') | (d['source'] == 'fleurs')]
+    d = d[d['num_samples'].notna()].sort_values(['study_cell', 'source'])
+    rows = []
+    for _, r in d.iterrows():
+        rows.append(
+            f"{LANGUAGE_DIC.get(r['study_cell'], r['study_cell'])} & "
+            f"{'FLEURS' if r['source'] == 'fleurs' else 'WorldSpeech'} & "
+            f"{int(r['num_samples'])} & {fmt(r['audio_length_s_mean'], 1)} & "
+            f"{fmt(r['audio_length_s_std'], 1)} & {fmt(r['audio_length_s_min'], 1)} & "
+            f"{fmt(r['audio_length_s_max'], 1)} \\\\")
+    return '\n'.join(rows)
+
+
 def main():
     print('Generating paper tables:')
     write('tab_region_match.tex', tab_region_match(), '@{}llrrrr@{}',
@@ -152,6 +198,26 @@ def main():
           'Training configuration and evaluation-set size per language, generated from the run '
           'manifest.',
           'tab:dataset-generated')
+    write('tab_exposure.tex', tab_exposure(), '@{}llrrrr@{}',
+          r'\textbf{Language} & \textbf{Region} & \textbf{Matched} & \textbf{Mism.} & '
+          r'\textbf{Excess pp} & \textbf{$\Delta$ CER}',
+          "Share of each decoder's post-training mix in the target language, from the Tiny Aya "
+          'report. Excess is matched minus the mean of the two mismatched variants. English is '
+          r"the one language whose matched decoder saw \emph{less} of it than the mismatched "
+          'ones did.',
+          'tab:exposure', wide=True)
+    write('tab_baselines_full.tex', tab_baselines_full(), '@{}llrrr@{}',
+          r'\textbf{Language} & \textbf{Test set} & \textbf{Whisper-M} & '
+          r'\textbf{Voxtral-M} & \textbf{Qwen2-A}',
+          'WER of the off-the-shelf models on each language. Values above 100 indicate '
+          'degenerate output rather than substitution errors.',
+          'tab:baselines-full', wide=True)
+    write('tab_dataset_stats.tex', tab_dataset_stats(), '@{}llrrrrr@{}',
+          r'\textbf{Language} & \textbf{Corpus} & \textbf{$n$} & \textbf{Mean} & '
+          r'\textbf{SD} & \textbf{Min} & \textbf{Max}',
+          'Evaluation sets: number of utterances and audio duration in seconds, measured '
+          'directly from the decoded audio at evaluation time.',
+          'tab:dataset-stats', wide=True)
     return 0
 
 

@@ -1,5 +1,47 @@
 # Change log
 
+## 2026-08-06 (second pass) — figures, discussion, and the paper enters the number checker
+
+**Additive again.** Nothing was removed from `main.tex`. Added: a `Related Work` section, six
+Results subsections (exposure, volume interaction, learning speed, the domain-gap null, the full
+baseline matrix, accent transfer), `Discussion`, `Conclusion`, three generated tables, and the
+three existing figures — the first draft used none of them. 6 pages to 11.
+
+**Three new generated tables.** `tab_exposure`, `tab_baselines_full` and `tab_dataset_stats`.
+The trap: in a Python raw string `r'\\textbf'` is a literal double backslash, so the four
+earlier table headers (`\textbf`) were right and the three new ones silently emitted a LaTeX
+line break before every column name — 101 errors from three characters. Same for `\\Delta`.
+
+**The paper is now scanned by `verify_paper_numbers.py`.** `DOCS` gained `main.tex`, guarded on
+existence so a bare clone still passes. Eleven derived checks and four orderings were added for
+the numbers the new sections print: the exposure correlation, English's negative excess, the
+largest gain training buys, the held-out variety count, the four Whisper hour figures, and the
+per-variant mean ranks on both convergence speed and endpoint accuracy. 128 numbers, 28
+orderings, 102/128 high-specificity. Negative-tested by flipping the sign of English's
+`excess_pp`: one ordering broke, one number failed, exit 1; restored, exit 0.
+
+It immediately caught one drift: the Conclusion printed "up to 53 WER" against a CSV value of
+-52.83. The paper now prints 52.8.
+
+**Two figure titles asserted more than the data does.** The volume figure was titled
+"Region-matched decoder benefit decays with training-data volume" while the text reports
+rho 0.48, p 0.13 — retitled to "Region-match effect against training-data volume". The crs_sc
+figure advertised "5 finished TinyAya variants; Qwen3-4B control still training", but serial 0
+holds only the four LisTAya variants and Qwen3 is out of the paper's scope.
+
+**`t7_baselines` uniqueness now scopes to finished runs.** A failed `fr_ca`/Voxtral eval sitting
+beside its in-flight retry tripped the assert. A re-run is not a duplicate eval; the constraint
+belongs on the rows that carry results, matching the `is_canonical` convention used elsewhere.
+
+**One prose error caught by re-derivation, not by the checker.** The accent-transfer sentence
+listed 7 English + 8 Spanish + 2 French and then said "20 held-out varieties in all". There are
+20, but three of them are single varieties of Swahili, Tamil and Urdu that the list omitted.
+
+**One `% REVIEW:` comment added.** The Whisper hour figures quoted in the baselines section are
+ASR plus translation hours; for the low-resource entries almost all of it is translation
+(Marathi: 0.6 h ASR of 289).
+
+
 ## 2026-08-06 (later still) — first draft of the paper's Results
 
 **Venue.** ROCLING, calibrated from proceedings rather than instructions: 149 papers across

@@ -1,7 +1,8 @@
 # Generated files: what exists, what writes it, and how to rebuild
 
-Merges the number-provenance and figure-reproduction notes. Every number in `FINDINGS.md`
-traces to a CSV below, and `verify_paper_numbers.py` re-derives all of them on every run.
+Merges the number-provenance and figure-reproduction notes. Every number in `FINDINGS.md` and
+in `ACL26_LALMDecoder/main.tex` traces to a CSV below, and `verify_paper_numbers.py` re-derives
+all of them on every run.
 Adding a number to a document means adding it to that checker's `DERIVED` list.
 
 Nothing is hand-computed. Statistics are stored at 6 dp so a printed value is rounded exactly
@@ -110,6 +111,27 @@ All written by `plot_curve.py` into `results_all/plots/s0/`.
 | `s0_curve_crs_ood.png` | The `crs_sc` cell alone: unseen by both encoder and decoder |
 | `s0_volume_interaction.png` | **Headline.** Region-match effect against training-stream size, one point per language |
 | `s0_volume_interaction_relative.png` | The same effect as a share of baseline CER, so the volume/difficulty confound is visible |
+
+`plotter.sh` copies the three the paper uses into `ACL26_LALMDecoder/assets/figures/`, so those
+copies are always byte-identical to their sources: `s0_curve_cer_vs_audio_hours`,
+`s0_volume_interaction`, `s0_curve_crs_ood`.
+
+## Paper tables
+
+`build_paper_tables.py` writes complete `table`/`table*` floats into
+`ACL26_LALMDecoder/tables/`. A bare tabular body cannot be `\input` inside an alignment, and a
+6-column table silently overlaps its neighbour in one ACL column, so the generator emits the
+whole float and sets `table*` where needed.
+
+| Table | Source CSV |
+|---|---|
+| `tab_region_match.tex` | `t2_region_match.csv` (primary analysis block only) |
+| `tab_loss_by_tier.tex` | `t6_loss_by_axis.csv` |
+| `tab_baselines.tex` | `t7_training_vs_baseline.csv` |
+| `tab_datasets.tex` | `manifest_training.csv` + `manifest_eval_sets.csv` |
+| `tab_exposure.tex` | `t8_exposure.csv` |
+| `tab_baselines_full.tex` | `t7_baselines.csv` |
+| `tab_dataset_stats.tex` | `manifest_eval_sets.csv` |
 
 ## Definitions a reader could otherwise get wrong
 

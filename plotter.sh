@@ -226,25 +226,22 @@ python -u plot_curve.py --input_file "$HIST" \
   --title 'Training loss vs audio processed, by decoder variant' \
   --output_file s0/s0_curve_trainloss_vs_audio_hours --results_dir results_all/plots
 
-# The crs_sc OOD cell on its own, un-faceted. It is the only language run with six models,
-# but the non-Aya Qwen3-4B control is still training, and --keep_states finished drops it --
-# so the title says five, not six. A caption that describes data the declared filter removed
-# is exactly the mismatch that shipped in a sibling repo; update it when Qwen3-4B finishes.
+# The crs_sc OOD cell on its own, un-faceted. Serial 0 holds only the four LisTAya variants
+# here; the non-Aya control lives in serial 2 and is out of the paper's scope.
 python -u plot_curve.py --input_file "$HIST" \
   --x_var_name audio_hours --y_var_name 'eval/cer' --hue_var_name model_id \
   --keep_languages crs_sc --keep_states finished \
   --log_scale_x --log_scale_y --fig_size 8 5 \
-  --title 'Seychellois Creole, unseen by encoder AND decoder\n(5 finished TinyAya variants; Qwen3-4B control still training)' \
+  --title 'Seychellois Creole, unseen by both the encoder and every decoder' \
   --output_file s0/s0_curve_crs_ood --results_dir results_all/plots
 
-# The headline figure. symlog on y because one language sits at -14.7 CER while the rest are
-# within +/-1.2: a linear axis compresses six of seven points into an unreadable band, and a log
-# axis cannot render a signed effect at all.
+# symlog on y because Tamil sits at -14.7 CER while the other ten are within +/-1.5: a linear
+# axis compresses them into an unreadable band, and a log axis cannot render a signed effect.
 python -u plot_curve.py --input_file "$ACC/t5_volume_interaction.csv" \
   --kind scatter --x_var_name stream_post_filter --y_var_name delta_vs_mismatched \
   --hue_var_name region --annotate_var_name dataset --hline 0 \
   --log_scale_x --symlog_y 1.0 --legend_outside --fig_size 7.5 4.6 --font_scale 0.9 \
-  --title 'Region-matched decoder benefit decays with training-data volume' \
+  --title 'Region-match effect against training-data volume' \
   --output_file s0/s0_volume_interaction --results_dir results_all/plots
 
 # The same effect relative to baseline CER. This is the confound made visible rather than
@@ -261,6 +258,13 @@ python -u plot_curve.py --input_file "$ACC/t5_volume_interaction.csv" \
 # --- 4b. Paper tables --------------------------------------------------------------
 # Every table the paper prints is generated from the CSVs above, so no number is transcribed.
 python -u build_paper_tables.py
+
+# Figures must be byte-identical to their generated sources, so the pipeline copies them rather
+# than anyone doing it by hand.
+mkdir -p ACL26_LALMDecoder/assets/figures
+for fig in s0_curve_cer_vs_audio_hours s0_volume_interaction s0_curve_crs_ood; do
+  cp "results_all/plots/s0/${fig}.png" ACL26_LALMDecoder/assets/figures/
+done
 
 # --- 5. Verification guards --------------------------------------------------------
 # Always last, and they fail loudly rather than letting an inconsistency reach a document.
