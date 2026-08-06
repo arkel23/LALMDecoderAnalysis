@@ -222,7 +222,8 @@ Two related failures from the same session:
 
 ## Session workflow
 
-- One-off commands go in the repo's **`claude_process.sh`** with a dated comment, and get
+- One-off commands go in the repo's **`claude_process.sh`** (gitignored, a local log only)
+  with a dated comment, and get
   **commented out once spent** — three live "DONE" lines would have relaunched a multi-hour
   recompute on the next `bash claude_process.sh`.
 - Don't wait sequentially on independent multi-step batches. Start a downstream step on

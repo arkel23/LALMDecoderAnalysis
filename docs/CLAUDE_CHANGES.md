@@ -8,13 +8,15 @@ an explicit cross product held in the script; `test_utils_port.py` pins both lis
 `eval_lalm_baselines.sh` so the duplication cannot rot. Serial 11 is not a cross product, so it
 takes `--pairings`.
 
-**Serial 10: 264 expected, 123 done, 141 to run.**
+**The baseline roster is three models**, not six: whisper-medium, which is the study's own
+encoder and so the like-for-like reference, plus the two commercial LALMs. whisper-tiny, -small
+and -large-v3-turbo are dropped -- they answer a Whisper-scaling question this study is not
+asking, and they had never been run.
+
+**Serial 10: 132 expected, 123 done, 9 to run.**
 
 | model | missing |
 |---|---|
-| `whisper_tiny` | 44 (never started) |
-| `whisper_small` | 44 (never started) |
-| `whisper_large_v3_turbo` | 44 (never started) |
 | `voxtral_mini_3b` | 4 |
 | `qwen_2_audio_7b` | 3 |
 | `whisper_medium` | 2 |

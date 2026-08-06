@@ -197,3 +197,7 @@ paper/*.toc
 # it would impose one machine's agent configuration on everyone who clones the repo.
 .claude/
 
+
+# 08/05: claude_process.sh is a local running log of one-off commands, not a deliverable.
+# Kept on disk for inspection, out of git.
+/claude_process.sh

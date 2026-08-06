@@ -15,7 +15,7 @@ checkout. Dataset configs resolve offline -- this repo owns the generator that w
 
 Usage:
     python missing_runs.py --serial 10
-    python missing_runs.py --serial 10 --model_configs whisper_tiny.yaml whisper_small.yaml
+    python missing_runs.py --serial 10 --model_configs whisper_medium.yaml
     python missing_runs.py --serial 11 \\
         --pairings for_quantizedasr/scripts/eval_lalm_decoder_txf.sh
 """
@@ -31,13 +31,10 @@ from verify_eval_pairing import parse_pairings
 RERUN_STATES = (None, 'failed', 'crashed')
 QA_MODELS = '/home/edwinrios/projects/QuantizedASR/configs/models'
 
-# The serial 10 baselines. The instruct variant of Qwen2-Audio is deliberately absent: it
-# performs badly here. Keep this in step with eval_lalm_baselines.sh.
+# The serial 10 baselines: the study's own encoder plus the two commercial LALMs. Pinned against
+# eval_lalm_baselines.sh by test_utils_port.py.
 MODEL_CONFIGS = [
-    'whisper_tiny.yaml',
-    'whisper_small.yaml',
     'whisper_medium.yaml',
-    'whisper_large_v3_turbo.yaml',
     'voxtral_mini_3b.yaml',
     'qwen_2_audio_7b.yaml',
 ]

@@ -53,12 +53,11 @@ DATASET_CONFIGS=(
     "short_ml/worldspeech_ur_pk_test.yaml"
 )
 
-# The instruct variant of Qwen2-Audio is deliberately absent: it performs badly here.
+# whisper-medium is the study's own encoder, so it is the like-for-like reference; the other two
+# are the commercial LALMs. Other Whisper sizes answer a scaling question this study is not
+# asking. The instruct variant of Qwen2-Audio is absent because it performs badly here.
 MODEL_CONFIGS=(
-    "whisper_tiny.yaml"
-    "whisper_small.yaml"
     "whisper_medium.yaml"
-    "whisper_large_v3_turbo.yaml"
     "voxtral_mini_3b.yaml"
     "qwen_2_audio_7b.yaml"
 )

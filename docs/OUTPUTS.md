@@ -63,7 +63,7 @@ All in `results_all/acc/`.
 | `t5_volume_stats.csv` | `analyze_volume_interaction.py` | correlations, drop-one robustness, collinearity, partial correlation |
 | `t6_loss_metrics.csv` | `analyze_loss_metrics.py` | per-run generalisation gap and eval-loss rise |
 | `t6_loss_by_axis.csv` | `analyze_loss_metrics.py` | the same, grouped by domain / accent / resource tier |
-| `t7_baselines.csv` | `analyze_baselines.py` | serial 10 baselines, with `eval_domain` and `in_domain_role` |
+| `t7_baselines.csv` | `analyze_baselines.py` | serial 10 baselines (whisper-medium + Voxtral-Mini + Qwen2-Audio x 44 datasets), with `eval_domain` and `in_domain_role` |
 | `t7_training_vs_baseline.csv` | `analyze_baselines.py` | serial 11 minus serial 10; written only once serial 11 exists |
 | `t8_exposure.csv` | `analyze_exposure.py` | per-language treatment size in percentage points |
 | `t8_exposure_stats.csv` | `analyze_exposure.py` | exposure-vs-effect correlations |
