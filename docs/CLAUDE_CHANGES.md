@@ -1,5 +1,44 @@
 # Change log
 
+## 2026-08-07 (later) — accent transfer, and a variety set that was not held out
+
+**`accent_transfer` was never a held-out set.** `in_domain_role` returns it for anything that is
+not a cell's primary point, and `TRAIN_CONFIGS` trains `sw_ke` on `sw_ke + sw_tz`, `ur_pk` on
+`ur_pk + ur_in`, `ha_ng` on `ha_ng + ha_td`. So two of the 20 evaluated varieties were training
+data. Splitting on it changes the dialect result outright:
+
+| | wins | median delta WER |
+|---|---|---|
+| genuinely held out | **0 / 14** | +6.0 |
+| seen in training | 2 / 2 | -32.3 |
+
+The paper had attributed those two wins to the weak-baseline effect. They are seen data.
+Corrected, along with the "20 held-out varieties" count (18 held out, 2 trained).
+
+`utils.TRAINED_VARIETIES` is **derived from `TRAIN_CONFIGS`**, not typed — a typed list is what
+let the two eval sweeps drift once already. `is_trained_variety` plus six unit tests.
+
+**New: `analyze_accent_transfer.py`.** One row per (model, variety) joined to that same model's
+in-domain and FLEURS anchors, `validate='many_to_one'` on both. Writes `t11_accent_transfer`,
+`t11_accent_correlations` and `t11_accent_by_language`.
+
+**The language main effect is most of any pooled correlation.** Over all varieties, in-domain
+WER predicts variety WER at rho 0.56; centre both axes within language and it is 0.12
+(p = 0.38). On the held-out population in-domain predicts at 0.44 pooled and **survives**
+centring at 0.29 (p = 0.035), while FLEURS does not (0.25 -> 0.20, p = 0.15). Every correlation
+is emitted at all three aggregations rather than the flattering one, and an ordering check pins
+that centring must shrink the pooled figure — negative-tested.
+
+**Hausa's asymmetry is now encoded, not lore.** Its in-domain point is WorldSpeech `ha_td` and
+its out-of-domain point is FLEURS `ha_ng`; WorldSpeech `ha_ng` test is the selection split and
+excluded, because the FLEURS Hausa validation split was too slow to evaluate. `ha_ng` and
+`crs_sc` are the two cells not selected on FLEURS, so only theirs is zero-shot with respect to
+selection — `utils.selected_on_fleurs`, carried as a column. Neither contributes a held-out
+variety today, so it guards rather than moves the numbers.
+
+**Serial 11 grew 33 -> 36 cells mid-run** and the checker caught two stale counts in the paper
+before they were committed.
+
 ## 2026-08-07 — convergence in steps and epochs, and the baseline contrast inverts
 
 **t1 gained step and epoch columns.** It recorded the convergence point only in audio hours.

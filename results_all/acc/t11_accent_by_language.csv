@@ -1,0 +1,37 @@
+population,study_cell,dataset,language_name,seen_in_training,n_models,num_samples,median_variety_wer,median_penalty_abs,median_penalty_rel
+baseline,en_us,en_au,English,False,3,3880.000000,13.740000,-0.450000,0.967415
+baseline,en_us,en_jm,English,False,3,117.000000,12.120000,-1.010000,0.923077
+baseline,en_us,en_ke,English,False,3,1822.000000,34.880000,14.150000,2.077685
+baseline,en_us,en_nz,English,False,3,3074.000000,12.970000,-1.990000,0.848439
+baseline,en_us,en_pk,English,False,3,237.000000,108.600000,94.740000,6.797248
+baseline,en_us,en_sl,English,False,3,1238.000000,25.840000,9.040000,1.677075
+baseline,en_us,en_zm,English,False,3,3527.000000,26.130000,10.660000,1.811881
+baseline,es_419,es_ar,Spanish (LatAm),False,3,3032.000000,29.200000,15.780000,1.948317
+baseline,es_419,es_cl,Spanish (LatAm),False,3,20912.000000,34.280000,17.640000,2.340156
+baseline,es_419,es_co,Spanish (LatAm),False,3,1893.000000,25.280000,8.640000,1.519231
+baseline,es_419,es_es,Spanish (LatAm),False,3,34140.000000,12.850000,-0.550000,0.966947
+baseline,es_419,es_pe,Spanish (LatAm),False,3,4637.000000,16.310000,-0.950000,0.914027
+baseline,es_419,es_pr,Spanish (LatAm),False,3,2742.000000,20.100000,1.900000,1.171946
+baseline,es_419,es_py,Spanish (LatAm),False,3,1604.000000,18.190000,1.550000,1.093149
+baseline,es_419,es_uy,Spanish (LatAm),False,3,10730.000000,30.940000,17.790000,2.069111
+baseline,fr_fr,fr_cd,French,False,3,265.000000,17.080000,-0.650000,0.956667
+baseline,fr_fr,fr_ci,French,False,3,116.000000,17.470000,-0.790000,0.947333
+baseline,sw_ke,sw_tz,Swahili,True,3,10542.000000,98.500000,52.170000,3.011955
+baseline,ta_in,ta_lk,Tamil,False,3,1224.000000,98.260000,41.250000,2.117886
+baseline,ur_pk,ur_in,Urdu,True,3,155.000000,90.060000,16.630000,1.226474
+trained,en_us,en_au,English,False,3,3880.000000,23.410000,10.570000,1.816777
+trained,en_us,en_jm,English,False,3,117.000000,16.700000,3.860000,1.300623
+trained,en_us,en_ke,English,False,3,1822.000000,33.570000,20.320000,2.518028
+trained,en_us,en_nz,English,False,3,3074.000000,29.100000,15.510000,2.141280
+trained,en_us,en_pk,English,False,3,237.000000,580.670000,567.080000,42.727741
+trained,en_us,en_sl,English,False,3,1238.000000,29.300000,16.460000,2.281931
+trained,en_us,en_zm,English,False,3,3527.000000,30.380000,17.540000,2.366044
+trained,es_419,es_ar,Spanish (LatAm),False,3,3032.000000,32.160000,19.870000,2.608907
+trained,es_419,es_cl,Spanish (LatAm),False,3,20912.000000,34.250000,21.770000,2.744391
+trained,es_419,es_co,Spanish (LatAm),False,3,1893.000000,21.240000,8.890000,1.719838
+trained,es_419,es_pe,Spanish (LatAm),False,3,4637.000000,16.230000,3.880000,1.314170
+trained,es_419,es_pr,Spanish (LatAm),False,3,2742.000000,18.400000,6.050000,1.489879
+trained,es_419,es_py,Spanish (LatAm),False,3,1604.000000,19.420000,6.940000,1.570715
+trained,sw_ke,sw_tz,Swahili,True,4,10542.000000,24.895000,2.910000,1.135484
+trained,ta_in,ta_lk,Tamil,False,4,1224.000000,93.770000,66.110000,3.362655
+trained,ur_pk,ur_in,Urdu,True,4,155.000000,37.305000,-77.460000,0.325783

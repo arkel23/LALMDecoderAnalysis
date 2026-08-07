@@ -1,7 +1,7 @@
 dataset,dataset_path,split,baseline_wer,baseline_model,trained_wer,trained_model,delta_wer,training_helps,study_cell,eval_domain,in_domain_role
 am_et,google/fleurs,test,108.150000,Voxtral-Mini-3B-2507,61.440000,tiny-aya-fire,-46.710000,True,am_et,cross_domain,
 am_et,disco-eth/WorldSpeech,test,134.590000,Voxtral-Mini-3B-2507,57.490000,tiny-aya-global,-77.100000,True,am_et,in_domain,primary
-en_us,google/fleurs,test,4.420000,Voxtral-Mini-3B-2507,21.740000,tiny-aya-water,17.320000,False,en_us,cross_domain,
+en_us,google/fleurs,test,4.420000,Voxtral-Mini-3B-2507,11.080000,tiny-aya-fire,6.660000,False,en_us,cross_domain,
 en_au,disco-eth/WorldSpeech,test,13.360000,whisper-medium,21.600000,tiny-aya-water,8.240000,False,en_us,in_domain,accent_transfer
 en_jm,disco-eth/WorldSpeech,test,11.760000,whisper-medium,16.190000,tiny-aya-water,4.430000,False,en_us,in_domain,accent_transfer
 en_ke,disco-eth/WorldSpeech,test,27.280000,Voxtral-Mini-3B-2507,31.130000,tiny-aya-fire,3.850000,False,en_us,in_domain,accent_transfer
@@ -15,15 +15,18 @@ es_ar,disco-eth/WorldSpeech,test,28.610000,Voxtral-Mini-3B-2507,31.950000,tiny-a
 es_cl,disco-eth/WorldSpeech,test,27.980000,Voxtral-Mini-3B-2507,32.970000,tiny-aya-fire,4.990000,False,es_419,in_domain,accent_transfer
 es_co,disco-eth/WorldSpeech,test,15.560000,Voxtral-Mini-3B-2507,21.180000,tiny-aya-global,5.620000,False,es_419,in_domain,accent_transfer
 es_mx,disco-eth/WorldSpeech,test,11.050000,Voxtral-Mini-3B-2507,12.020000,tiny-aya-fire,0.970000,False,es_419,in_domain,primary
+es_pe,disco-eth/WorldSpeech,test,10.100000,Voxtral-Mini-3B-2507,15.960000,tiny-aya-global,5.860000,False,es_419,in_domain,accent_transfer
+es_pr,disco-eth/WorldSpeech,test,12.950000,Voxtral-Mini-3B-2507,18.290000,tiny-aya-global,5.340000,False,es_419,in_domain,accent_transfer
+es_py,disco-eth/WorldSpeech,test,12.740000,Voxtral-Mini-3B-2507,18.880000,tiny-aya-fire,6.140000,False,es_419,in_domain,accent_transfer
 ha_ng,google/fleurs,test,95.560000,Voxtral-Mini-3B-2507,70.520000,tiny-aya-fire,-25.040000,True,ha_ng,cross_domain,
-ha_td,disco-eth/WorldSpeech,test,110.680000,Voxtral-Mini-3B-2507,60.110000,tiny-aya-fire,-50.570000,True,ha_ng,in_domain,primary
+ha_td,disco-eth/WorldSpeech,test,110.680000,Voxtral-Mini-3B-2507,59.290000,tiny-aya-global,-51.390000,True,ha_ng,in_domain,primary
 hi_in,google/fleurs,test,10.050000,Voxtral-Mini-3B-2507,22.360000,tiny-aya-water,12.310000,False,hi_in,cross_domain,
-hi_in,disco-eth/WorldSpeech,test,32.930000,Voxtral-Mini-3B-2507,34.460000,tiny-aya-water,1.530000,False,hi_in,in_domain,primary
+hi_in,disco-eth/WorldSpeech,test,32.930000,Voxtral-Mini-3B-2507,34.300000,tiny-aya-fire,1.370000,False,hi_in,in_domain,primary
 id_id,google/fleurs,test,9.850000,Voxtral-Mini-3B-2507,13.270000,tiny-aya-water,3.420000,False,id_id,cross_domain,
 id_id,disco-eth/WorldSpeech,test,24.940000,whisper-medium,19.680000,tiny-aya-water,-5.260000,True,id_id,in_domain,primary
 mr_in,google/fleurs,test,39.420000,Voxtral-Mini-3B-2507,30.800000,tiny-aya-fire,-8.620000,True,mr_in,cross_domain,
-mr_in,disco-eth/WorldSpeech,test,37.620000,Voxtral-Mini-3B-2507,23.520000,tiny-aya-water,-14.100000,True,mr_in,in_domain,primary
-sw_ke,google/fleurs,test,51.520000,Voxtral-Mini-3B-2507,38.490000,tiny-aya-global,-13.030000,True,sw_ke,cross_domain,
+mr_in,disco-eth/WorldSpeech,test,37.620000,Voxtral-Mini-3B-2507,19.610000,tiny-aya-fire,-18.010000,True,mr_in,in_domain,primary
+sw_ke,google/fleurs,test,51.520000,Voxtral-Mini-3B-2507,35.010000,tiny-aya-earth,-16.510000,True,sw_ke,cross_domain,
 sw_ke,disco-eth/WorldSpeech,test,25.930000,Voxtral-Mini-3B-2507,20.900000,tiny-aya-fire,-5.030000,True,sw_ke,in_domain,primary
 sw_tz,disco-eth/WorldSpeech,test,78.100000,Voxtral-Mini-3B-2507,23.810000,tiny-aya-fire,-54.290000,True,sw_ke,in_domain,accent_transfer
 ta_in,google/fleurs,test,31.740000,whisper-medium,66.280000,tiny-aya-fire,34.540000,False,ta_in,cross_domain,
@@ -31,4 +34,4 @@ ta_in,disco-eth/WorldSpeech,test,36.900000,whisper-medium,26.760000,tiny-aya-wat
 ta_lk,disco-eth/WorldSpeech,test,78.150000,whisper-medium,88.470000,tiny-aya-fire,10.320000,False,ta_in,in_domain,accent_transfer
 ur_pk,google/fleurs,test,29.760000,whisper-medium,39.780000,tiny-aya-water,10.020000,False,ur_pk,cross_domain,
 ur_in,disco-eth/WorldSpeech,test,45.420000,whisper-medium,35.210000,tiny-aya-fire,-10.210000,True,ur_pk,in_domain,accent_transfer
-ur_pk,disco-eth/WorldSpeech,test,73.430000,Voxtral-Mini-3B-2507,115.010000,tiny-aya-water,41.580000,False,ur_pk,in_domain,primary
+ur_pk,disco-eth/WorldSpeech,test,73.430000,Voxtral-Mini-3B-2507,111.140000,tiny-aya-earth,37.710000,False,ur_pk,in_domain,primary

@@ -76,6 +76,9 @@ All in `results_all/acc/`.
 | `t9_replicate_stats.csv` | `analyze_replicates.py` | pooled between-run standard deviation |
 | `t10_convergence_clustering.csv` | `analyze_convergence_clustering.py` | variance decomposition of the convergence point: is it set by language or decoder |
 | `t10_convergence_by_language.csv` | `analyze_convergence_clustering.py` | per language, where its four decoders converged and how far apart |
+| `t11_accent_transfer.csv` | `analyze_accent_transfer.py` | one row per (model, variety) with the same model's in-domain and FLEURS anchors |
+| `t11_accent_correlations.csv` | `analyze_accent_transfer.py` | do those anchors predict held-out-variety WER, at three aggregations |
+| `t11_accent_by_language.csv` | `analyze_accent_transfer.py` | per variety: WER and the penalty against its parent's in-domain point |
 
 ## The eval-dataset registry
 
@@ -138,6 +141,18 @@ whole float and sets `table*` where needed.
 ## Definitions a reader could otherwise get wrong
 
 - **`best_cer`** is the minimum CER over a run's 101 evaluations, and is the **primary** metric.
+- **`in_domain_role == 'accent_transfer'` is NOT a held-out set.** It means "not the cell's
+  primary point", which includes `sw_tz`, `ur_in` and `ha_td` -- all training data via
+  `TRAIN_CONFIGS`. Split on `utils.is_trained_variety` first: pooling them turned a 0/11 dialect
+  result into 2/13. Of the 20 evaluated varieties, 18 are held out and 2 were trained on.
+- **Hausa's anchors are asymmetric by design.** Its in-domain point is WorldSpeech `ha_td` and
+  its out-of-domain point is FLEURS `ha_ng`; WorldSpeech `ha_ng` test is the selection split and
+  is excluded from both sweeps. `ha_ng` and `crs_sc` are the two cells not selected on FLEURS,
+  so only their FLEURS score is zero-shot with respect to selection --- carried as
+  `utils.selected_on_fleurs`. `crs_sc` is the one cell with no FLEURS point at all.
+- **Language dominates any pooled accent correlation.** In-domain WER predicts held-out variety
+  WER at rho 0.56 pooled over all varieties and 0.12 once each language's mean is removed.
+  `t11_accent_correlations.csv` emits pooled, language-centred and within-language side by side.
 - **The convergence point** is `*_to_1.5x_best`: the first evaluation at which a run comes
   within 1.5x of **its own** best CER. Reported in three units from the same index —
   `step_to_*` (optimiser steps), `audio_h_to_*` (processed audio) and `epoch_at_*` (stream

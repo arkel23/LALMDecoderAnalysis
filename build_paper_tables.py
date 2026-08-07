@@ -173,6 +173,21 @@ def tab_dataset_stats():
     return '\n'.join(rows)
 
 
+def tab_accent():
+    """Per held-out variety: how much worse than its parent's in-domain point."""
+    d = pd.read_csv(os.path.join(ACC, 't11_accent_by_language.csv'))
+    d = d[d['population'] == 'baseline'].sort_values(['study_cell', 'dataset'])
+    rows = []
+    for _, r in d.iterrows():
+        rows.append(
+            f"{LANGUAGE_DIC.get(r['study_cell'], r['study_cell'])} & "
+            f"{str(r['dataset']).replace('_', chr(92) + '_')} & "
+            f"{'trained' if r['seen_in_training'] else 'held out'} & "
+            f"{int(r['num_samples'])} & {fmt(r['median_variety_wer'])} & "
+            f"{fmt(r['median_penalty_abs'])} & {fmt(r['median_penalty_rel'])} \\\\")
+    return '\n'.join(rows)
+
+
 def main():
     print('Generating paper tables:')
     write('tab_region_match.tex', tab_region_match(), '@{}llrrrr@{}',
@@ -218,6 +233,14 @@ def main():
           'Evaluation sets: number of utterances and audio duration in seconds, measured '
           'directly from the decoded audio at evaluation time.',
           'tab:dataset-stats', wide=True)
+    write('tab_accent.tex', tab_accent(), '@{}lllrrrr@{}',
+          r'\textbf{Language} & \textbf{Variety} & \textbf{Status} & \textbf{$n$} & '
+          r'\textbf{WER} & \textbf{$\Delta$} & \textbf{Ratio}',
+          'Country varieties beyond each cell\'s training variety, median over the three '
+          'off-the-shelf models. $\\Delta$ and ratio are against the same model\'s in-domain '
+          'point. Tanzanian Swahili and Indian Urdu were in their cells\' training streams and '
+          'are not held out.',
+          'tab:accent', wide=True)
     return 0
 
 

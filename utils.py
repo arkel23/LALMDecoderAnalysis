@@ -191,6 +191,16 @@ TRAIN_CONFIGS = {
     'crs_sc': ('ERISLab/WorldSpeech',   ('crs_sc',),         'train_val_exc_clean'),
 }
 
+# Every variety some cell trained on, derived from the map above rather than typed. `sw_tz`,
+# `ur_in` and `ha_td` are training data, so `in_domain_role`'s 'accent_transfer' is not by
+# itself a held-out set -- split on this before any transfer statistic.
+TRAINED_VARIETIES = frozenset(c for _, configs, _ in TRAIN_CONFIGS.values() for c in configs)
+
+
+def is_trained_variety(dataset):
+    """True when this eval config was in some cell's training stream."""
+    return dataset in TRAINED_VARIETIES
+
 # --- WorldSpeech example counts: FROZEN SNAPSHOT ----------------------------------------
 # num_examples per training config, from the HF dataset builder metadata (2026-07-30).
 # Regenerate with verify_dataset_durations.py.
@@ -347,6 +357,17 @@ def in_domain_role(study_cell, dataset, eval_domain):
 def is_selection_split(language, dataset_path, dataset, split):
     """True when this eval is on the split the cell's checkpoint was chosen on."""
     return SELECTION_SPLIT.get(language) == (dataset_path, dataset, split)
+
+
+def selected_on_fleurs(language):
+    """True when the checkpoint was chosen on FLEURS validation.
+
+    False for ha_ng and crs_sc, which were selected in-domain -- ha_ng because the FLEURS
+    Hausa validation split was too slow to evaluate. Their FLEURS test score is therefore
+    zero-shot with respect to selection, while the other ten cells' is not.
+    """
+    entry = SELECTION_SPLIT.get(language)
+    return bool(entry) and entry[0] == 'google/fleurs'
 
 
 # WorldSpeech eval configs are named after the TRAINING variety (fr_ca, es_mx), while the study

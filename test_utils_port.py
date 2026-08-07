@@ -550,5 +550,16 @@ if _s11.exists():
     check('every serial-11 checkpoint records a training language',
           all(_cf(m)[0] is not None for m in _d['model_id'].unique()))
 
+# --- held-out vs seen varieties ---------------------------------------------------------
+# 'accent_transfer' means "not the cell's primary point", which includes varieties the cell
+# TRAINED on. Pooling the two turned a 0/11 transfer result into 2/13.
+for _v in ('sw_tz', 'ur_in', 'ha_td'):
+    check(f'{_v} is a trained variety, not held-out', utils.is_trained_variety(_v))
+for _v in ('en_au', 'es_cl', 'ta_lk', 'es_es'):
+    check(f'{_v} is genuinely held out', not utils.is_trained_variety(_v))
+check('TRAINED_VARIETIES is derived from TRAIN_CONFIGS, not typed separately',
+      utils.TRAINED_VARIETIES
+      == frozenset(c for _, cfgs, _ in utils.TRAIN_CONFIGS.values() for c in cfgs))
+
 print(f'\n{"ALL TESTS PASSED" if ok else "SOME TESTS FAILED"}')
 sys.exit(0 if ok else 1)

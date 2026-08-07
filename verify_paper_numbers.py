@@ -21,7 +21,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import pandas as pd
 from scipy import stats
 
-from utils import GRID_SERIAL
+from utils import GRID_SERIAL, TRAINED_VARIETIES, is_trained_variety
 
 ACC = os.path.join('results_all', 'acc')
 # Every document that prints numbers derived from this repo's CSVs. Scanning only one of them
@@ -373,6 +373,8 @@ ORDERINGS = [
 T7B = os.path.join(ACC, 't7_baselines.csv')
 T7C = os.path.join(ACC, 't7_training_vs_baseline.csv')
 HOURS = os.path.join('data', 'language_hours_whisper.csv')
+T11 = os.path.join(ACC, 't11_accent_transfer.csv')
+T11C = os.path.join(ACC, 't11_accent_correlations.csv')
 
 
 def _t8s(x, y, col):
@@ -394,6 +396,22 @@ def _hours(code):
     sel = d[d['language_code'] == code]
     assert len(sel) == 1, f'{code} matched {len(sel)} rows in {HOURS}'
     return float(sel.iloc[0]['hours'])
+
+
+def _accent_corr(predictor, aggregation, col='spearman_rho',
+                 population='held_out_only', model_population='baseline'):
+    d = load(T11C)
+    sel = d[(d['population'] == population) & (~d['excludes_degenerate'])
+            & (d['model_population'] == model_population) & (d['predictor'] == predictor)
+            & (d['outcome'] == 'variety_wer') & (d['aggregation'] == aggregation)]
+    assert len(sel) == 1, f'{predictor}/{aggregation} matched {len(sel)} rows in {T11C}'
+    return float(sel.iloc[0][col])
+
+
+def _held_out(frame):
+    """The accent rows for varieties that were NOT in any training stream."""
+    d = load(frame)
+    return d[~d['dataset'].map(is_trained_variety)]
 
 
 def _rank_mean(col, variant):
@@ -427,6 +445,22 @@ DERIVED += [
     ('Whisper hours, Swahili', lambda: _hours('sw'), 0),
     ('Whisper hours, Amharic', lambda: _hours('am'), 0),
     ('Whisper hours, Hausa', lambda: _hours('ha'), 0),
+    ('held-out varieties evaluated, excluding the two that were trained on',
+     lambda: _held_out(T11).query("population == 'baseline'")['dataset'].nunique(), 0),
+    ('held-out dialect cells the projector wins',
+     lambda: _held_out(T7C).query("in_domain_role == 'accent_transfer'")
+     ['training_helps'].sum(), 0),
+    ('median WER cost on held-out dialects',
+     lambda: _held_out(T7C).query("in_domain_role == 'accent_transfer'")
+     ['delta_wer'].median(), 1),
+    ('in-domain predicts held-out variety WER, pooled',
+     lambda: _accent_corr('primary_wer', 'pooled'), 2),
+    ('in-domain predicts held-out variety WER, language-centred',
+     lambda: _accent_corr('primary_wer', 'language_centred'), 2),
+    ('FLEURS predicts held-out variety WER, pooled',
+     lambda: _accent_corr('fleurs_wer', 'pooled'), 2),
+    ('FLEURS predicts held-out variety WER, language-centred',
+     lambda: _accent_corr('fleurs_wer', 'language_centred'), 2),
 ]
 DERIVED += [(f'mean rank, {col.split("_")[0]}, {v}',
              (lambda c, m: lambda: _rank_mean(c, m))(col, v), 2)
@@ -454,6 +488,19 @@ ORDERINGS += [
     ('training wins on the majority of cells whose baseline exceeds 50 WER',
      lambda: (lambda d: bool(d[d['baseline_wer'] >= 50]['training_helps'].mean() > 0.5))(
          load(T7C))),
+    # The seen/held-out split is load-bearing: pooling sw_tz and ur_in turned 0/11 into 2/13.
+    ('the projector wins NO genuinely held-out dialect cell',
+     lambda: int(_held_out(T7C).query("in_domain_role == 'accent_transfer'")
+                 ['training_helps'].sum()) == 0),
+    ('the only dialect wins are varieties that were trained on',
+     lambda: (lambda d: set(d[d['training_helps']]['dataset'])
+              <= TRAINED_VARIETIES)(
+         load(T7C).query("in_domain_role == 'accent_transfer'"))),
+    # Most of the pooled correlation is the language, not the model. Pinned so a later pass
+    # cannot quietly report the pooled figure alone.
+    ('language-centring shrinks the in-domain correlation on the full variety set',
+     lambda: _accent_corr('primary_wer', 'language_centred', population='all_varieties')
+     < 0.5 * _accent_corr('primary_wer', 'pooled', population='all_varieties')),
     ('and loses on the majority whose baseline is under 20 WER',
      lambda: (lambda d: bool(d[d['baseline_wer'] < 20]['training_helps'].mean() < 0.5))(
          load(T7C))),
