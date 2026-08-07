@@ -27,6 +27,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from missing_runs import REGISTRY
 from utils import (LANGUAGE_DIC, RESOURCE_TIER, get_eval_domain, to_study_cell,
                    in_domain_role, IN_DOMAIN_PRIMARY, parent_model_id, checkpoint_fields,
                    assert_unique_keys)
@@ -94,17 +95,51 @@ def build_table(df):
     return out.sort_values(['dataset', 'model_short'])
 
 
+def evaluable_cells(registry_path=REGISTRY):
+    """(study_cell, eval_domain) pairs the registry actually has a config for.
+
+    FLEURS has no Seychellois Creole, so crs_sc/cross_domain can never be run. Reporting it as
+    'missing' reads as 'not yet', which is a different thing from 'does not exist'.
+    """
+    if not os.path.exists(registry_path):
+        return None
+    reg = pd.read_csv(registry_path)
+    reg = reg[reg['use_in_sweep']]
+    domain = np.where(reg['source'].astype(str).str.contains('fleurs'),
+                      'cross_domain', 'in_domain')
+    return set(zip(reg['study_cell'].map(to_study_cell), domain))
+
+
 def coverage(out):
-    """What has finished, and what is still missing. Serial 10 fills in incrementally."""
+    """Split what is absent into three kinds, because they mean different things.
+
+    not_applicable  the registry has no config -- it can never be run
+    failed          a run exists and failed. On crs_sc that IS the finding: the model does not
+                    support the language, so it is not a gap to be filled later
+    pending         no run yet, the only kind that fills in on its own
+    """
     fin = out[out['state'] == 'finished']
     models = sorted(out['model_short'].dropna().unique())
     langs = sorted(out['study_cell'].dropna().unique())
-    # Per (language, domain, model): collapsing domains hides which half is missing.
     grid = pd.crosstab([fin['study_cell'], fin['eval_domain']], fin['model_short'])
-    missing = [(l, d, m) for l in langs for d in ('cross_domain', 'in_domain') for m in models
-               if not ((fin['study_cell'] == l) & (fin['eval_domain'] == d)
-                       & (fin['model_short'] == m)).any()]
-    return models, langs, grid, missing
+
+    evaluable = evaluable_cells()
+    absent = {'not_applicable': [], 'failed': [], 'pending': []}
+    for lang in langs:
+        for dom in ('cross_domain', 'in_domain'):
+            for model in models:
+                cell = ((out['study_cell'] == lang) & (out['eval_domain'] == dom)
+                        & (out['model_short'] == model))
+                if (cell & (out['state'] == 'finished')).any():
+                    continue
+                if evaluable is not None and (lang, dom) not in evaluable:
+                    kind = 'not_applicable'
+                elif (cell & (out['state'] == 'failed')).any():
+                    kind = 'failed'
+                else:
+                    kind = 'pending'
+                absent[kind].append((lang, dom, model))
+    return models, langs, grid, absent
 
 
 def compare_with_trained(base, trained, metric='wer'):
@@ -179,19 +214,29 @@ def main():
     out.to_csv(args.output_file, index=False, float_format=FLOAT_FORMAT)
     print(f'Wrote {len(out)} rows to {args.output_file}\n')
 
-    models, langs, grid, missing = coverage(out)
+    models, langs, grid, absent = coverage(out)
     print(f'models: {", ".join(models)}')
     print(f'languages: {", ".join(langs)}')
     print('\nfinished runs per (language, model):')
     print(grid.to_string() if len(grid) else '  (none finished yet)')
-    if missing:
-        print(f'\n{len(missing)} (language, domain, model) cell(s) not finished. '
-              f'Aggregates below cover ONLY what has finished:')
+
+    EXPLAIN = {
+        'not_applicable': 'no config in the registry -- CANNOT be run, not a gap',
+        'failed': 'run exists and failed -- on crs_sc that is the result, not a gap',
+        'pending': 'no run yet -- this is the only kind that fills in',
+    }
+    for kind in ('not_applicable', 'failed', 'pending'):
+        cells = absent[kind]
+        if not cells:
+            continue
+        print(f'\n{len(cells)} cell(s) {kind}: {EXPLAIN[kind]}')
         for dom in ('cross_domain', 'in_domain'):
-            miss = [f'{l}/{m}' for l, d, m in missing if d == dom]
-            if miss:
-                print(f'  {dom}: {len(miss)} missing -- '
-                      f'{", ".join(miss[:10])}{" ..." if len(miss) > 10 else ""}')
+            names = [f'{l}/{m}' for l, d, m in cells if d == dom]
+            if names:
+                print(f'  {dom}: {", ".join(names[:10])}'
+                      f'{" ..." if len(names) > 10 else ""}')
+    if absent['pending']:
+        print('\nAggregates below cover ONLY what has finished.')
 
     fin = out[out['state'] == 'finished']
     if len(fin):

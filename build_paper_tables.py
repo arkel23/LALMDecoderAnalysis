@@ -142,18 +142,28 @@ def tab_exposure():
 
 
 def tab_baselines_full():
-    """Serial 10: the off-the-shelf models on each language's primary eval sets."""
+    """Serial 10: the off-the-shelf models on each language's primary eval sets.
+
+    A failed run is marked, not blanked. On Seychellois Creole two of the three models fail
+    outright, which is the same finding the paper makes about that cell -- printing `--` there
+    would read as 'not measured yet'.
+    """
     d = pd.read_csv(os.path.join(ACC, 't7_baselines.csv'))
-    d = d[(d['state'] == 'finished') & d['wer'].notna()]
     d = d[(d['in_domain_role'] == 'primary') | (d['eval_domain'] == 'cross_domain')]
-    piv = d.pivot_table(index=['study_cell', 'eval_domain'], columns='model_short', values='wer')
+    failed = set(zip(d[d['state'] == 'failed']['study_cell'],
+                     d[d['state'] == 'failed']['eval_domain'],
+                     d[d['state'] == 'failed']['model_short']))
+    ok = d[(d['state'] == 'finished') & d['wer'].notna()]
+    piv = ok.pivot_table(index=['study_cell', 'eval_domain'], columns='model_short', values='wer')
     models = [m for m in ('whisper-medium', 'Voxtral-Mini-3B-2507', 'Qwen2-Audio-7B')
               if m in piv.columns]
     rows = []
     for (cell, dom), r in piv.iterrows():
+        cells = [r'\textsuperscript{\textdagger}' if (cell, dom, m) in failed else fmt(r[m])
+                 for m in models]
         rows.append(f"{LANGUAGE_DIC.get(cell, cell)} & "
                     f"{'FLEURS' if dom == 'cross_domain' else 'in-domain'} & "
-                    + ' & '.join(fmt(r[m]) for m in models) + ' \\\\')
+                    + ' & '.join(cells) + ' \\\\')
     return '\n'.join(rows)
 
 
@@ -225,7 +235,9 @@ def main():
           r'\textbf{Language} & \textbf{Test set} & \textbf{Whisper-M} & '
           r'\textbf{Voxtral-M} & \textbf{Qwen2-A}',
           'WER of the off-the-shelf models on each language. Values above 100 indicate '
-          'degenerate output rather than substitution errors.',
+          'degenerate output rather than substitution errors; \\textdagger{} marks a run that '
+          'failed because the model does not accept the language. FLEURS has no Seychellois '
+          'Creole, so that cell has no cross-domain row at all.',
           'tab:baselines-full', wide=True)
     write('tab_dataset_stats.tex', tab_dataset_stats(), '@{}llrrrrr@{}',
           r'\textbf{Language} & \textbf{Corpus} & \textbf{$n$} & \textbf{Mean} & '

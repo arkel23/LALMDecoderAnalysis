@@ -59,45 +59,68 @@ whisper-medium,ta_in,ta_lk,78.150000,1224.000000,36.900000,31.740000,baseline,Ta
 Qwen2-Audio-7B,ur_pk,ur_in,108.480000,155.000000,86.380000,119.720000,baseline,Urdu,partial,True,True,False,22.100000,1.255846
 Voxtral-Mini-3B-2507,ur_pk,ur_in,90.060000,155.000000,73.430000,86.600000,baseline,Urdu,partial,True,True,False,16.630000,1.226474
 whisper-medium,ur_pk,ur_in,45.420000,155.000000,209.640000,29.760000,baseline,Urdu,partial,True,True,False,-164.220000,0.216657
+earth,en_us,en_au,23.060000,3880.000000,13.150000,,trained,English,same,False,True,False,9.910000,1.753612
 fire,en_us,en_au,23.410000,3880.000000,12.840000,11.080000,trained,English,same,False,True,False,10.570000,1.823209
-global,en_us,en_au,24.690000,3880.000000,13.590000,,trained,English,same,False,True,False,11.100000,1.816777
+global,en_us,en_au,24.690000,3880.000000,13.590000,12.120000,trained,English,same,False,True,False,11.100000,1.816777
 water,en_us,en_au,21.600000,3880.000000,13.250000,21.740000,trained,English,same,False,True,False,8.350000,1.630189
+earth,en_us,en_jm,15.440000,117.000000,13.150000,,trained,English,same,False,True,False,2.290000,1.174144
 fire,en_us,en_jm,16.700000,117.000000,12.840000,11.080000,trained,English,same,False,True,False,3.860000,1.300623
-global,en_us,en_jm,20.230000,117.000000,13.590000,,trained,English,same,False,True,False,6.640000,1.488595
+global,en_us,en_jm,20.230000,117.000000,13.590000,12.120000,trained,English,same,False,True,False,6.640000,1.488595
 water,en_us,en_jm,16.190000,117.000000,13.250000,21.740000,trained,English,same,False,True,False,2.940000,1.221887
+earth,en_us,en_ke,33.630000,1822.000000,13.150000,,trained,English,same,False,True,False,20.480000,2.557414
 fire,en_us,en_ke,31.130000,1822.000000,12.840000,11.080000,trained,English,same,False,True,False,18.290000,2.424455
-global,en_us,en_ke,34.220000,1822.000000,13.590000,,trained,English,same,False,True,False,20.630000,2.518028
+global,en_us,en_ke,34.220000,1822.000000,13.590000,12.120000,trained,English,same,False,True,False,20.630000,2.518028
 water,en_us,en_ke,33.570000,1822.000000,13.250000,21.740000,trained,English,same,False,True,False,20.320000,2.533585
+earth,en_us,en_nz,25.820000,3074.000000,13.150000,,trained,English,same,False,True,False,12.670000,1.963498
 fire,en_us,en_nz,40.230000,3074.000000,12.840000,11.080000,trained,English,same,False,True,False,27.390000,3.133178
-global,en_us,en_nz,29.100000,3074.000000,13.590000,,trained,English,same,False,True,False,15.510000,2.141280
+global,en_us,en_nz,29.100000,3074.000000,13.590000,12.120000,trained,English,same,False,True,False,15.510000,2.141280
 water,en_us,en_nz,22.890000,3074.000000,13.250000,21.740000,trained,English,same,False,True,False,9.640000,1.727547
+earth,en_us,en_pk,679.040000,237.000000,13.150000,,trained,English,same,False,True,True,665.890000,51.638023
 fire,en_us,en_pk,378.710000,237.000000,12.840000,11.080000,trained,English,same,False,True,True,365.870000,29.494548
-global,en_us,en_pk,580.670000,237.000000,13.590000,,trained,English,same,False,True,True,567.080000,42.727741
+global,en_us,en_pk,580.670000,237.000000,13.590000,12.120000,trained,English,same,False,True,True,567.080000,42.727741
 water,en_us,en_pk,693.960000,237.000000,13.250000,21.740000,trained,English,same,False,True,True,680.710000,52.374340
+earth,en_us,en_sl,30.970000,1238.000000,13.150000,,trained,English,same,False,True,False,17.820000,2.355133
 fire,en_us,en_sl,29.300000,1238.000000,12.840000,11.080000,trained,English,same,False,True,False,16.460000,2.281931
-global,en_us,en_sl,29.040000,1238.000000,13.590000,,trained,English,same,False,True,False,15.450000,2.136865
+global,en_us,en_sl,29.040000,1238.000000,13.590000,12.120000,trained,English,same,False,True,False,15.450000,2.136865
 water,en_us,en_sl,31.750000,1238.000000,13.250000,21.740000,trained,English,same,False,True,False,18.500000,2.396226
+earth,en_us,en_zm,33.620000,3527.000000,13.150000,,trained,English,same,False,True,False,20.470000,2.556654
 fire,en_us,en_zm,30.380000,3527.000000,12.840000,11.080000,trained,English,same,False,True,False,17.540000,2.366044
-global,en_us,en_zm,32.840000,3527.000000,13.590000,,trained,English,same,False,True,False,19.250000,2.416483
+global,en_us,en_zm,32.840000,3527.000000,13.590000,12.120000,trained,English,same,False,True,False,19.250000,2.416483
 water,en_us,en_zm,29.950000,3527.000000,13.250000,21.740000,trained,English,same,False,True,False,16.700000,2.260377
+earth,es_419,es_ar,32.470000,3032.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,19.930000,2.589314
 fire,es_419,es_ar,31.950000,3032.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,19.930000,2.658070
 global,es_419,es_ar,32.160000,3032.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,19.680000,2.576923
 water,es_419,es_ar,32.220000,3032.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,19.870000,2.608907
+earth,es_419,es_cl,35.340000,20912.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,22.800000,2.818182
 fire,es_419,es_cl,32.970000,20912.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,20.950000,2.742928
 global,es_419,es_cl,34.250000,20912.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,21.770000,2.744391
 water,es_419,es_cl,35.450000,20912.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,23.100000,2.870445
+earth,es_419,es_co,21.670000,1893.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,9.130000,1.728070
 fire,es_419,es_co,21.360000,1893.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,9.340000,1.777038
 global,es_419,es_co,21.180000,1893.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,8.700000,1.697115
 water,es_419,es_co,21.240000,1893.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,8.890000,1.719838
+water,es_419,es_es,19.810000,34140.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,7.460000,1.604049
+earth,es_419,es_pe,16.100000,4637.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,3.560000,1.283892
 fire,es_419,es_pe,16.350000,4637.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,4.330000,1.360233
 global,es_419,es_pe,15.960000,4637.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,3.480000,1.278846
 water,es_419,es_pe,16.230000,4637.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,3.880000,1.314170
+earth,es_419,es_pr,18.190000,2742.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,5.650000,1.450558
 fire,es_419,es_pr,18.740000,2742.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,6.720000,1.559068
 global,es_419,es_pr,18.290000,2742.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,5.810000,1.465545
 water,es_419,es_pr,18.400000,2742.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,6.050000,1.489879
+earth,es_419,es_py,19.760000,1604.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,7.220000,1.575758
 fire,es_419,es_py,18.880000,1604.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,6.860000,1.570715
 global,es_419,es_py,19.420000,1604.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,6.940000,1.556090
 water,es_419,es_py,19.940000,1604.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,7.590000,1.614575
+fire,es_419,es_uy,33.920000,10730.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,21.900000,2.821963
+global,es_419,es_uy,33.840000,10730.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,21.360000,2.711538
+water,es_419,es_uy,34.200000,10730.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,21.850000,2.769231
+fire,fr_fr,fr_cd,21.470000,265.000000,12.470000,15.390000,trained,French,different,False,True,False,9.000000,1.721732
+global,fr_fr,fr_cd,21.270000,265.000000,12.470000,19.400000,trained,French,different,False,True,False,8.800000,1.705694
+water,fr_fr,fr_cd,20.090000,265.000000,12.600000,16.360000,trained,French,different,False,True,False,7.490000,1.594444
+fire,fr_fr,fr_ci,21.300000,116.000000,12.470000,15.390000,trained,French,different,False,True,False,8.830000,1.708099
+global,fr_fr,fr_ci,21.700000,116.000000,12.470000,19.400000,trained,French,different,False,True,False,9.230000,1.740176
+water,fr_fr,fr_ci,32.960000,116.000000,12.600000,16.360000,trained,French,different,False,True,False,20.360000,2.615873
 earth,sw_ke,sw_tz,25.000000,10542.000000,22.090000,35.010000,trained,Swahili,partial,True,True,False,2.910000,1.131734
 fire,sw_ke,sw_tz,23.810000,10542.000000,20.900000,38.710000,trained,Swahili,partial,True,True,False,2.910000,1.139234
 global,sw_ke,sw_tz,25.100000,10542.000000,22.200000,38.490000,trained,Swahili,partial,True,True,False,2.900000,1.130631

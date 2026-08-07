@@ -358,12 +358,12 @@ the highest-resource cells improve almost to the end.
 \subsection{Connector training versus off-the-shelf models}
 
 Table~\ref{tab:baselines} compares each trained LisTAya checkpoint against the strongest
-off-the-shelf model we evaluate on the same test set, over the 36 cells evaluated so far.
-Training wins on 13 of them, and which 13 is the result: the benefit tracks how badly the
-off-the-shelf model was already doing (Spearman $\rho = -0.42$, $p = 0.011$). On the nine cells
-whose baseline exceeds 50 WER the projector wins six, with a median gain of 25.0 WER and a
-largest of 77.1; on the thirteen whose baseline is under 20 WER it wins one, and costs a median
-of 5.6 WER.
+off-the-shelf model we evaluate on the same test set, over all 43 cells.
+Training wins on 15 of them, and which 15 is the result: the benefit tracks how badly the
+off-the-shelf model was already doing (Spearman $\rho = -0.46$, $p = 0.002$). On the ten cells
+whose baseline exceeds 50 WER the projector wins seven, with a median gain of 35.9 WER and a
+largest of 81.7; on the eighteen whose baseline is under 20 WER it wins two, and costs a median
+of 5.8 WER.
 
 So training a projector does not make a system uniformly better. It converts unusable output
 into usable output where the encoder's coverage is thin, and gives up ground where a
@@ -373,8 +373,7 @@ low-resource language is making.
 % REVIEW: one pair is degenerate rather than merely worse -- en_pk goes 93.87 to 378.71 WER.
 % It is left in the table and excluded from no statistic above; worth a look before submission.
 
-% TODO: the sweep is at 36 of 43 cells. Re-run build_paper_tables.py before submission and
-% update the counts in this subsection and in the Conclusion.
+% The sweep is complete at 43 of 43 cells; these counts are final unless the data changes.
 
 \input{tables/tab_baselines}
 
@@ -499,14 +498,14 @@ languages where the off-the-shelf systems produce unusable output.
 
 WorldSpeech ships several country varieties per language, and the study trained on only some of
 them. Evaluating the rest costs inference alone and turns each in-domain number into a
-dialect-transfer axis. Twenty further varieties are evaluated, of which 18 are genuinely
+dialect-transfer axis. Twenty further varieties are evaluated by every model, of which 18 are genuinely
 held out --- 8 Spanish, 7 English, 2 French and Sri Lankan Tamil --- while Tanzanian Swahili and
 Indian Urdu were themselves part of their cells' training streams and are reported separately
 throughout.
 
 The projector does not transfer across dialect. On its own training variety it beats the
-baseline on 7 of 10 cells, with a median gain of 5.1 WER. On genuinely held-out varieties of the
-same languages it wins \emph{none} of the 14 evaluated so far, at a median cost of 6.0 WER. The
+baseline on 9 of 12 cells, with a median gain of 6.6 WER. On genuinely held-out varieties of the
+same languages it wins \emph{none} of the 18, at a median cost of 6.0 WER. The
 only two wins among the wider set are exactly the two varieties that were not held out, where it
 gains a median of 32.3 WER. A projector trained on one variety of a language is a system for
 that variety, and the apparent exceptions are seen data.
@@ -573,9 +572,10 @@ with $p = 0.966$, against a design that resolves 4.90 CER and a between-run stan
 post-training data, and the one language whose exposure contradicts its region label behaves as
 exposure predicts.
 
-Training the projector at all is what matters, though not uniformly. Across 36 evaluated cells
-it beats the strongest off-the-shelf model on 13, and the benefit tracks the baseline's weakness
-($\rho = -0.42$, $p = 0.011$): up to 77.1 WER where those models produce degenerate output, and
+Training the projector at all is what matters, though not uniformly. Across all 43 evaluated
+cells it beats the strongest off-the-shelf model on 15, and the benefit tracks the baseline's
+weakness ($\rho = -0.46$, $p = 0.002$): up to 81.7 WER where those models produce degenerate
+output, and
 a net cost where they are already strong. And how much in-language audio the projector sees predicts how
 the run behaves: overfitting falls monotonically across resource tiers, with the lowest-resource
 cells peaking a quarter of the way into training.

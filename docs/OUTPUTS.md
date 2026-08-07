@@ -141,6 +141,13 @@ whole float and sets `table*` where needed.
 ## Definitions a reader could otherwise get wrong
 
 - **`best_cer`** is the minimum CER over a run's 101 evaluations, and is the **primary** metric.
+- **An absent baseline cell is one of three things, not one.** `analyze_baselines.coverage`
+  splits them: `not_applicable` (no config in the registry, so it can never be run --- FLEURS
+  has no Seychellois Creole, which is 3 cells), `failed` (a run exists and failed; on `crs_sc`
+  Whisper-Medium and Voxtral-Mini fail because they do not accept the language, which is the
+  result rather than a gap), and `pending` (no run yet --- the only kind that fills in). Failed
+  rows are **kept** in `t7_baselines.csv` with `state='failed'` and NaN metrics, and marked
+  `\textdagger` in the paper table rather than blanked.
 - **`in_domain_role == 'accent_transfer'` is NOT a held-out set.** It means "not the cell's
   primary point", which includes `sw_tz`, `ur_in` and `ha_td` -- all training data via
   `TRAIN_CONFIGS`. Split on `utils.is_trained_variety` first: pooling them turned a 0/11 dialect

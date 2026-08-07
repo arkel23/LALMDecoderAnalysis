@@ -1,5 +1,32 @@
 # Change log
 
+## 2026-08-07 (fourth) — an absent baseline cell is three different things
+
+Asked how `crs_sc` is handled when Whisper-Medium and Voxtral-Mini fail on it. The answer was
+**NaN, undifferentiated**: the failed rows are kept in `t7_baselines.csv` with `state='failed'`
+and NaN `wer`/`cer`, the paper table printed `--`, and `coverage()` reported "5 cells not
+finished ... aggregates cover ONLY what has finished". Three of those five can never be run and
+two failed structurally, so the line read as "come back later" when nothing will change.
+
+`coverage()` now splits them, deriving the first from the eval registry:
+
+- **not_applicable** (3) --- FLEURS has no Seychellois Creole, so `crs_sc`/cross-domain has no
+  config for any model. It can never be run.
+- **failed** (2) --- `crs_sc` in-domain for Whisper-Medium and Voxtral-Mini. The run exists and
+  failed because the models do not accept the language. That is the paper's `crs_sc` argument,
+  not a gap.
+- **pending** (0) --- the only kind that fills in on its own, and the only kind that now
+  triggers the "aggregates cover ONLY what has finished" warning.
+
+`tab_baselines_full` marks a failed cell `\textdagger` with the reason in the caption instead of
+printing `--`, which had been indistinguishable from a pending cell. Failed rows are still kept
+in the CSV; only `compare_with_trained` and the aggregates filter to finished, so `crs_sc`'s
+best baseline is Qwen2-Audio-7B --- the only one that ran.
+
+**Serial 11 completed at 43 of 43 cells during this pass.** Training now wins 15, the crossover
+strengthens to rho = -0.46 (p = 0.002), the largest gain is 81.7 WER, and held-out dialect
+transfer is 0 of 18.
+
 ## 2026-08-07 (later still) — early stopping, described for QuantizedASR but not applied
 
 `for_quantizedasr/qasr/train/add_early_stopping.py`, mirroring the target path. QuantizedASR is
