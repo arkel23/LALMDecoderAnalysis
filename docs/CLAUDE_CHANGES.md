@@ -1,5 +1,28 @@
 # Change log
 
+## 2026-08-07 (later still) — early stopping, described for QuantizedASR but not applied
+
+`for_quantizedasr/qasr/train/add_early_stopping.py`, mirroring the target path. QuantizedASR is
+untouched; the file states the diff and carries the two functions to paste.
+
+Read against the live `build_trainer`: `Seq2SeqTrainingArguments` already sets every field the
+callback needs, `weight_decay=args.weight_decay` is already wired (so weight decay is a CLI
+value, not a code change), and `DecoderASRTrainer.__init__` already accepts and forwards
+`callbacks`. The only gap is that neither construction site passes it.
+
+Four traps, each of which disables or defers stopping with a warning rather than an error, so
+`validate_early_stopping` turns them into construction-time failures:
+`save_steps != eval_steps` defers the stop; `load_best_model_at_end=False` leaves
+`state.best_metric` unset (and its CLI flag is `store_false`, so passing it is what turns it
+OFF); `greater_is_better` is hardcoded False in `build_trainer`, silently inverting for an
+upward metric; `prediction_loss_only=True` computes no metrics, so anything but `loss` resolves
+to None. All four exercised here against the pasteable function.
+
+Caveat recorded for whoever runs it: `final_minus_best`, `late_sd` and the eval-loss rise
+carrying the overfitting-by-tier result are all defined on a completed curve. Early-stopped runs
+truncate exactly the post-minimum tail those measure, so they belong in a new serial rather than
+in serial 0.
+
 ## 2026-08-07 (later) — accent transfer, and a variety set that was not held out
 
 **`accent_transfer` was never a held-out set.** `in_domain_role` returns it for anything that is
