@@ -122,8 +122,8 @@ def tab_baselines():
             f"{LANGUAGE_DIC.get(r['study_cell'], r['study_cell'])} & "
             f"{str(r['dataset']).replace('_', chr(92) + '_')} & "
             f"{'in-domain' if r['eval_domain'] == 'in_domain' else 'FLEURS'} & "
-            f"{fmt(r['baseline_wer'])} & {fmt(r['trained_wer'])} & "
-            f"{fmt(r['delta_wer'])} \\\\")
+            f"{fmt(r['baseline_cer'])} & {fmt(r['trained_cer'])} & "
+            f"{fmt(r['delta_cer'])} \\\\")
     return '\n'.join(rows)
 
 
@@ -153,8 +153,9 @@ def tab_baselines_full():
     failed = set(zip(d[d['state'] == 'failed']['study_cell'],
                      d[d['state'] == 'failed']['eval_domain'],
                      d[d['state'] == 'failed']['model_short']))
-    ok = d[(d['state'] == 'finished') & d['wer'].notna()]
-    piv = ok.pivot_table(index=['study_cell', 'eval_domain'], columns='model_short', values='wer')
+    ok = d[(d['state'] == 'finished') & d['cer'].notna()]
+    piv = ok.pivot_table(index=['study_cell', 'eval_domain'], columns='model_short',
+                         values='cer')
     models = [m for m in ('whisper-medium', 'Voxtral-Mini-3B-2507', 'Qwen2-Audio-7B')
               if m in piv.columns]
     rows = []
@@ -193,7 +194,7 @@ def tab_accent():
             f"{LANGUAGE_DIC.get(r['study_cell'], r['study_cell'])} & "
             f"{str(r['dataset']).replace('_', chr(92) + '_')} & "
             f"{'trained' if r['seen_in_training'] else 'held out'} & "
-            f"{int(r['num_samples'])} & {fmt(r['median_variety_wer'])} & "
+            f"{int(r['num_samples'])} & {fmt(r['median_variety_cer'])} & "
             f"{fmt(r['median_penalty_abs'])} & {fmt(r['median_penalty_rel'])} \\\\")
     return '\n'.join(rows)
 
@@ -215,7 +216,7 @@ def main():
     write('tab_baselines.tex', tab_baselines(), '@{}lllrrr@{}',
           r'\textbf{Language} & \textbf{Test set} & \textbf{Domain} & \textbf{Base.} & '
           r'\textbf{LisTAya} & \textbf{$\Delta$}',
-          'WER of the best off-the-shelf baseline against the best LisTAya checkpoint on the '
+          'CER of the best off-the-shelf baseline against the best LisTAya checkpoint on the '
           'same test set. Negative $\\Delta$ favours the trained projector.',
           'tab:baselines', wide=True)
     write('tab_datasets.tex', tab_datasets(), '@{}llrr@{}',
@@ -234,7 +235,7 @@ def main():
     write('tab_baselines_full.tex', tab_baselines_full(), '@{}llrrr@{}',
           r'\textbf{Language} & \textbf{Test set} & \textbf{Whisper-M} & '
           r'\textbf{Voxtral-M} & \textbf{Qwen2-A}',
-          'WER of the off-the-shelf models on each language. Values above 100 indicate '
+          'CER of the off-the-shelf models on each language. Values above 100 indicate '
           'degenerate output rather than substitution errors; \\textdagger{} marks a run that '
           'failed because the model does not accept the language. FLEURS has no Seychellois '
           'Creole, so that cell has no cross-domain row at all.',
@@ -247,9 +248,10 @@ def main():
           'tab:dataset-stats', wide=True)
     write('tab_accent.tex', tab_accent(), '@{}lllrrrr@{}',
           r'\textbf{Language} & \textbf{Variety} & \textbf{Status} & \textbf{$n$} & '
-          r'\textbf{WER} & \textbf{$\Delta$} & \textbf{Ratio}',
+          r'\textbf{CER} & \textbf{$\Delta$} & \textbf{Ratio}',
           'Country varieties beyond each cell\'s training variety, median over the three '
-          'off-the-shelf models. $\\Delta$ and ratio are against the same model\'s in-domain '
+          'off-the-shelf models, in CER. $\\Delta$ and ratio are against the same model\'s '
+          'in-domain '
           'point. Tanzanian Swahili and Indian Urdu were in their cells\' training streams and '
           'are not held out.',
           'tab:accent', wide=True)

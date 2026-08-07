@@ -1,5 +1,33 @@
 # Change log
 
+## 2026-08-07 (fifth) — CER everywhere, and a one-page summary
+
+**The baseline and accent work was in WER while the rest of the study is in CER.** Serial 0
+selects on `eval/cer` and every serial-0 statistic is CER, but `analyze_baselines.py` defaulted
+to `--metric wer` and the accent analysis followed it. CER is complete on both eval serials
+(127/127 and 158/158), so the switch cost no coverage.
+
+Switched: `analyze_baselines.py` default metric, `analyze_accent_transfer.py` columns
+(`variety_cer`, `primary_cer`, `fleurs_cer`), the three table generators and their captions,
+`verify_paper_numbers.py`, and every affected number in `main.tex`. Only two WER mentions remain
+and both are deliberate: Fong et al.'s own reported figures, and one labelled review comment.
+
+The CER framing is also a better story. Training beats the best off-the-shelf model on 15 of 43
+cells and the benefit tracks the baseline's weakness (rho = -0.43, p = 0.004), with every large
+win on a thin-coverage language: Amharic -102.6 in-domain and -78.7 on FLEURS, Kreol Seselwa
+-68.8, Hausa -45.4, Tanzanian Swahili -32.0. Split at the median baseline CER of 15.8, it wins
+12 of 22 above and 3 of 21 below.
+
+**A real error surfaced while verifying the summary.** The paper said "the four decoders span
+17.92--21.35 CER, a range of 3.43" on crs_sc. 21.35 is `tiny-aya-base`, a non-regional CONTROL
+and a fifth model. The four LisTAya variants span 17.92-19.91, a range of **1.99**. 3.43 is the
+five Tiny Aya models, 3.96 all six. `FINDINGS.md` had said this correctly; the paper lost it.
+Three derived checks now pin the four-variant figures.
+
+**New `docs/SUMMARY.md`**, and README points at it. One page: a table of every experiment with
+its script and outputs, then the findings ranked by how compelling they are to a reviewer, with
+the CSV behind each. Every number in it was re-derived from its CSV before committing.
+
 ## 2026-08-07 (fourth) — an absent baseline cell is three different things
 
 Asked how `crs_sc` is handled when Whisper-Medium and Voxtral-Mini fail on it. The answer was

@@ -21,7 +21,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import pandas as pd
 from scipy import stats
 
-from utils import GRID_SERIAL, TRAINED_VARIETIES, is_trained_variety
+from utils import GRID_SERIAL, TRAINED_VARIETIES, CORE_VARIANTS, is_trained_variety
 
 ACC = os.path.join('results_all', 'acc')
 # Every document that prints numbers derived from this repo's CSVs. Scanning only one of them
@@ -403,7 +403,7 @@ def _accent_corr(predictor, aggregation, col='spearman_rho',
     d = load(T11C)
     sel = d[(d['population'] == population) & (~d['excludes_degenerate'])
             & (d['model_population'] == model_population) & (d['predictor'] == predictor)
-            & (d['outcome'] == 'variety_wer') & (d['aggregation'] == aggregation)]
+            & (d['outcome'] == 'variety_cer') & (d['aggregation'] == aggregation)]
     assert len(sel) == 1, f'{predictor}/{aggregation} matched {len(sel)} rows in {T11C}'
     return float(sel.iloc[0][col])
 
@@ -434,7 +434,7 @@ DERIVED += [
     ("English's matched-decoder exposure",
      lambda: _t8('en_us', 'exposure_matched_pct'), 1),
     ('the largest gain training buys over the best baseline',
-     lambda: load(T7C)['delta_wer'].min(), 1),
+     lambda: load(T7C)['delta_cer'].min(), 1),
     ('cells where training beats the best baseline',
      lambda: load(T7C)['training_helps'].sum(), 0),
     ('cells in the training-vs-baseline contrast',
@@ -445,22 +445,31 @@ DERIVED += [
     ('Whisper hours, Swahili', lambda: _hours('sw'), 0),
     ('Whisper hours, Amharic', lambda: _hours('am'), 0),
     ('Whisper hours, Hausa', lambda: _hours('ha'), 0),
+    # The crs_sc spread depends on WHICH models are counted: the four LisTAya variants, the
+    # five Tiny Aya models (adding base), or all six (adding the Qwen3 control).
+    ('crs_sc spread across the four LisTAya variants',
+     lambda: (lambda d: d['best_cer'].max() - d['best_cer'].min())(
+         load(T3)[load(T3)['model_short'].isin(CORE_VARIANTS)]), 2),
+    ('crs_sc best CER, the four LisTAya variants',
+     lambda: load(T3)[load(T3)['model_short'].isin(CORE_VARIANTS)]['best_cer'].min(), 2),
+    ('crs_sc worst CER, the four LisTAya variants',
+     lambda: load(T3)[load(T3)['model_short'].isin(CORE_VARIANTS)]['best_cer'].max(), 2),
     ('held-out varieties evaluated, excluding the two that were trained on',
      lambda: _held_out(T11).query("population == 'baseline'")['dataset'].nunique(), 0),
     ('held-out dialect cells the projector wins',
      lambda: _held_out(T7C).query("in_domain_role == 'accent_transfer'")
      ['training_helps'].sum(), 0),
-    ('median WER cost on held-out dialects',
+    ('median CER cost on held-out dialects',
      lambda: _held_out(T7C).query("in_domain_role == 'accent_transfer'")
-     ['delta_wer'].median(), 1),
-    ('in-domain predicts held-out variety WER, pooled',
-     lambda: _accent_corr('primary_wer', 'pooled'), 2),
-    ('in-domain predicts held-out variety WER, language-centred',
-     lambda: _accent_corr('primary_wer', 'language_centred'), 2),
-    ('FLEURS predicts held-out variety WER, pooled',
-     lambda: _accent_corr('fleurs_wer', 'pooled'), 2),
-    ('FLEURS predicts held-out variety WER, language-centred',
-     lambda: _accent_corr('fleurs_wer', 'language_centred'), 2),
+     ['delta_cer'].median(), 1),
+    ('in-domain predicts held-out variety CER, pooled',
+     lambda: _accent_corr('primary_cer', 'pooled'), 2),
+    ('in-domain predicts held-out variety CER, language-centred',
+     lambda: _accent_corr('primary_cer', 'language_centred'), 2),
+    ('FLEURS predicts held-out variety CER, pooled',
+     lambda: _accent_corr('fleurs_cer', 'pooled'), 2),
+    ('FLEURS predicts held-out variety CER, language-centred',
+     lambda: _accent_corr('fleurs_cer', 'language_centred'), 2),
 ]
 DERIVED += [(f'mean rank, {col.split("_")[0]}, {v}',
              (lambda c, m: lambda: _rank_mean(c, m))(col, v), 2)
@@ -483,11 +492,12 @@ ORDERINGS += [
     # Was 'training beats the baseline on every cell'. True at 4 evaluated cells, false at 33:
     # the projector wins where the baseline is weak and loses where it is already strong.
     ('training helps more the worse the baseline is',
-     lambda: stats.spearmanr(load(T7C)['baseline_wer'],
-                             load(T7C)['delta_wer']).statistic < -0.3),
-    ('training wins on the majority of cells whose baseline exceeds 50 WER',
-     lambda: (lambda d: bool(d[d['baseline_wer'] >= 50]['training_helps'].mean() > 0.5))(
-         load(T7C))),
+     lambda: stats.spearmanr(load(T7C)['baseline_cer'],
+                             load(T7C)['delta_cer']).statistic < -0.3),
+    # Split at the MEDIAN baseline CER rather than a round number, so the threshold is derived.
+    ('training wins on the majority of cells above the median baseline CER',
+     lambda: (lambda d: bool(d[d['baseline_cer'] >= d['baseline_cer'].median()]
+                             ['training_helps'].mean() > 0.5))(load(T7C))),
     # The seen/held-out split is load-bearing: pooling sw_tz and ur_in turned 0/11 into 2/13.
     ('the projector wins NO genuinely held-out dialect cell',
      lambda: int(_held_out(T7C).query("in_domain_role == 'accent_transfer'")
@@ -499,11 +509,11 @@ ORDERINGS += [
     # Most of the pooled correlation is the language, not the model. Pinned so a later pass
     # cannot quietly report the pooled figure alone.
     ('language-centring shrinks the in-domain correlation on the full variety set',
-     lambda: _accent_corr('primary_wer', 'language_centred', population='all_varieties')
-     < 0.5 * _accent_corr('primary_wer', 'pooled', population='all_varieties')),
-    ('and loses on the majority whose baseline is under 20 WER',
-     lambda: (lambda d: bool(d[d['baseline_wer'] < 20]['training_helps'].mean() < 0.5))(
-         load(T7C))),
+     lambda: _accent_corr('primary_cer', 'language_centred', population='all_varieties')
+     < 0.5 * _accent_corr('primary_cer', 'pooled', population='all_varieties')),
+    ('and loses on the majority below it',
+     lambda: (lambda d: bool(d[d['baseline_cer'] < d['baseline_cer'].median()]
+                             ['training_helps'].mean() < 0.5))(load(T7C))),
 ]
 
 

@@ -142,7 +142,7 @@ def coverage(out):
     return models, langs, grid, absent
 
 
-def compare_with_trained(base, trained, metric='wer'):
+def compare_with_trained(base, trained, metric='cer'):
     """serial 11 minus serial 10, per (language, eval set). Same metric, same split.
 
     Returns None until the trained sweep exists. The merge asserts key uniqueness on both
@@ -201,7 +201,9 @@ def main():
                    default=os.path.join('results_all', 'acc', 't7_baselines.csv'))
     p.add_argument('--contrast_file', type=str,
                    default=os.path.join('results_all', 'acc', 't7_training_vs_baseline.csv'))
-    p.add_argument('--metric', type=str, default='wer')
+    # CER is the study's primary error rate everywhere else (serial 0 selects on
+    # eval/cer), so the baseline contrast uses it too. WER stays in the CSV.
+    p.add_argument('--metric', type=str, default='cer')
     args = p.parse_args()
 
     base_raw = load_serial(args.input_file, 'serial 10 (baselines)')
@@ -244,7 +246,7 @@ def main():
                [c for c in WER_FAMILY if c in fin.columns] + \
                [c for c in ('rtfx', 'no_params', 'num_samples') if c in fin.columns]
         print('\nfinished baseline results:')
-        print(fin.sort_values(['eval_domain', 'wer'])[show].round(3).to_string(index=False))
+        print(fin.sort_values(['eval_domain', args.metric])[show].round(3).to_string(index=False))
 
         # Same model, same language, two domains: the cleanest read on how much harder the
         # in-domain corpus is than the read-speech benchmark.
@@ -252,7 +254,7 @@ def main():
         assert_unique_keys(primary[primary['eval_domain'] == 'in_domain'],
                            ['model_id', 'study_cell'], label='in-domain primary rows')
         both = (primary.pivot_table(index=['study_cell', 'model_short'], columns='eval_domain',
-                                    values='wer')
+                                    values=args.metric)
                 .dropna())
         if len(both):
             both['in_over_cross'] = both['in_domain'] / both['cross_domain']

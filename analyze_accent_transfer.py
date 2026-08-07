@@ -1,7 +1,7 @@
 """Does a model's in-domain or FLEURS score predict how it does on held-out varieties?
 
 One row per (model, variety), with that SAME model's two anchors for the parent language:
-`primary_wer` (its in-domain point) and `fleurs_wer` (its cross-domain point). Three outcomes --
+`primary_cer` (its in-domain point) and `fleurs_cer` (its cross-domain point). Three outcomes --
 the variety's own WER, the absolute penalty against the anchor, and the relative penalty.
 
 Two things this script exists to keep straight, both of which change the answer:
@@ -9,7 +9,7 @@ Two things this script exists to keep straight, both of which change the answer:
   seen vs held-out  `in_domain_role == 'accent_transfer'` means "not the cell's primary point",
                     which includes sw_tz, ur_in and ha_td -- training data. `held_out_only` is
                     the headline population; `all_varieties` is reported beside it.
-  selection source  `fleurs_wer` is downstream of selection for the ten cells chosen on FLEURS
+  selection source  `fleurs_cer` is downstream of selection for the ten cells chosen on FLEURS
                     validation, and zero-shot for ha_ng and crs_sc, which were chosen in-domain.
                     Carried as `parent_selected_on_fleurs`. Neither cell contributes a held-out
                     variety today, so it does not move the numbers -- it guards the moment one
@@ -48,8 +48,8 @@ DEGENERATE_WER = 150.0
 # Below this a within-language correlation is not worth reporting as a number.
 MIN_VARIETIES_FOR_WITHIN_LANGUAGE = 3
 
-PREDICTORS = ('primary_wer', 'fleurs_wer')
-OUTCOMES = ('variety_wer', 'penalty_rel')
+PREDICTORS = ('primary_cer', 'fleurs_cer')
+OUTCOMES = ('variety_cer', 'penalty_rel')
 
 
 def load_trained(path):
@@ -58,7 +58,7 @@ def load_trained(path):
         print(f'[SKIP] serial 11: {path} not present')
         return None
     df = pd.read_csv(path)
-    df = df[(df['state'] == 'finished') & df['wer'].notna()].copy()
+    df = df[(df['state'] == 'finished') & df['cer'].notna()].copy()
     df['model_short'] = df['model_id'].map(parent_model_id).map(MODEL_SHORT)
     return df
 
@@ -78,14 +78,14 @@ def build_rows(df, population):
     """One row per (model, variety), joined to the same model's two anchors."""
     key = ['model_short', 'study_cell']
     anchors = {}
-    for name, mask in (('primary_wer', (df['in_domain_role'] == 'primary')),
-                       ('fleurs_wer', (df['eval_domain'] == 'cross_domain'))):
-        a = df[mask][key + ['wer']].rename(columns={'wer': name})
+    for name, mask in (('primary_cer', (df['in_domain_role'] == 'primary')),
+                       ('fleurs_cer', (df['eval_domain'] == 'cross_domain'))):
+        a = df[mask][key + ['cer']].rename(columns={'cer': name})
         assert_unique_keys(a, key, label=f'{population} anchor {name}')
         anchors[name] = a
 
     acc = df[df['in_domain_role'] == 'accent_transfer'][
-        key + ['dataset', 'wer', 'num_samples']].rename(columns={'wer': 'variety_wer'})
+        key + ['dataset', 'cer', 'num_samples']].rename(columns={'cer': 'variety_cer'})
     assert_unique_keys(acc, key + ['dataset'], label=f'{population} accented rows')
 
     for name, a in anchors.items():
@@ -97,9 +97,9 @@ def build_rows(df, population):
     # The whole point of the split: sw_tz and ur_in are training data.
     acc['variety_seen_in_training'] = acc['dataset'].map(is_trained_variety)
     acc['parent_selected_on_fleurs'] = acc['study_cell'].map(selected_on_fleurs)
-    acc['is_degenerate'] = acc['variety_wer'] > DEGENERATE_WER
-    acc['penalty_abs'] = acc['variety_wer'] - acc['primary_wer']
-    acc['penalty_rel'] = acc['variety_wer'] / acc['primary_wer']
+    acc['is_degenerate'] = acc['variety_cer'] > DEGENERATE_WER
+    acc['penalty_abs'] = acc['variety_cer'] - acc['primary_cer']
+    acc['penalty_rel'] = acc['variety_cer'] / acc['primary_cer']
     return acc.sort_values(['population', 'study_cell', 'dataset', 'model_short'])
 
 
@@ -157,7 +157,7 @@ def main():
     args = p.parse_args()
 
     base = pd.read_csv(args.input_file)
-    base = base[(base['state'] == 'finished') & base['wer'].notna()]
+    base = base[(base['state'] == 'finished') & base['cer'].notna()]
     frames = [build_rows(base, 'baseline')]
 
     trained = load_trained(args.trained_file)
@@ -170,7 +170,7 @@ def main():
     print(f'Wrote {len(rows)} rows to {args.output_file}\n')
 
     for pop, g in rows.groupby('population'):
-        miss = int(g['primary_wer'].isna().sum() + g['fleurs_wer'].isna().sum())
+        miss = int(g['primary_cer'].isna().sum() + g['fleurs_cer'].isna().sum())
         print(f'{pop}: {len(g)} (model, variety) rows over {g["dataset"].nunique()} varieties '
               f'x {g["model_short"].nunique()} models, {miss} missing anchor value(s)')
         print(f'  models: {", ".join(sorted(g["model_short"].dropna().unique()))}')
@@ -182,7 +182,7 @@ def main():
     corr.to_csv(args.correlation_file, index=False, float_format=FLOAT_FORMAT)
     print(f'\nWrote {len(corr)} rows to {args.correlation_file}')
     head = corr[(corr['population'] == 'held_out_only') & (~corr['excludes_degenerate'])
-                & (corr['outcome'] == 'variety_wer') & (corr['aggregation'] != 'within_language')]
+                & (corr['outcome'] == 'variety_cer') & (corr['aggregation'] != 'within_language')]
     print(head[['model_population', 'predictor', 'aggregation', 'spearman_rho', 'spearman_p',
                 'n']].round(4).to_string(index=False))
     off = sorted(rows.loc[~rows['parent_selected_on_fleurs'], 'study_cell'].unique())
@@ -194,7 +194,7 @@ def main():
                     seen_in_training=('variety_seen_in_training', 'first'),
                     n_models=('model_short', 'nunique'),
                     num_samples=('num_samples', 'first'),
-                    median_variety_wer=('variety_wer', 'median'),
+                    median_variety_cer=('variety_cer', 'median'),
                     median_penalty_abs=('penalty_abs', 'median'),
                     median_penalty_rel=('penalty_rel', 'median'))
                .sort_values(['population', 'study_cell', 'dataset']))

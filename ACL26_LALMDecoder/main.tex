@@ -360,17 +360,20 @@ the highest-resource cells improve almost to the end.
 Table~\ref{tab:baselines} compares each trained LisTAya checkpoint against the strongest
 off-the-shelf model we evaluate on the same test set, over all 43 cells.
 Training wins on 15 of them, and which 15 is the result: the benefit tracks how badly the
-off-the-shelf model was already doing (Spearman $\rho = -0.46$, $p = 0.002$). On the ten cells
-whose baseline exceeds 50 WER the projector wins seven, with a median gain of 35.9 WER and a
-largest of 81.7; on the eighteen whose baseline is under 20 WER it wins two, and costs a median
-of 5.8 WER.
+off-the-shelf model was already doing (Spearman $\rho = -0.43$, $p = 0.004$). Splitting at the
+median baseline CER of 15.8, the projector wins 12 of the 22 cells at or above it and 3 of the
+21 below, and the losses below are small (median $+3.7$ CER) while the wins above are not.
+
+Every large win is a language the frozen components barely cover: Amharic ($-102.6$ CER
+in-domain, $-78.7$ on FLEURS), Kreol Seselwa ($-68.8$), Hausa ($-45.4$) and Tanzanian Swahili
+($-32.0$).
 
 So training a projector does not make a system uniformly better. It converts unusable output
 into usable output where the encoder's coverage is thin, and gives up ground where a
 general-purpose model is already strong --- which is the trade a practitioner adding a
 low-resource language is making.
 
-% REVIEW: one pair is degenerate rather than merely worse -- en_pk goes 93.87 to 378.71 WER.
+% REVIEW: one pair is degenerate rather than merely worse -- en_pk, in WER 93.87 -> 378.71.
 % It is left in the table and excluded from no statistic above; worth a look before submission.
 
 % The sweep is complete at 43 of 43 cells; these counts are final unless the data changes.
@@ -382,15 +385,16 @@ low-resource language is making.
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{assets/figures/s0_curve_crs_ood.png}
-\caption{Kreol Seselwa, unsupported by both the encoder and every decoder. The variants converge
-to within 3.43 CER of one another.}
+\caption{Kreol Seselwa, unsupported by both the encoder and every decoder. The four LisTAya
+variants converge to within 1.99 CER of one another.}
 \label{fig:crs}
 \end{figure}
 
 
 Kreol Seselwa is supported by neither the Whisper encoder nor any Tiny Aya decoder, and it is
-the one cell where both frozen components operate outside their coverage. The four decoders span
-17.92--21.35 CER on it, a range of 3.43 CER. The projector therefore learns a usable alignment
+the one cell where both frozen components operate outside their coverage. The four LisTAya
+variants span 17.92--19.91 CER on it, a range of 1.99 CER; adding the non-regional Tiny Aya base
+control widens that to 3.43. The projector therefore learns a usable alignment
 for a language absent from both pretraining corpora, and which regional variant it is paired
 with matters as little there as elsewhere.
 
@@ -483,7 +487,7 @@ of Hausa, and the error rates follow.
 % REVIEW: these are ASR plus translation hours from the Whisper paper's own table. For the
 % low-resource entries almost all of it is translation (Marathi: 0.6 h ASR of 289), a
 % distinction a reviewer may want stated. Source: data/language_hours_whisper.csv.
-Several entries exceed 100 WER, which indicates degenerate
+Several entries exceed 100 CER, which indicates degenerate
 output --- repetition and hallucinated continuations --- rather than ordinary substitution
 errors, and is the failure mode these models show on languages outside their coverage.
 
@@ -504,20 +508,20 @@ Indian Urdu were themselves part of their cells' training streams and are report
 throughout.
 
 The projector does not transfer across dialect. On its own training variety it beats the
-baseline on 9 of 12 cells, with a median gain of 6.6 WER. On genuinely held-out varieties of the
-same languages it wins \emph{none} of the 18, at a median cost of 6.0 WER. The
+baseline on 9 of 12 cells, with a median gain of 3.0 CER. On genuinely held-out varieties of the
+same languages it wins \emph{none} of the 18, at a median cost of 4.1 CER. The
 only two wins among the wider set are exactly the two varieties that were not held out, where it
-gains a median of 32.3 WER. A projector trained on one variety of a language is a system for
+gains a median of 17.4 CER. A projector trained on one variety of a language is a system for
 that variety, and the apparent exceptions are seen data.
 
 This also bears on whether a cheaper evaluation can stand in for a dialect sweep. Across the
 off-the-shelf models, a model's score on a language's in-domain test set predicts its score on
-held-out varieties of that language at $\rho = 0.44$ ($p = 0.0008$, $n = 54$), and the
-association survives removing the language mean at $\rho = 0.29$ ($p = 0.035$). The FLEURS score
-predicts less well and does not survive it ($\rho = 0.25 \rightarrow 0.20$, $p = 0.15$). Most of
+held-out varieties of that language at $\rho = 0.42$ ($p = 0.001$, $n = 54$), and the
+association survives removing the language mean at $\rho = 0.30$ ($p = 0.026$). The FLEURS score
+predicts less well and does not survive it ($\rho = 0.20 \rightarrow 0.06$, $p = 0.66$). Most of
 any pooled correlation here is the language rather than the model: on the full variety set,
-including the two seen ones, in-domain appears to predict at $\rho = 0.56$ and falls to
-$\rho = 0.12$ once language is removed.
+including the two seen ones, in-domain appears to predict at $\rho = 0.53$ and falls to
+$\rho = 0.15$ once language is removed.
 
 \input{tables/tab_accent}
 
@@ -574,7 +578,7 @@ exposure predicts.
 
 Training the projector at all is what matters, though not uniformly. Across all 43 evaluated
 cells it beats the strongest off-the-shelf model on 15, and the benefit tracks the baseline's
-weakness ($\rho = -0.46$, $p = 0.002$): up to 81.7 WER where those models produce degenerate
+weakness ($\rho = -0.43$, $p = 0.004$): up to 102.6 CER where those models produce degenerate
 output, and
 a net cost where they are already strong. And how much in-language audio the projector sees predicts how
 the run behaves: overfitting falls monotonically across resource tiers, with the lowest-resource

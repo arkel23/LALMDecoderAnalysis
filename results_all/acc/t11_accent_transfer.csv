@@ -1,135 +1,137 @@
-model_short,study_cell,dataset,variety_wer,num_samples,primary_wer,fleurs_wer,population,language_name,accent_match,variety_seen_in_training,parent_selected_on_fleurs,is_degenerate,penalty_abs,penalty_rel
-Qwen2-Audio-7B,en_us,en_au,19.000000,3880.000000,21.010000,7.790000,baseline,English,same,False,True,False,-2.010000,0.904331
-Voxtral-Mini-3B-2507,en_us,en_au,13.740000,3880.000000,13.130000,4.420000,baseline,English,same,False,True,False,0.610000,1.046458
-whisper-medium,en_us,en_au,13.360000,3880.000000,13.810000,5.250000,baseline,English,same,False,True,False,-0.450000,0.967415
-Qwen2-Audio-7B,en_us,en_jm,24.600000,117.000000,21.010000,7.790000,baseline,English,same,False,True,False,3.590000,1.170871
-Voxtral-Mini-3B-2507,en_us,en_jm,12.120000,117.000000,13.130000,4.420000,baseline,English,same,False,True,False,-1.010000,0.923077
-whisper-medium,en_us,en_jm,11.760000,117.000000,13.810000,5.250000,baseline,English,same,False,True,False,-2.050000,0.851557
-Qwen2-Audio-7B,en_us,en_ke,34.940000,1822.000000,21.010000,7.790000,baseline,English,same,False,True,False,13.930000,1.663018
-Voxtral-Mini-3B-2507,en_us,en_ke,27.280000,1822.000000,13.130000,4.420000,baseline,English,same,False,True,False,14.150000,2.077685
-whisper-medium,en_us,en_ke,34.880000,1822.000000,13.810000,5.250000,baseline,English,same,False,True,False,21.070000,2.525706
-Qwen2-Audio-7B,en_us,en_nz,17.660000,3074.000000,21.010000,7.790000,baseline,English,same,False,True,False,-3.350000,0.840552
-Voxtral-Mini-3B-2507,en_us,en_nz,11.140000,3074.000000,13.130000,4.420000,baseline,English,same,False,True,False,-1.990000,0.848439
-whisper-medium,en_us,en_nz,12.970000,3074.000000,13.810000,5.250000,baseline,English,same,False,True,False,-0.840000,0.939175
-Qwen2-Audio-7B,en_us,en_pk,115.750000,237.000000,21.010000,7.790000,baseline,English,same,False,True,False,94.740000,5.509281
-Voxtral-Mini-3B-2507,en_us,en_pk,108.600000,237.000000,13.130000,4.420000,baseline,English,same,False,True,False,95.470000,8.271135
-whisper-medium,en_us,en_pk,93.870000,237.000000,13.810000,5.250000,baseline,English,same,False,True,False,80.060000,6.797248
-Qwen2-Audio-7B,en_us,en_sl,30.050000,1238.000000,21.010000,7.790000,baseline,English,same,False,True,False,9.040000,1.430271
-Voxtral-Mini-3B-2507,en_us,en_sl,22.020000,1238.000000,13.130000,4.420000,baseline,English,same,False,True,False,8.890000,1.677075
-whisper-medium,en_us,en_sl,25.840000,1238.000000,13.810000,5.250000,baseline,English,same,False,True,False,12.030000,1.871108
-Qwen2-Audio-7B,en_us,en_zm,31.400000,3527.000000,21.010000,7.790000,baseline,English,same,False,True,False,10.390000,1.494526
-Voxtral-Mini-3B-2507,en_us,en_zm,23.790000,3527.000000,13.130000,4.420000,baseline,English,same,False,True,False,10.660000,1.811881
-whisper-medium,en_us,en_zm,26.130000,3527.000000,13.810000,5.250000,baseline,English,same,False,True,False,12.320000,1.892107
-Qwen2-Audio-7B,es_419,es_ar,32.420000,3032.000000,16.640000,6.420000,baseline,Spanish (LatAm),related,False,True,False,15.780000,1.948317
-Voxtral-Mini-3B-2507,es_419,es_ar,28.610000,3032.000000,11.050000,3.330000,baseline,Spanish (LatAm),related,False,True,False,17.560000,2.589140
-whisper-medium,es_419,es_ar,29.200000,3032.000000,30.780000,3.570000,baseline,Spanish (LatAm),related,False,True,False,-1.580000,0.948668
-Qwen2-Audio-7B,es_419,es_cl,34.280000,20912.000000,16.640000,6.420000,baseline,Spanish (LatAm),related,False,True,False,17.640000,2.060096
-Voxtral-Mini-3B-2507,es_419,es_cl,27.980000,20912.000000,11.050000,3.330000,baseline,Spanish (LatAm),related,False,True,False,16.930000,2.532127
-whisper-medium,es_419,es_cl,72.030000,20912.000000,30.780000,3.570000,baseline,Spanish (LatAm),related,False,True,False,41.250000,2.340156
-Qwen2-Audio-7B,es_419,es_co,25.280000,1893.000000,16.640000,6.420000,baseline,Spanish (LatAm),related,False,True,False,8.640000,1.519231
-Voxtral-Mini-3B-2507,es_419,es_co,15.560000,1893.000000,11.050000,3.330000,baseline,Spanish (LatAm),related,False,True,False,4.510000,1.408145
-whisper-medium,es_419,es_co,101.930000,1893.000000,30.780000,3.570000,baseline,Spanish (LatAm),related,False,True,False,71.150000,3.311566
-Qwen2-Audio-7B,es_419,es_es,16.090000,34140.000000,16.640000,6.420000,baseline,Spanish (LatAm),related,False,True,False,-0.550000,0.966947
-Voxtral-Mini-3B-2507,es_419,es_es,11.810000,34140.000000,11.050000,3.330000,baseline,Spanish (LatAm),related,False,True,False,0.760000,1.068778
-whisper-medium,es_419,es_es,12.850000,34140.000000,30.780000,3.570000,baseline,Spanish (LatAm),related,False,True,False,-17.930000,0.417479
-Qwen2-Audio-7B,es_419,es_pe,16.310000,4637.000000,16.640000,6.420000,baseline,Spanish (LatAm),related,False,True,False,-0.330000,0.980168
-Voxtral-Mini-3B-2507,es_419,es_pe,10.100000,4637.000000,11.050000,3.330000,baseline,Spanish (LatAm),related,False,True,False,-0.950000,0.914027
-whisper-medium,es_419,es_pe,27.090000,4637.000000,30.780000,3.570000,baseline,Spanish (LatAm),related,False,True,False,-3.690000,0.880117
-Qwen2-Audio-7B,es_419,es_pr,20.100000,2742.000000,16.640000,6.420000,baseline,Spanish (LatAm),related,False,True,False,3.460000,1.207933
-Voxtral-Mini-3B-2507,es_419,es_pr,12.950000,2742.000000,11.050000,3.330000,baseline,Spanish (LatAm),related,False,True,False,1.900000,1.171946
-whisper-medium,es_419,es_pr,25.600000,2742.000000,30.780000,3.570000,baseline,Spanish (LatAm),related,False,True,False,-5.180000,0.831709
-Qwen2-Audio-7B,es_419,es_py,18.190000,1604.000000,16.640000,6.420000,baseline,Spanish (LatAm),related,False,True,False,1.550000,1.093149
-Voxtral-Mini-3B-2507,es_419,es_py,12.740000,1604.000000,11.050000,3.330000,baseline,Spanish (LatAm),related,False,True,False,1.690000,1.152941
-whisper-medium,es_419,es_py,19.830000,1604.000000,30.780000,3.570000,baseline,Spanish (LatAm),related,False,True,False,-10.950000,0.644250
-Qwen2-Audio-7B,es_419,es_uy,34.430000,10730.000000,16.640000,6.420000,baseline,Spanish (LatAm),related,False,True,False,17.790000,2.069111
-Voxtral-Mini-3B-2507,es_419,es_uy,29.750000,10730.000000,11.050000,3.330000,baseline,Spanish (LatAm),related,False,True,False,18.700000,2.692308
-whisper-medium,es_419,es_uy,30.940000,10730.000000,30.780000,3.570000,baseline,Spanish (LatAm),related,False,True,False,0.160000,1.005198
-Qwen2-Audio-7B,fr_fr,fr_cd,18.570000,265.000000,22.100000,9.020000,baseline,French,different,False,True,False,-3.530000,0.840271
-Voxtral-Mini-3B-2507,fr_fr,fr_cd,17.080000,265.000000,14.930000,4.700000,baseline,French,different,False,True,False,2.150000,1.144005
-whisper-medium,fr_fr,fr_cd,14.350000,265.000000,15.000000,7.940000,baseline,French,different,False,True,False,-0.650000,0.956667
-Qwen2-Audio-7B,fr_fr,fr_ci,19.520000,116.000000,22.100000,9.020000,baseline,French,different,False,True,False,-2.580000,0.883258
-Voxtral-Mini-3B-2507,fr_fr,fr_ci,17.470000,116.000000,14.930000,4.700000,baseline,French,different,False,True,False,2.540000,1.170127
-whisper-medium,fr_fr,fr_ci,14.210000,116.000000,15.000000,7.940000,baseline,French,different,False,True,False,-0.790000,0.947333
-Qwen2-Audio-7B,sw_ke,sw_tz,117.590000,10542.000000,35.780000,97.680000,baseline,Swahili,partial,True,True,False,81.810000,3.286473
-Voxtral-Mini-3B-2507,sw_ke,sw_tz,78.100000,10542.000000,25.930000,51.520000,baseline,Swahili,partial,True,True,False,52.170000,3.011955
-whisper-medium,sw_ke,sw_tz,98.500000,10542.000000,786.100000,93.710000,baseline,Swahili,partial,True,True,False,-687.600000,0.125302
-Qwen2-Audio-7B,ta_in,ta_lk,100.000000,1224.000000,104.430000,105.850000,baseline,Tamil,same,False,True,False,-4.430000,0.957579
-Voxtral-Mini-3B-2507,ta_in,ta_lk,98.260000,1224.000000,45.040000,62.290000,baseline,Tamil,same,False,True,False,53.220000,2.181616
-whisper-medium,ta_in,ta_lk,78.150000,1224.000000,36.900000,31.740000,baseline,Tamil,same,False,True,False,41.250000,2.117886
-Qwen2-Audio-7B,ur_pk,ur_in,108.480000,155.000000,86.380000,119.720000,baseline,Urdu,partial,True,True,False,22.100000,1.255846
-Voxtral-Mini-3B-2507,ur_pk,ur_in,90.060000,155.000000,73.430000,86.600000,baseline,Urdu,partial,True,True,False,16.630000,1.226474
-whisper-medium,ur_pk,ur_in,45.420000,155.000000,209.640000,29.760000,baseline,Urdu,partial,True,True,False,-164.220000,0.216657
-earth,en_us,en_au,23.060000,3880.000000,13.150000,,trained,English,same,False,True,False,9.910000,1.753612
-fire,en_us,en_au,23.410000,3880.000000,12.840000,11.080000,trained,English,same,False,True,False,10.570000,1.823209
-global,en_us,en_au,24.690000,3880.000000,13.590000,12.120000,trained,English,same,False,True,False,11.100000,1.816777
-water,en_us,en_au,21.600000,3880.000000,13.250000,21.740000,trained,English,same,False,True,False,8.350000,1.630189
-earth,en_us,en_jm,15.440000,117.000000,13.150000,,trained,English,same,False,True,False,2.290000,1.174144
-fire,en_us,en_jm,16.700000,117.000000,12.840000,11.080000,trained,English,same,False,True,False,3.860000,1.300623
-global,en_us,en_jm,20.230000,117.000000,13.590000,12.120000,trained,English,same,False,True,False,6.640000,1.488595
-water,en_us,en_jm,16.190000,117.000000,13.250000,21.740000,trained,English,same,False,True,False,2.940000,1.221887
-earth,en_us,en_ke,33.630000,1822.000000,13.150000,,trained,English,same,False,True,False,20.480000,2.557414
-fire,en_us,en_ke,31.130000,1822.000000,12.840000,11.080000,trained,English,same,False,True,False,18.290000,2.424455
-global,en_us,en_ke,34.220000,1822.000000,13.590000,12.120000,trained,English,same,False,True,False,20.630000,2.518028
-water,en_us,en_ke,33.570000,1822.000000,13.250000,21.740000,trained,English,same,False,True,False,20.320000,2.533585
-earth,en_us,en_nz,25.820000,3074.000000,13.150000,,trained,English,same,False,True,False,12.670000,1.963498
-fire,en_us,en_nz,40.230000,3074.000000,12.840000,11.080000,trained,English,same,False,True,False,27.390000,3.133178
-global,en_us,en_nz,29.100000,3074.000000,13.590000,12.120000,trained,English,same,False,True,False,15.510000,2.141280
-water,en_us,en_nz,22.890000,3074.000000,13.250000,21.740000,trained,English,same,False,True,False,9.640000,1.727547
-earth,en_us,en_pk,679.040000,237.000000,13.150000,,trained,English,same,False,True,True,665.890000,51.638023
-fire,en_us,en_pk,378.710000,237.000000,12.840000,11.080000,trained,English,same,False,True,True,365.870000,29.494548
-global,en_us,en_pk,580.670000,237.000000,13.590000,12.120000,trained,English,same,False,True,True,567.080000,42.727741
-water,en_us,en_pk,693.960000,237.000000,13.250000,21.740000,trained,English,same,False,True,True,680.710000,52.374340
-earth,en_us,en_sl,30.970000,1238.000000,13.150000,,trained,English,same,False,True,False,17.820000,2.355133
-fire,en_us,en_sl,29.300000,1238.000000,12.840000,11.080000,trained,English,same,False,True,False,16.460000,2.281931
-global,en_us,en_sl,29.040000,1238.000000,13.590000,12.120000,trained,English,same,False,True,False,15.450000,2.136865
-water,en_us,en_sl,31.750000,1238.000000,13.250000,21.740000,trained,English,same,False,True,False,18.500000,2.396226
-earth,en_us,en_zm,33.620000,3527.000000,13.150000,,trained,English,same,False,True,False,20.470000,2.556654
-fire,en_us,en_zm,30.380000,3527.000000,12.840000,11.080000,trained,English,same,False,True,False,17.540000,2.366044
-global,en_us,en_zm,32.840000,3527.000000,13.590000,12.120000,trained,English,same,False,True,False,19.250000,2.416483
-water,en_us,en_zm,29.950000,3527.000000,13.250000,21.740000,trained,English,same,False,True,False,16.700000,2.260377
-earth,es_419,es_ar,32.470000,3032.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,19.930000,2.589314
-fire,es_419,es_ar,31.950000,3032.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,19.930000,2.658070
-global,es_419,es_ar,32.160000,3032.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,19.680000,2.576923
-water,es_419,es_ar,32.220000,3032.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,19.870000,2.608907
-earth,es_419,es_cl,35.340000,20912.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,22.800000,2.818182
-fire,es_419,es_cl,32.970000,20912.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,20.950000,2.742928
-global,es_419,es_cl,34.250000,20912.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,21.770000,2.744391
-water,es_419,es_cl,35.450000,20912.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,23.100000,2.870445
-earth,es_419,es_co,21.670000,1893.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,9.130000,1.728070
-fire,es_419,es_co,21.360000,1893.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,9.340000,1.777038
-global,es_419,es_co,21.180000,1893.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,8.700000,1.697115
-water,es_419,es_co,21.240000,1893.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,8.890000,1.719838
-water,es_419,es_es,19.810000,34140.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,7.460000,1.604049
-earth,es_419,es_pe,16.100000,4637.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,3.560000,1.283892
-fire,es_419,es_pe,16.350000,4637.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,4.330000,1.360233
-global,es_419,es_pe,15.960000,4637.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,3.480000,1.278846
-water,es_419,es_pe,16.230000,4637.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,3.880000,1.314170
-earth,es_419,es_pr,18.190000,2742.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,5.650000,1.450558
-fire,es_419,es_pr,18.740000,2742.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,6.720000,1.559068
-global,es_419,es_pr,18.290000,2742.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,5.810000,1.465545
-water,es_419,es_pr,18.400000,2742.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,6.050000,1.489879
-earth,es_419,es_py,19.760000,1604.000000,12.540000,7.200000,trained,Spanish (LatAm),related,False,True,False,7.220000,1.575758
-fire,es_419,es_py,18.880000,1604.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,6.860000,1.570715
-global,es_419,es_py,19.420000,1604.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,6.940000,1.556090
-water,es_419,es_py,19.940000,1604.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,7.590000,1.614575
-fire,es_419,es_uy,33.920000,10730.000000,12.020000,7.090000,trained,Spanish (LatAm),related,False,True,False,21.900000,2.821963
-global,es_419,es_uy,33.840000,10730.000000,12.480000,7.410000,trained,Spanish (LatAm),related,False,True,False,21.360000,2.711538
-water,es_419,es_uy,34.200000,10730.000000,12.350000,7.500000,trained,Spanish (LatAm),related,False,True,False,21.850000,2.769231
-fire,fr_fr,fr_cd,21.470000,265.000000,12.470000,15.390000,trained,French,different,False,True,False,9.000000,1.721732
-global,fr_fr,fr_cd,21.270000,265.000000,12.470000,19.400000,trained,French,different,False,True,False,8.800000,1.705694
-water,fr_fr,fr_cd,20.090000,265.000000,12.600000,16.360000,trained,French,different,False,True,False,7.490000,1.594444
-fire,fr_fr,fr_ci,21.300000,116.000000,12.470000,15.390000,trained,French,different,False,True,False,8.830000,1.708099
-global,fr_fr,fr_ci,21.700000,116.000000,12.470000,19.400000,trained,French,different,False,True,False,9.230000,1.740176
-water,fr_fr,fr_ci,32.960000,116.000000,12.600000,16.360000,trained,French,different,False,True,False,20.360000,2.615873
-earth,sw_ke,sw_tz,25.000000,10542.000000,22.090000,35.010000,trained,Swahili,partial,True,True,False,2.910000,1.131734
-fire,sw_ke,sw_tz,23.810000,10542.000000,20.900000,38.710000,trained,Swahili,partial,True,True,False,2.910000,1.139234
-global,sw_ke,sw_tz,25.100000,10542.000000,22.200000,38.490000,trained,Swahili,partial,True,True,False,2.900000,1.130631
-water,sw_ke,sw_tz,24.790000,10542.000000,21.250000,39.450000,trained,Swahili,partial,True,True,False,3.540000,1.166588
-earth,ta_in,ta_lk,95.610000,1224.000000,27.330000,76.330000,trained,Tamil,same,False,True,False,68.280000,3.498353
-fire,ta_in,ta_lk,88.470000,1224.000000,28.880000,66.280000,trained,Tamil,same,False,True,False,59.590000,3.063366
-global,ta_in,ta_lk,96.330000,1224.000000,29.280000,110.080000,trained,Tamil,same,False,True,False,67.050000,3.289959
-water,ta_in,ta_lk,91.930000,1224.000000,26.760000,101.100000,trained,Tamil,same,False,True,False,65.170000,3.435351
-earth,ur_pk,ur_in,35.950000,155.000000,111.140000,41.760000,trained,Urdu,partial,True,True,False,-75.190000,0.323466
-fire,ur_pk,ur_in,35.210000,155.000000,130.080000,41.800000,trained,Urdu,partial,True,True,False,-94.870000,0.270680
-global,ur_pk,ur_in,38.660000,155.000000,117.830000,49.530000,trained,Urdu,partial,True,True,False,-79.170000,0.328100
-water,ur_pk,ur_in,39.260000,155.000000,115.010000,39.780000,trained,Urdu,partial,True,True,False,-75.750000,0.341362
+model_short,study_cell,dataset,variety_cer,num_samples,primary_cer,fleurs_cer,population,language_name,accent_match,variety_seen_in_training,parent_selected_on_fleurs,is_degenerate,penalty_abs,penalty_rel
+Qwen2-Audio-7B,en_us,en_au,13.870000,3880.000000,16.800000,4.670000,baseline,English,same,False,True,False,-2.930000,0.825595
+Voxtral-Mini-3B-2507,en_us,en_au,9.950000,3880.000000,9.950000,2.110000,baseline,English,same,False,True,False,0.000000,1.000000
+whisper-medium,en_us,en_au,9.460000,3880.000000,10.390000,2.350000,baseline,English,same,False,True,False,-0.930000,0.910491
+Qwen2-Audio-7B,en_us,en_jm,17.660000,117.000000,16.800000,4.670000,baseline,English,same,False,True,False,0.860000,1.051190
+Voxtral-Mini-3B-2507,en_us,en_jm,7.970000,117.000000,9.950000,2.110000,baseline,English,same,False,True,False,-1.980000,0.801005
+whisper-medium,en_us,en_jm,7.620000,117.000000,10.390000,2.350000,baseline,English,same,False,True,False,-2.770000,0.733397
+Qwen2-Audio-7B,en_us,en_ke,25.020000,1822.000000,16.800000,4.670000,baseline,English,same,False,True,False,8.220000,1.489286
+Voxtral-Mini-3B-2507,en_us,en_ke,19.490000,1822.000000,9.950000,2.110000,baseline,English,same,False,True,False,9.540000,1.958794
+whisper-medium,en_us,en_ke,25.390000,1822.000000,10.390000,2.350000,baseline,English,same,False,True,False,15.000000,2.443696
+Qwen2-Audio-7B,en_us,en_nz,13.040000,3074.000000,16.800000,4.670000,baseline,English,same,False,True,False,-3.760000,0.776190
+Voxtral-Mini-3B-2507,en_us,en_nz,8.470000,3074.000000,9.950000,2.110000,baseline,English,same,False,True,False,-1.480000,0.851256
+whisper-medium,en_us,en_nz,9.740000,3074.000000,10.390000,2.350000,baseline,English,same,False,True,False,-0.650000,0.937440
+Qwen2-Audio-7B,en_us,en_pk,110.100000,237.000000,16.800000,4.670000,baseline,English,same,False,True,False,93.300000,6.553571
+Voxtral-Mini-3B-2507,en_us,en_pk,78.470000,237.000000,9.950000,2.110000,baseline,English,same,False,True,False,68.520000,7.886432
+whisper-medium,en_us,en_pk,87.700000,237.000000,10.390000,2.350000,baseline,English,same,False,True,False,77.310000,8.440808
+Qwen2-Audio-7B,en_us,en_sl,19.870000,1238.000000,16.800000,4.670000,baseline,English,same,False,True,False,3.070000,1.182738
+Voxtral-Mini-3B-2507,en_us,en_sl,14.120000,1238.000000,9.950000,2.110000,baseline,English,same,False,True,False,4.170000,1.419095
+whisper-medium,en_us,en_sl,16.710000,1238.000000,10.390000,2.350000,baseline,English,same,False,True,False,6.320000,1.608277
+Qwen2-Audio-7B,en_us,en_zm,21.170000,3527.000000,16.800000,4.670000,baseline,English,same,False,True,False,4.370000,1.260119
+Voxtral-Mini-3B-2507,en_us,en_zm,15.830000,3527.000000,9.950000,2.110000,baseline,English,same,False,True,False,5.880000,1.590955
+whisper-medium,en_us,en_zm,17.770000,3527.000000,10.390000,2.350000,baseline,English,same,False,True,False,7.380000,1.710298
+Qwen2-Audio-7B,es_419,es_ar,22.350000,3032.000000,12.210000,3.900000,baseline,Spanish (LatAm),related,False,True,False,10.140000,1.830467
+Voxtral-Mini-3B-2507,es_419,es_ar,20.010000,3032.000000,8.460000,1.730000,baseline,Spanish (LatAm),related,False,True,False,11.550000,2.365248
+whisper-medium,es_419,es_ar,20.220000,3032.000000,22.390000,1.340000,baseline,Spanish (LatAm),related,False,True,False,-2.170000,0.903082
+Qwen2-Audio-7B,es_419,es_cl,23.350000,20912.000000,12.210000,3.900000,baseline,Spanish (LatAm),related,False,True,False,11.140000,1.912367
+Voxtral-Mini-3B-2507,es_419,es_cl,19.590000,20912.000000,8.460000,1.730000,baseline,Spanish (LatAm),related,False,True,False,11.130000,2.315603
+whisper-medium,es_419,es_cl,51.410000,20912.000000,22.390000,1.340000,baseline,Spanish (LatAm),related,False,True,False,29.020000,2.296114
+Qwen2-Audio-7B,es_419,es_co,17.960000,1893.000000,12.210000,3.900000,baseline,Spanish (LatAm),related,False,True,False,5.750000,1.470925
+Voxtral-Mini-3B-2507,es_419,es_co,11.790000,1893.000000,8.460000,1.730000,baseline,Spanish (LatAm),related,False,True,False,3.330000,1.393617
+whisper-medium,es_419,es_co,78.040000,1893.000000,22.390000,1.340000,baseline,Spanish (LatAm),related,False,True,False,55.650000,3.485485
+Qwen2-Audio-7B,es_419,es_es,10.170000,34140.000000,12.210000,3.900000,baseline,Spanish (LatAm),related,False,True,False,-2.040000,0.832924
+Voxtral-Mini-3B-2507,es_419,es_es,7.430000,34140.000000,8.460000,1.730000,baseline,Spanish (LatAm),related,False,True,False,-1.030000,0.878251
+whisper-medium,es_419,es_es,7.960000,34140.000000,22.390000,1.340000,baseline,Spanish (LatAm),related,False,True,False,-14.430000,0.355516
+Qwen2-Audio-7B,es_419,es_pe,10.610000,4637.000000,12.210000,3.900000,baseline,Spanish (LatAm),related,False,True,False,-1.600000,0.868960
+Voxtral-Mini-3B-2507,es_419,es_pe,6.550000,4637.000000,8.460000,1.730000,baseline,Spanish (LatAm),related,False,True,False,-1.910000,0.774232
+whisper-medium,es_419,es_pe,18.140000,4637.000000,22.390000,1.340000,baseline,Spanish (LatAm),related,False,True,False,-4.250000,0.810183
+Qwen2-Audio-7B,es_419,es_pr,13.920000,2742.000000,12.210000,3.900000,baseline,Spanish (LatAm),related,False,True,False,1.710000,1.140049
+Voxtral-Mini-3B-2507,es_419,es_pr,9.540000,2742.000000,8.460000,1.730000,baseline,Spanish (LatAm),related,False,True,False,1.080000,1.127660
+whisper-medium,es_419,es_pr,17.630000,2742.000000,22.390000,1.340000,baseline,Spanish (LatAm),related,False,True,False,-4.760000,0.787405
+Qwen2-Audio-7B,es_419,es_py,12.000000,1604.000000,12.210000,3.900000,baseline,Spanish (LatAm),related,False,True,False,-0.210000,0.982801
+Voxtral-Mini-3B-2507,es_419,es_py,8.650000,1604.000000,8.460000,1.730000,baseline,Spanish (LatAm),related,False,True,False,0.190000,1.022459
+whisper-medium,es_419,es_py,12.960000,1604.000000,22.390000,1.340000,baseline,Spanish (LatAm),related,False,True,False,-9.430000,0.578830
+Qwen2-Audio-7B,es_419,es_uy,23.940000,10730.000000,12.210000,3.900000,baseline,Spanish (LatAm),related,False,True,False,11.730000,1.960688
+Voxtral-Mini-3B-2507,es_419,es_uy,20.690000,10730.000000,8.460000,1.730000,baseline,Spanish (LatAm),related,False,True,False,12.230000,2.445626
+whisper-medium,es_419,es_uy,21.410000,10730.000000,22.390000,1.340000,baseline,Spanish (LatAm),related,False,True,False,-0.980000,0.956230
+Qwen2-Audio-7B,fr_fr,fr_cd,10.580000,265.000000,15.190000,4.970000,baseline,French,different,False,True,False,-4.610000,0.696511
+Voxtral-Mini-3B-2507,fr_fr,fr_cd,11.010000,265.000000,12.060000,2.100000,baseline,French,different,False,True,False,-1.050000,0.912935
+whisper-medium,fr_fr,fr_cd,7.180000,265.000000,10.930000,2.860000,baseline,French,different,False,True,False,-3.750000,0.656908
+Qwen2-Audio-7B,fr_fr,fr_ci,12.570000,116.000000,15.190000,4.970000,baseline,French,different,False,True,False,-2.620000,0.827518
+Voxtral-Mini-3B-2507,fr_fr,fr_ci,12.130000,116.000000,12.060000,2.100000,baseline,French,different,False,True,False,0.070000,1.005804
+whisper-medium,fr_fr,fr_ci,7.770000,116.000000,10.930000,2.860000,baseline,French,different,False,True,False,-3.160000,0.710887
+Qwen2-Audio-7B,sw_ke,sw_tz,88.240000,10542.000000,25.450000,78.950000,baseline,Swahili,partial,True,True,False,62.790000,3.467191
+Voxtral-Mini-3B-2507,sw_ke,sw_tz,45.450000,10542.000000,18.630000,26.320000,baseline,Swahili,partial,True,True,False,26.820000,2.439614
+whisper-medium,sw_ke,sw_tz,51.190000,10542.000000,625.310000,42.040000,baseline,Swahili,partial,True,True,False,-574.120000,0.081863
+Qwen2-Audio-7B,ta_in,ta_lk,99.430000,1224.000000,105.290000,109.620000,baseline,Tamil,same,False,True,False,-5.860000,0.944344
+Voxtral-Mini-3B-2507,ta_in,ta_lk,88.760000,1224.000000,30.270000,48.020000,baseline,Tamil,same,False,True,False,58.490000,2.932276
+whisper-medium,ta_in,ta_lk,64.300000,1224.000000,18.440000,16.220000,baseline,Tamil,same,False,True,False,45.860000,3.486985
+Qwen2-Audio-7B,ur_pk,ur_in,101.320000,155.000000,68.220000,106.900000,baseline,Urdu,partial,True,True,False,33.100000,1.485195
+Voxtral-Mini-3B-2507,ur_pk,ur_in,47.350000,155.000000,46.030000,48.190000,baseline,Urdu,partial,True,True,False,1.320000,1.028677
+whisper-medium,ur_pk,ur_in,20.170000,155.000000,164.200000,11.650000,baseline,Urdu,partial,True,True,False,-144.030000,0.122838
+earth,en_us,en_au,16.560000,3880.000000,9.550000,,trained,English,same,False,True,False,7.010000,1.734031
+fire,en_us,en_au,17.130000,3880.000000,9.440000,5.540000,trained,English,same,False,True,False,7.690000,1.814619
+global,en_us,en_au,18.270000,3880.000000,9.960000,6.220000,trained,English,same,False,True,False,8.310000,1.834337
+water,en_us,en_au,14.930000,3880.000000,9.680000,14.750000,trained,English,same,False,True,False,5.250000,1.542355
+earth,en_us,en_jm,9.540000,117.000000,9.550000,,trained,English,same,False,True,False,-0.010000,0.998953
+fire,en_us,en_jm,11.340000,117.000000,9.440000,5.540000,trained,English,same,False,True,False,1.900000,1.201271
+global,en_us,en_jm,12.640000,117.000000,9.960000,6.220000,trained,English,same,False,True,False,2.680000,1.269076
+water,en_us,en_jm,9.930000,117.000000,9.680000,14.750000,trained,English,same,False,True,False,0.250000,1.025826
+earth,en_us,en_ke,25.860000,1822.000000,9.550000,,trained,English,same,False,True,False,16.310000,2.707853
+fire,en_us,en_ke,23.810000,1822.000000,9.440000,5.540000,trained,English,same,False,True,False,14.370000,2.522246
+global,en_us,en_ke,26.740000,1822.000000,9.960000,6.220000,trained,English,same,False,True,False,16.780000,2.684739
+water,en_us,en_ke,24.950000,1822.000000,9.680000,14.750000,trained,English,same,False,True,False,15.270000,2.577479
+earth,en_us,en_nz,20.220000,3074.000000,9.550000,,trained,English,same,False,True,False,10.670000,2.117277
+fire,en_us,en_nz,35.390000,3074.000000,9.440000,5.540000,trained,English,same,False,True,False,25.950000,3.748941
+global,en_us,en_nz,23.640000,3074.000000,9.960000,6.220000,trained,English,same,False,True,False,13.680000,2.373494
+water,en_us,en_nz,17.300000,3074.000000,9.680000,14.750000,trained,English,same,False,True,False,7.620000,1.787190
+earth,en_us,en_pk,732.190000,237.000000,9.550000,,trained,English,same,False,True,True,722.640000,76.669110
+fire,en_us,en_pk,422.880000,237.000000,9.440000,5.540000,trained,English,same,False,True,True,413.440000,44.796610
+global,en_us,en_pk,587.130000,237.000000,9.960000,6.220000,trained,English,same,False,True,True,577.170000,58.948795
+water,en_us,en_pk,755.130000,237.000000,9.680000,14.750000,trained,English,same,False,True,True,745.450000,78.009298
+earth,en_us,en_sl,21.540000,1238.000000,9.550000,,trained,English,same,False,True,False,11.990000,2.255497
+fire,en_us,en_sl,21.110000,1238.000000,9.440000,5.540000,trained,English,same,False,True,False,11.670000,2.236229
+global,en_us,en_sl,20.250000,1238.000000,9.960000,6.220000,trained,English,same,False,True,False,10.290000,2.033133
+water,en_us,en_sl,22.730000,1238.000000,9.680000,14.750000,trained,English,same,False,True,False,13.050000,2.348140
+earth,en_us,en_zm,25.740000,3527.000000,9.550000,,trained,English,same,False,True,False,16.190000,2.695288
+fire,en_us,en_zm,22.390000,3527.000000,9.440000,5.540000,trained,English,same,False,True,False,12.950000,2.371822
+global,en_us,en_zm,25.180000,3527.000000,9.960000,6.220000,trained,English,same,False,True,False,15.220000,2.528112
+water,en_us,en_zm,21.380000,3527.000000,9.680000,14.750000,trained,English,same,False,True,False,11.700000,2.208678
+earth,es_419,es_ar,22.320000,3032.000000,9.350000,3.220000,trained,Spanish (LatAm),related,False,True,False,12.970000,2.387166
+fire,es_419,es_ar,21.960000,3032.000000,8.910000,3.140000,trained,Spanish (LatAm),related,False,True,False,13.050000,2.464646
+global,es_419,es_ar,22.010000,3032.000000,9.230000,3.220000,trained,Spanish (LatAm),related,False,True,False,12.780000,2.384615
+water,es_419,es_ar,22.190000,3032.000000,9.130000,3.470000,trained,Spanish (LatAm),related,False,True,False,13.060000,2.430449
+earth,es_419,es_cl,24.590000,20912.000000,9.350000,3.220000,trained,Spanish (LatAm),related,False,True,False,15.240000,2.629947
+fire,es_419,es_cl,23.070000,20912.000000,8.910000,3.140000,trained,Spanish (LatAm),related,False,True,False,14.160000,2.589226
+global,es_419,es_cl,23.700000,20912.000000,9.230000,3.220000,trained,Spanish (LatAm),related,False,True,False,14.470000,2.567714
+water,es_419,es_cl,24.850000,20912.000000,9.130000,3.470000,trained,Spanish (LatAm),related,False,True,False,15.720000,2.721796
+earth,es_419,es_co,15.430000,1893.000000,9.350000,3.220000,trained,Spanish (LatAm),related,False,True,False,6.080000,1.650267
+fire,es_419,es_co,15.600000,1893.000000,8.910000,3.140000,trained,Spanish (LatAm),related,False,True,False,6.690000,1.750842
+global,es_419,es_co,15.160000,1893.000000,9.230000,3.220000,trained,Spanish (LatAm),related,False,True,False,5.930000,1.642470
+water,es_419,es_co,15.370000,1893.000000,9.130000,3.470000,trained,Spanish (LatAm),related,False,True,False,6.240000,1.683461
+fire,es_419,es_es,16.370000,34140.000000,8.910000,3.140000,trained,Spanish (LatAm),related,False,True,False,7.460000,1.837262
+water,es_419,es_es,13.010000,34140.000000,9.130000,3.470000,trained,Spanish (LatAm),related,False,True,False,3.880000,1.424973
+earth,es_419,es_pe,10.500000,4637.000000,9.350000,3.220000,trained,Spanish (LatAm),related,False,True,False,1.150000,1.122995
+fire,es_419,es_pe,10.790000,4637.000000,8.910000,3.140000,trained,Spanish (LatAm),related,False,True,False,1.880000,1.210999
+global,es_419,es_pe,10.390000,4637.000000,9.230000,3.220000,trained,Spanish (LatAm),related,False,True,False,1.160000,1.125677
+water,es_419,es_pe,10.770000,4637.000000,9.130000,3.470000,trained,Spanish (LatAm),related,False,True,False,1.640000,1.179628
+earth,es_419,es_pr,12.240000,2742.000000,9.350000,3.220000,trained,Spanish (LatAm),related,False,True,False,2.890000,1.309091
+fire,es_419,es_pr,12.860000,2742.000000,8.910000,3.140000,trained,Spanish (LatAm),related,False,True,False,3.950000,1.443322
+global,es_419,es_pr,12.280000,2742.000000,9.230000,3.220000,trained,Spanish (LatAm),related,False,True,False,3.050000,1.330444
+water,es_419,es_pr,12.330000,2742.000000,9.130000,3.470000,trained,Spanish (LatAm),related,False,True,False,3.200000,1.350493
+earth,es_419,es_py,13.100000,1604.000000,9.350000,3.220000,trained,Spanish (LatAm),related,False,True,False,3.750000,1.401070
+fire,es_419,es_py,12.360000,1604.000000,8.910000,3.140000,trained,Spanish (LatAm),related,False,True,False,3.450000,1.387205
+global,es_419,es_py,12.510000,1604.000000,9.230000,3.220000,trained,Spanish (LatAm),related,False,True,False,3.280000,1.355363
+water,es_419,es_py,12.640000,1604.000000,9.130000,3.470000,trained,Spanish (LatAm),related,False,True,False,3.510000,1.384447
+earth,es_419,es_uy,23.670000,10730.000000,9.350000,3.220000,trained,Spanish (LatAm),related,False,True,False,14.320000,2.531551
+fire,es_419,es_uy,23.670000,10730.000000,8.910000,3.140000,trained,Spanish (LatAm),related,False,True,False,14.760000,2.656566
+global,es_419,es_uy,23.480000,10730.000000,9.230000,3.220000,trained,Spanish (LatAm),related,False,True,False,14.250000,2.543879
+water,es_419,es_uy,23.850000,10730.000000,9.130000,3.470000,trained,Spanish (LatAm),related,False,True,False,14.720000,2.612267
+fire,fr_fr,fr_cd,12.140000,265.000000,8.580000,7.860000,trained,French,different,False,True,False,3.560000,1.414918
+global,fr_fr,fr_cd,11.810000,265.000000,8.610000,11.450000,trained,French,different,False,True,False,3.200000,1.371661
+water,fr_fr,fr_cd,10.920000,265.000000,8.600000,8.450000,trained,French,different,False,True,False,2.320000,1.269767
+fire,fr_fr,fr_ci,13.210000,116.000000,8.580000,7.860000,trained,French,different,False,True,False,4.630000,1.539627
+global,fr_fr,fr_ci,13.530000,116.000000,8.610000,11.450000,trained,French,different,False,True,False,4.920000,1.571429
+water,fr_fr,fr_ci,22.230000,116.000000,8.600000,8.450000,trained,French,different,False,True,False,13.630000,2.584884
+earth,sw_ke,sw_tz,14.100000,10542.000000,15.250000,15.100000,trained,Swahili,partial,True,True,False,-1.150000,0.924590
+fire,sw_ke,sw_tz,13.460000,10542.000000,14.520000,18.030000,trained,Swahili,partial,True,True,False,-1.060000,0.926997
+global,sw_ke,sw_tz,14.060000,10542.000000,15.320000,18.460000,trained,Swahili,partial,True,True,False,-1.260000,0.917755
+water,sw_ke,sw_tz,14.000000,10542.000000,14.870000,19.450000,trained,Swahili,partial,True,True,False,-0.870000,0.941493
+earth,ta_in,ta_lk,77.630000,1224.000000,15.830000,64.000000,trained,Tamil,same,False,True,False,61.800000,4.903980
+fire,ta_in,ta_lk,73.310000,1224.000000,15.640000,48.290000,trained,Tamil,same,False,True,False,57.670000,4.687340
+global,ta_in,ta_lk,78.650000,1224.000000,16.960000,87.810000,trained,Tamil,same,False,True,False,61.690000,4.637382
+water,ta_in,ta_lk,69.060000,1224.000000,15.420000,71.730000,trained,Tamil,same,False,True,False,53.640000,4.478599
+earth,ur_pk,ur_in,18.550000,155.000000,74.130000,22.810000,trained,Urdu,partial,True,True,False,-55.580000,0.250236
+fire,ur_pk,ur_in,17.350000,155.000000,94.310000,21.400000,trained,Urdu,partial,True,True,False,-76.960000,0.183968
+global,ur_pk,ur_in,19.400000,155.000000,83.480000,29.250000,trained,Urdu,partial,True,True,False,-64.080000,0.232391
+water,ur_pk,ur_in,20.980000,155.000000,76.380000,20.040000,trained,Urdu,partial,True,True,False,-55.400000,0.274679

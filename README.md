@@ -3,6 +3,8 @@
 Analysis-only repo for the LisTAya / TinyAya decoder-SFT comparison. It does not train or
 evaluate anything; it downloads wandb runs and derives every table and figure from them.
 
+**Start with [`docs/SUMMARY.md`](docs/SUMMARY.md)** -- every experiment and every finding on one page, findings ranked by how compelling they are for the paper.
+
 ## The research goal
 
 **Isolate the effect of decoder SFT data composition on a LALM's listening ability.**

@@ -140,6 +140,12 @@ whole float and sets `table*` where needed.
 
 ## Definitions a reader could otherwise get wrong
 
+- **CER is the primary error rate everywhere**, including the serial 10/11 baseline contrast and
+  the accent analysis (both switched from WER on 2026-08-07). WER stays in `t7_baselines.csv` as
+  a secondary column; `analyze_baselines.py --metric wer` reproduces the old contrast.
+- **The `crs_sc` spread depends on which models are counted**: 1.99 CER across the four LisTAya
+  variants, 3.43 adding the non-regional Tiny Aya base control, 3.96 adding the Qwen3-4B control.
+  Say which.
 - **`best_cer`** is the minimum CER over a run's 101 evaluations, and is the **primary** metric.
 - **An absent baseline cell is one of three things, not one.** `analyze_baselines.coverage`
   splits them: `not_applicable` (no config in the registry, so it can never be run --- FLEURS
