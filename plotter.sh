@@ -174,6 +174,13 @@ python -u analyze_baselines.py \
 # domain/accent shift (a large train-eval gap with no rise). Both curves are already logged.
 # Between-run variance from replicate pairs. This is the honest noise floor; late_sd measures
 # wobble along one trajectory and understates it. Skips cleanly until serial 1 has pairs.
+# Is the convergence point set by the language or by the decoder? Needs the replicate serials
+# for its noise floor, so it runs after the histories are all present.
+python -u analyze_convergence_clustering.py \
+  --input_file "$ACC/t1_sample_efficiency.csv" \
+  --output_file "$ACC/t10_convergence_clustering.csv" \
+  --per_language_file "$ACC/t10_convergence_by_language.csv"
+
 python -u analyze_replicates.py \
   --output_file "$ACC/t9_replicates.csv" --stats_file "$ACC/t9_replicate_stats.csv" || true
 

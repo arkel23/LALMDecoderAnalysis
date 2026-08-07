@@ -74,6 +74,8 @@ All in `results_all/acc/`.
 | `t8_exposure_stats.csv` | `analyze_exposure.py` | exposure-vs-effect correlations |
 | `t9_replicates.csv` | `analyze_replicates.py` | serial 0 against serial 1, per replicate pair |
 | `t9_replicate_stats.csv` | `analyze_replicates.py` | pooled between-run standard deviation |
+| `t10_convergence_clustering.csv` | `analyze_convergence_clustering.py` | variance decomposition of the convergence point: is it set by language or decoder |
+| `t10_convergence_by_language.csv` | `analyze_convergence_clustering.py` | per language, where its four decoders converged and how far apart |
 
 ## The eval-dataset registry
 
@@ -136,6 +138,13 @@ whole float and sets `table*` where needed.
 ## Definitions a reader could otherwise get wrong
 
 - **`best_cer`** is the minimum CER over a run's 101 evaluations, and is the **primary** metric.
+- **The convergence point** is `*_to_1.5x_best`: the first evaluation at which a run comes
+  within 1.5x of **its own** best CER. Reported in three units from the same index —
+  `step_to_*` (optimiser steps), `audio_h_to_*` (processed audio) and `epoch_at_*` (stream
+  passes). Evaluations are logged every 10 steps, so nothing resolves finer than that.
+- **`epoch_at_*` is `step * effective_batch / stream size`** to r = 0.998. Since stream size is
+  a language property spanning 75x while the convergence step spans 3.2x, grouping epochs by
+  language is near-tautological; `t10` flags this as `icc_is_tautological`.
   `final_cer` is the last evaluation and is secondary: mean `final_minus_best` is 5.36, so the
   last checkpoint is frequently not the best.
 - **Aggregation population.** Every aggregate in `FINDINGS.md` is over **finished, canonical

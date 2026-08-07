@@ -358,13 +358,23 @@ the highest-resource cells improve almost to the end.
 \subsection{Connector training versus off-the-shelf models}
 
 Table~\ref{tab:baselines} compares each trained LisTAya checkpoint against the strongest
-off-the-shelf model we evaluate on the same test set. In every cell evaluated so far, training a
-projector on a few hours of in-language audio beats the best downloadable model, and the margin
-is largest exactly where the baseline is weakest.
+off-the-shelf model we evaluate on the same test set, over the 33 cells evaluated so far.
+Training wins on 13 of them, and which 13 is the result: the benefit tracks how badly the
+off-the-shelf model was already doing (Spearman $\rho = -0.45$, $p = 0.009$). On the nine cells
+whose baseline exceeds 50 WER the projector wins six, with a median gain of 25.0 WER and a
+largest of 77.1; on the ten whose baseline is under 20 WER it wins one, and costs a median of
+5.0 WER.
 
-% TODO(first draft): this sweep is still running -- 4 of 43 cells at the time of writing.
-% Re-run build_paper_tables.py before submission and update the sentence above with the final
-% coverage.
+So training a projector does not make a system uniformly better. It converts unusable output
+into usable output where the encoder's coverage is thin, and gives up ground where a
+general-purpose model is already strong --- which is the trade a practitioner adding a
+low-resource language is making.
+
+% REVIEW: one pair is degenerate rather than merely worse -- en_pk goes 93.87 to 378.71 WER.
+% It is left in the table and excluded from no statistic above; worth a look before submission.
+
+% TODO: the sweep is at 33 of 43 cells. Re-run build_paper_tables.py before submission and
+% update the counts in this subsection and in the Conclusion.
 
 \input{tables/tab_baselines}
 
@@ -490,8 +500,15 @@ languages where the off-the-shelf systems produce unusable output.
 WorldSpeech ships several country varieties per language, and the study trained on only some of
 them. Evaluating the rest costs inference alone and turns each in-domain number into a
 dialect-transfer axis: 20 held-out varieties in all --- 8 further Spanish, 7 English, 2 French,
-and one each of Swahili, Tamil and Urdu --- evaluated across the baseline models. The trained checkpoints are being evaluated on the
-same sets; that sweep is still running, and we report it as coverage allows.
+and one each of Swahili, Tamil and Urdu --- evaluated across the baseline models and, on 13 of
+them so far, the trained checkpoints.
+
+The projector does not transfer across dialect. On its own training variety it beats the
+baseline on 7 of 10 cells, with a median gain of 5.1 WER; on held-out varieties of the same
+languages it beats the baseline on 2 of 13, and costs a median of 5.6 WER. The two it wins are
+Tanzanian Swahili and Indian Urdu, both cases where the baseline was already above 45 WER --- so
+they are the same weak-baseline effect as above rather than an exception to the dialect result.
+A projector trained on one variety of a language is a system for that variety.
 
 
 % ADDED (second pass).
@@ -540,9 +557,10 @@ with $p = 0.966$, against a design that resolves 4.90 CER and a between-run stan
 post-training data, and the one language whose exposure contradicts its region label behaves as
 exposure predicts.
 
-Training the projector at all is what matters. On every cell evaluated so far it beats the
-strongest off-the-shelf model available for that language, by margins up to 52.8 WER where those
-models produce degenerate output. And how much in-language audio the projector sees predicts how
+Training the projector at all is what matters, though not uniformly. Across 33 evaluated cells
+it beats the strongest off-the-shelf model on 13, and the benefit tracks the baseline's weakness
+($\rho = -0.45$, $p = 0.009$): up to 77.1 WER where those models produce degenerate output, and
+a net cost where they are already strong. And how much in-language audio the projector sees predicts how
 the run behaves: overfitting falls monotonically across resource tiers, with the lowest-resource
 cells peaking a quarter of the way into training.
 

@@ -1,0 +1,49 @@
+dataset,language_name,resource_tier,measure,n_models,min,median,max,spread_ratio,cv_log10,fastest_model,slowest_model
+am_et,Amharic,very_low,step_to_1.5x_best,4,160.000000,210.000000,290.000000,1.812500,0.105634,earth,water
+crs_sc,Seychellois Creole,high,step_to_1.5x_best,4,90.000000,100.000000,130.000000,1.444444,0.068104,water,earth
+en_us,English,high,step_to_1.5x_best,4,120.000000,150.000000,160.000000,1.333333,0.054745,water,global
+es_419,Spanish (LatAm),high,step_to_1.5x_best,4,120.000000,210.000000,290.000000,2.416667,0.188940,water,fire
+fr_fr,French,high,step_to_1.5x_best,4,140.000000,190.000000,350.000000,2.500000,0.184584,fire,global
+ha_ng,Hausa,mid,step_to_1.5x_best,4,200.000000,240.000000,290.000000,1.450000,0.079583,earth,global
+hi_in,Hindi,high,step_to_1.5x_best,4,160.000000,205.000000,250.000000,1.562500,0.111902,fire,earth
+id_id,Indonesian,high,step_to_1.5x_best,4,170.000000,180.000000,190.000000,1.117647,0.019724,fire,earth
+mr_in,Marathi,mid,step_to_1.5x_best,4,110.000000,145.000000,190.000000,1.727273,0.103661,earth,water
+sw_ke,Swahili,high,step_to_1.5x_best,4,160.000000,195.000000,260.000000,1.625000,0.091110,fire,earth
+ta_in,Tamil,very_low,step_to_1.5x_best,4,120.000000,150.000000,290.000000,2.416667,0.182261,fire,global
+ur_pk,Urdu,low,step_to_1.5x_best,4,130.000000,150.000000,190.000000,1.461538,0.083569,fire,earth
+am_et,Amharic,very_low,step_to_best,4,330.000000,365.000000,400.000000,1.212121,0.034470,earth,fire
+crs_sc,Seychellois Creole,high,step_to_best,4,320.000000,570.000000,770.000000,2.406250,0.178315,earth,global
+en_us,English,high,step_to_best,4,250.000000,630.000000,700.000000,2.800000,0.209500,global,fire
+es_419,Spanish (LatAm),high,step_to_best,4,410.000000,550.000000,880.000000,2.146341,0.166688,global,earth
+fr_fr,French,high,step_to_best,4,460.000000,740.000000,790.000000,1.717391,0.110305,fire,earth
+ha_ng,Hausa,mid,step_to_best,4,460.000000,570.000000,730.000000,1.586957,0.087767,water,global
+hi_in,Hindi,high,step_to_best,4,170.000000,465.000000,780.000000,4.588235,0.277008,fire,global
+id_id,Indonesian,high,step_to_best,4,430.000000,705.000000,810.000000,1.883721,0.129246,water,earth
+mr_in,Marathi,mid,step_to_best,4,360.000000,420.000000,570.000000,1.583333,0.094169,fire,water
+sw_ke,Swahili,high,step_to_best,4,400.000000,570.000000,690.000000,1.725000,0.119974,fire,global
+ta_in,Tamil,very_low,step_to_best,4,240.000000,365.000000,480.000000,2.000000,0.124330,fire,earth
+ur_pk,Urdu,low,step_to_best,4,140.000000,290.000000,430.000000,3.071429,0.204672,fire,earth
+am_et,Amharic,very_low,audio_h_to_1.5x_best,4,354.337133,465.126312,642.636555,1.813630,0.105747,earth,water
+crs_sc,Seychellois Creole,high,audio_h_to_1.5x_best,4,189.976835,211.221098,274.495591,1.444890,0.068121,water,earth
+en_us,English,high,audio_h_to_1.5x_best,4,324.688863,403.860946,430.524025,1.325959,0.053632,water,global
+es_419,Spanish (LatAm),high,audio_h_to_1.5x_best,4,254.979178,446.948463,617.394298,2.421352,0.189348,water,fire
+fr_fr,French,high,audio_h_to_1.5x_best,4,322.625993,437.413739,805.305218,2.496095,0.184255,fire,global
+ha_ng,Hausa,mid,audio_h_to_1.5x_best,4,452.626962,543.430269,656.611423,1.450668,0.079713,earth,global
+hi_in,Hindi,high,audio_h_to_1.5x_best,4,325.989780,413.626750,501.263721,1.537667,0.107885,fire,earth
+id_id,Indonesian,high,audio_h_to_1.5x_best,4,364.254632,388.081963,411.832427,1.130617,0.021772,fire,earth
+mr_in,Marathi,mid,audio_h_to_1.5x_best,4,209.231491,277.638237,362.205398,1.731123,0.104062,earth,water
+sw_ke,Swahili,high,audio_h_to_1.5x_best,4,228.982677,279.593314,373.159766,1.629642,0.091624,fire,earth
+ta_in,Tamil,very_low,audio_h_to_1.5x_best,4,242.445483,302.999153,585.901239,2.416631,0.182249,fire,global
+ur_pk,Urdu,low,audio_h_to_1.5x_best,4,179.340256,204.903526,260.668509,1.453486,0.081315,fire,earth
+am_et,Amharic,very_low,epoch_at_1.5x_best,4,9.007000,12.006000,17.001000,1.887532,0.112888,earth,water
+crs_sc,Seychellois Creole,high,epoch_at_1.5x_best,4,0.125877,0.139863,0.181822,1.444442,0.068104,water,earth
+en_us,English,high,epoch_at_1.5x_best,4,0.120000,0.150000,0.160000,1.333333,0.054745,water,global
+es_419,Spanish (LatAm),high,epoch_at_1.5x_best,4,0.120000,0.210000,0.290000,2.416667,0.188940,water,fire
+fr_fr,French,high,epoch_at_1.5x_best,4,0.140000,0.190000,0.350000,2.500000,0.184584,fire,global
+ha_ng,Hausa,mid,epoch_at_1.5x_best,4,3.041000,4.028000,5.025000,1.652417,0.125023,earth,global
+hi_in,Hindi,high,epoch_at_1.5x_best,4,0.160000,0.205000,0.250000,1.562500,0.111902,fire,earth
+id_id,Indonesian,high,epoch_at_1.5x_best,4,0.170000,0.180000,0.190000,1.117647,0.019724,fire,earth
+mr_in,Marathi,mid,epoch_at_1.5x_best,4,0.110000,1.032000,1.077000,9.790909,0.489323,earth,water
+sw_ke,Swahili,high,epoch_at_1.5x_best,4,0.160000,0.195000,0.260000,1.625000,0.091110,fire,earth
+ta_in,Tamil,very_low,epoch_at_1.5x_best,4,7.001000,8.505500,17.001000,2.428367,0.182134,fire,global
+ur_pk,Urdu,low,epoch_at_1.5x_best,4,2.010000,2.030000,3.010000,1.497512,0.086353,fire,earth

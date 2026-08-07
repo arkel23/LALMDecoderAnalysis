@@ -2,8 +2,9 @@
 
 Run-to-run noise exceeds the effect being looked for, so a table of final CERs mostly reports
 noise. best_cer is primary (the last checkpoint is not the best -- mean gap ~3.5 CER);
-final_minus_best measures overfitting; audio_h_to_*x_best is the sample-efficiency statistic;
-late_sd is the within-run noise floor.
+final_minus_best measures overfitting; audio_h_to_*x_best is the sample-efficiency statistic, reported in processed audio, optimiser
+steps and stream passes (audio_h_to_* / step_to_* / epoch_at_*); late_sd is the within-run
+noise floor.
 
 audio_hours is audio PROCESSED, counting repeats. The wandb train/epoch counter is unreliable
 under streaming, so epochs_logged is carried only to be flagged, never used as a divisor.
@@ -39,6 +40,10 @@ def curve_stats(ev):
     """ev: the eval rows of one run, sorted by audio_hours."""
     cer = ev['eval/cer'].to_numpy(dtype=float)
     hours = ev['audio_hours'].to_numpy(dtype=float)
+    step = ev['train/global_step'].to_numpy(dtype=float)
+    # Stream passes at the same point. An estimate under streaming, and a floor rather than a
+    # count wherever it caps at exactly 1.000 -- see analyze_data_accounting.py.
+    epoch = ev['train/epoch'].to_numpy(dtype=float)
 
     best_i = int(np.nanargmin(cer))
     best_cer = float(cer[best_i])
@@ -51,14 +56,19 @@ def curve_stats(ev):
         'final_minus_best': final_cer - best_cer,
         'audio_h_to_best': float(hours[best_i]),
         'audio_h_total': float(hours[-1]),
+        'step_to_best': float(step[best_i]),
+        'step_total': float(step[-1]),
+        'epoch_at_best': float(epoch[best_i]),
+        'epoch_total': float(epoch[-1]),
         'first_cer': float(cer[0]),
     }
 
     for factor in THRESHOLD_FACTORS:
         target = best_cer * factor
         hit = np.flatnonzero(cer <= target)
-        key = f'audio_h_to_{factor:g}x_best'
-        out[key] = float(hours[hit[0]]) if hit.size else np.nan
+        out[f'audio_h_to_{factor:g}x_best'] = float(hours[hit[0]]) if hit.size else np.nan
+        out[f'step_to_{factor:g}x_best'] = float(step[hit[0]]) if hit.size else np.nan
+        out[f'epoch_at_{factor:g}x_best'] = float(epoch[hit[0]]) if hit.size else np.nan
 
     # Noise floor: spread of CER once the run has stopped improving quickly.
     cutoff = hours[-1] * (1.0 - LATE_FRACTION)

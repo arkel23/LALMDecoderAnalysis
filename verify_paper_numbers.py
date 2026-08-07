@@ -19,6 +19,7 @@ import argparse
 from decimal import Decimal, ROUND_HALF_UP
 
 import pandas as pd
+from scipy import stats
 
 from utils import GRID_SERIAL
 
@@ -416,6 +417,10 @@ DERIVED += [
      lambda: _t8('en_us', 'exposure_matched_pct'), 1),
     ('the largest gain training buys over the best baseline',
      lambda: load(T7C)['delta_wer'].min(), 1),
+    ('cells where training beats the best baseline',
+     lambda: load(T7C)['training_helps'].sum(), 0),
+    ('cells in the training-vs-baseline contrast',
+     lambda: len(load(T7C)), 0),
     ('held-out accent/dialect varieties evaluated',
      lambda: load(T7B).query("in_domain_role == 'accent_transfer'")['dataset'].nunique(), 0),
     ('Whisper hours, Marathi', lambda: _hours('mr'), 0),
@@ -441,8 +446,17 @@ ORDERINGS += [
                      key=lambda v: _rank_mean('best_cer', v)))),
     ('English is the only language whose matched decoder saw LESS of it',
      lambda: set(load(T8).query('excess_pp < 0')['dataset']) == {'en_us'}),
-    ('training beats the best baseline on every cell evaluated so far',
-     lambda: bool(load(T7C)['training_helps'].all())),
+    # Was 'training beats the baseline on every cell'. True at 4 evaluated cells, false at 33:
+    # the projector wins where the baseline is weak and loses where it is already strong.
+    ('training helps more the worse the baseline is',
+     lambda: stats.spearmanr(load(T7C)['baseline_wer'],
+                             load(T7C)['delta_wer']).statistic < -0.3),
+    ('training wins on the majority of cells whose baseline exceeds 50 WER',
+     lambda: (lambda d: bool(d[d['baseline_wer'] >= 50]['training_helps'].mean() > 0.5))(
+         load(T7C))),
+    ('and loses on the majority whose baseline is under 20 WER',
+     lambda: (lambda d: bool(d[d['baseline_wer'] < 20]['training_helps'].mean() < 0.5))(
+         load(T7C))),
 ]
 
 

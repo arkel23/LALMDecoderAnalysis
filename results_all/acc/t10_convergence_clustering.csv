@@ -1,0 +1,5 @@
+measure,n_runs,n_languages,overall_min,overall_median,overall_max,overall_spread_ratio,icc_language,f_statistic,f_p_value,permutation_p,median_within_language_spread_ratio,n_replicate_pairs,median_replicate_spread_ratio,max_replicate_spread_ratio,decoder_spread_exceeds_noise_p,icc_is_tautological
+step_to_1.5x_best,48,12,90.000000,170.000000,350.000000,3.888889,0.311439,2.809213,0.009494,0.008299,1.593750,10,1.183333,1.833333,0.005542,False
+step_to_best,48,12,140.000000,460.000000,880.000000,6.285714,0.243078,2.284557,0.030627,0.028597,1.941860,10,1.161752,1.937500,0.001081,False
+audio_h_to_1.5x_best,48,12,179.340256,358.271266,805.305218,4.490376,0.500945,5.015145,0.000107,0.000200,1.583654,10,1.184034,1.819089,0.004590,False
+epoch_at_1.5x_best,48,12,0.110000,0.250000,17.001000,154.554545,0.941478,65.350092,0.000000,0.000100,1.638708,10,1.278749,1.885439,0.006692,True

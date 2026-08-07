@@ -1,5 +1,42 @@
 # Change log
 
+## 2026-08-07 — convergence in steps and epochs, and the baseline contrast inverts
+
+**t1 gained step and epoch columns.** It recorded the convergence point only in audio hours.
+`train/global_step` and `train/epoch` are on every eval row and `curve_stats` already had the
+index, so `step_to_best`, `step_to_{1.25,1.5,2}x_best`, `step_total`, `epoch_at_*` and
+`epoch_total` cost two lines each.
+
+**New: `analyze_convergence_clustering.py`.** Is the convergence point a property of the
+language or of the decoder? A one-way variance decomposition of log10(convergence point)
+grouped by language, with the F test, a 10,000-shuffle permutation null, and a noise floor from
+the replicate serials via the same `curve_stats`.
+
+Every run converges within **90-350 steps** (median 170) across corpora spanning 75x in size.
+Language explains **31 %** of the variance in log10 steps (F = 2.81, p = 0.0095; permutation
+p = 0.0083). The median language spans 1.59x across its four decoders against 1.18x between two
+runs of one configuration (10 pairs, one-sided p = 0.006) — real, but small. Tamil, the example
+that prompted the question, is 120-290 steps: one of the *widest*, not the tightest.
+
+Measured in epochs the ICC is 0.94, which is not a finding: epoch is
+`step * effective_batch / stream size` to r = 0.998 and stream size is a language property by
+construction. `t10` carries `icc_is_tautological` so the 0.94 cannot be quoted as clustering.
+
+**Serial 11 went from 4 to 33 evaluated cells and inverted a headline claim.** The ordering
+check added yesterday — "training beats the best baseline on every cell" — went red. It is now
+13 of 33, and *which* 13 is the result: the benefit tracks the baseline's weakness
+(Spearman rho = -0.45, p = 0.009). Where the baseline exceeds 50 WER the projector wins 6 of 9
+(median gain 25.0, largest 77.1); under 20 WER it wins 1 of 10 and costs a median of 5.0.
+
+The same data gives a dialect result. On its own training variety the projector beats the
+baseline on 7 of 10 cells (median gain 5.1 WER); on held-out varieties of the same languages,
+2 of 13 (median cost 5.6 WER). Both wins are cells whose baseline was already above 45 WER, so
+they are the weak-baseline effect rather than an exception.
+
+`main.tex` was corrected in three places rather than added to — the previous claim was false
+against the new data, not merely incomplete. One `% REVIEW:` flags a degenerate pair
+(en_pk: 93.87 to 378.71 WER) and one `% TODO` records that the sweep is at 33 of 43 cells.
+
 ## 2026-08-06 (second pass) — figures, discussion, and the paper enters the number checker
 
 **Additive again.** Nothing was removed from `main.tex`. Added: a `Related Work` section, six
